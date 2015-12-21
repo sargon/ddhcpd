@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+
+# Network test setup helper
+# This script will construct a number of network namespaces and
+# then create veth-pairs. One pair for server connections and another for
+# client commands. Inside of the netns the client interface is named "client0"
+# and the server interface "server0". 
+
+
+NUM_OF_INTERFACE=$(cat /tmp/ddhcp-netns-count 2>/dev/null)
+
+function isNumber(){
+  local NUMBER=$1
+  re='^[0-9]+$'
+  if ! [[ $NUMBER =~ $re ]] ; then
+    return 1
+  else 
+    return 0
+  fi
+}
+
+function buildNS(){
+  local NS_NAME="test$1"
+  ip netns add "${NS_NAME}" 
+  ip link set dev "server0" netns "$NS_NAME"
+  ip netns exec "$NS_NAME" ip link set dev "server0" up
+  ip link set dev "client0" netns "$NS_NAME"
+  ip netns exec "$NS_NAME" ip link set dev "client0" up
+  ip netns exec "$NS_NAME" ip a a 10.0.0.1/20 dev client0
+  ip netns exec "$NS_NAME" ip link set dev lo up
+  sleep 1
+}
+
+function destroyNS(){
+  local NS_NAME="test$1"
+  ip netns delete "${NS_NAME}" 
+}
+
+function buildInterfacePairs() {
+  local IDX=$1
+  ip link add name "srv${IDX}" type veth peer name "server0" type veth
+  ip link add name "clt${IDX}" type veth peer name "client0" type veth
+  for iface in "srv${IDX}" "server0" "clt${IDX}" "client0"; do
+    ip link set dev "${iface}" up
+  done 
+}
+
+function destroyInterfacePairs() {
+  local IDX=$1
+  ip link delete dev "srv${IDX}" 
+  ip link delete dev "clt${IDX}" 
+}
+
+function startServer() {
+  local NS_NAME="test$1"
+  local binary="$2"
+  ip netns exec "${NS_NAME}" ${binary}
+}
+
+function network-init() {
+  local NUMBER_OF_INSTANCES="$1"
+
+  echo -n "Building Network Namespaces "
+  for index in $(seq 0 ${NUMBER_OF_INSTANCES}); do
+    buildInterfacePairs "${index}"
+    buildNS "${index}"
+    #startServer "${index}" "${SERVER_BINARY}" &
+    echo -n "."
+  done
+  echo " done"
+  echo "$NUMBER_OF_INSTANCES" > /tmp/ddhcp-netns-count
+
+  echo "Building server bridge"
+  ip link add name br-srv type bridge
+  ip link set dev br-srv up
+  for index in $(seq 0 ${NUMBER_OF_INSTANCES}); do
+    ip link set dev "srv${index}" master "br-srv"
+  done
+}
+
+function server-init() {
+  local INDEX="$1"
+  startServer "${index}" "${SERVER_BINARY}"
+}
+
+function network-stop() {
+  echo "Destroy server bridge"
+  ip link delete dev "br-srv"
+
+  echo -n "Destroy Network Namespaces "
+  for index in $(seq 0 ${NUM_OF_INTERFACE}); do
+    destroyInterfacePairs "${index}"
+    destroyNS "${index}"
+    echo -n "."
+  done
+  echo " done"
+  rm /tmp/ddhcp-netns-count
+}
+
+if [[ "$(id -u)" != "0" ]] ; then
+  echo "Error: Need root privileges" 
+  exit 1
+fi
+
+case "$1" in
+  net-init)
+    NUMBER_OF_INSTANCES="$2"
+    isNumber "$NUMBER_OF_INSTANCES"
+    if [[ $? -ne 0 ]] ; then
+      echo "Error: '${NUMBER_OF_INSTANCES}' is not a number"
+    fi
+    network-init "$NUMBER_OF_INSTANCES"
+    ;;
+  net-stop)
+    network-stop
+    ;;
+  srv-start)
+    INDEX="$1"
+    BINARY="$2"
+    isNumber "$1"
+    if [[ $? -ne 0 ]] ; then
+      echo "Error: '${NUMBER_OF_INSTANCES}' is not a index number"
+    fi
+    network-init "$NUMBER_OF_INSTANCES"
+    ;;
+  *)
+    echo "Usage: $0 <command> <parameter>"
+    echo "where"
+    echo " <command> is one of"
+    echo " net-init  <#num>            - Initialize <#num> interface pairs and netns."
+    echo " srv-start <index> <command> - Start <command> in netns with <index>."
+    echo " net-stop                    - Destroy interface pairs and netns."
+    ;;
+esac
+
+
