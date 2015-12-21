@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
         printf("Using interface: %s\n",interface);
         break;
       default:
+        printf("ARGC: %i",argc);
         abort ();
     }
   }
@@ -50,12 +51,12 @@ int main(int argc, char **argv) {
 
   char* buffer = (char*) malloc( sizeof(struct ddhcp_mcast_packet));
   printf("Socket: %i\n",interface_msock);
+  struct ddhcp_mcast_packet packet;
   while(1) {
-
-  int byte = recv(interface_msock, buffer, sizeof(struct ddhcp_mcast_packet),0);
-  if ( byte > 0 ) {
-    printf("ByteRead: %i, Command: %i:%i",byte,errno,((struct ddhcp_mcast_packet*) buffer)->command);
-  }
+    int byte = recv(interface_msock, buffer, 1000,0);
+    if ( byte > 0 ) {
+      ntoh_mcast_packet(buffer,byte, &packet);
+    }
   }
 
   free(blocks);

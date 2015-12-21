@@ -53,8 +53,9 @@ function destroyInterfacePairs() {
 
 function startServer() {
   local NS_NAME="test$1"
-  local binary="$2"
-  ip netns exec "${NS_NAME}" ${binary}
+  shift
+  echo ip netns exec "${NS_NAME}" $@
+  ip netns exec "${NS_NAME}" $@
 }
 
 function network-init() {
@@ -76,11 +77,6 @@ function network-init() {
   for index in $(seq 0 ${NUMBER_OF_INSTANCES}); do
     ip link set dev "srv${index}" master "br-srv"
   done
-}
-
-function server-init() {
-  local INDEX="$1"
-  startServer "${index}" "${SERVER_BINARY}"
 }
 
 function network-stop() {
@@ -115,13 +111,14 @@ case "$1" in
     network-stop
     ;;
   srv-start)
+    shift
     INDEX="$1"
-    BINARY="$2"
-    isNumber "$1"
+    shift
+    isNumber "$INDEX"
     if [[ $? -ne 0 ]] ; then
       echo "Error: '${NUMBER_OF_INSTANCES}' is not a index number"
     fi
-    network-init "$NUMBER_OF_INSTANCES"
+    startServer "$INDEX" $@
     ;;
   *)
     echo "Usage: $0 <command> <parameter>"

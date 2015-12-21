@@ -37,6 +37,7 @@
 #include "netsock.h"
 #include "packet.h"
 
+// ff02::1234.1234
 const struct in6_addr in6addr_localmcast = {{{ 0xff, 0x02, 0x00, 0x00,
 					       0x00, 0x00, 0x00, 0x00,
 					       0x00, 0x00, 0x00, 0x00,
@@ -177,7 +178,7 @@ int netsock_open(char* interface,int* interface_mcast)
 	}
 
   //interface->netsock = sock;
-  interface_mcast = sock_mc;
+  *interface_mcast = sock_mc;
 
 	return 0;
 err:
