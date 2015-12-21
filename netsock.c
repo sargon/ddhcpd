@@ -178,7 +178,6 @@ int netsock_open(char* interface,int* interface_mcast)
 
   //interface->netsock = sock;
   interface_mcast = sock_mc;
-  printf("%i",interface_mcast);
 
 	return 0;
 err:

@@ -11,7 +11,21 @@ const int NET_LEN = 10;
 
 struct ddhcp_block* blocks;
 
-int main() {
+int main(int argc, char **argv) {
+
+  char* interface = "veth2";
+
+  int c;
+  while (( c = getopt(argc,argv,"i:")) != -1 ) {
+    switch(c) {
+      case 'i': 
+        interface = optarg;
+        printf("Using interface: %s\n",interface);
+        break;
+      default:
+        abort ();
+    }
+  }
 
   // init block stucture
 
@@ -30,8 +44,9 @@ int main() {
   // init network and event loops
   // TODO
   int interface_msock = 4;
-  char* interface = "veth2";
-  netsock_open(interface,&interface_msock);
+  if ( netsock_open(interface,&interface_msock) == -1) {
+    return 1;
+  }
 
   char* buffer = (char*) malloc( sizeof(struct ddhcp_mcast_packet));
   printf("Socket: %i\n",interface_msock);
@@ -39,7 +54,7 @@ int main() {
 
   int byte = recv(interface_msock, buffer, sizeof(struct ddhcp_mcast_packet),0);
   if ( byte > 0 ) {
-    printf("ByteRead: %i, Command: %i",byte,errno,((struct ddhcp_mcast_packet*) buffer)->command);
+    printf("ByteRead: %i, Command: %i:%i",byte,errno,((struct ddhcp_mcast_packet*) buffer)->command);
   }
   }
 
