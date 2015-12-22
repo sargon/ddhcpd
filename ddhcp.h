@@ -25,7 +25,8 @@ struct ddhcp_block {
   uint32_t subnet;
   uint8_t  subnet_len;
   uint32_t address;
-  uint32_t valid_until;
+  time_t valid_until;
   struct dhcp_lease_block* lease_block;
 };
+
 

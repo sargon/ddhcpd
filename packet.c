@@ -34,29 +34,48 @@ int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet){
   buffer = buffer + 16;
 
   // Payload
+  uint8_t  tmp8;
+  uint16_t tmp16;
+  uint32_t tmp32;
+  struct ddhcp_payload* payload;
 
   switch(packet->command){
+    // UpdateClaim
     case 1:
-      packet->payload = (void*) malloc(sizeof(struct ddhcp_update_claim)*packet->count);
-      struct ddhcp_update_claim* payload = ((struct ddhcp_update_claim*) packet->payload);
+      packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
+      payload = packet->payload;
       for ( int i = 0 ; i < packet->count ; i++ ){
-        uint32_t tmp32;
-        uint16_t tmp16;
         memcpy(&tmp32, buffer   ,4 ); payload->block_index = ntohl(tmp32);
         memcpy(&tmp16, buffer+4 ,2 ); payload->timeout =ntohs(tmp16);
-        memcpy(&(payload->usage) , buffer+6 ,1 );
+        memcpy(&tmp8, buffer+6 ,1 ); payload->reserved = tmp8;
         printf("UPDATE_CLAIM: BLOCK:%i TIMEOUT:%i USAGE:%i \n",
-            ((struct ddhcp_update_claim*) packet->payload)[i].block_index,
-            ((struct ddhcp_update_claim*) packet->payload)[i].timeout,
-            ((struct ddhcp_update_claim*) packet->payload)[i].usage
+            packet->payload[i].block_index,
+            packet->payload[i].timeout,
+            packet->payload[i].reserved
             );
-        payload = payload+8;
+        payload++;
+        buffer = buffer + 7;
+      }
+    break;
+    // InquireBlock
+    case 2:
+      packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
+      payload = packet->payload;
+      for ( int i = 0 ; i < packet->count ; i++ ){
+        memcpy(&tmp32, buffer   ,4 ); payload->block_index = ntohl(tmp32);
+        printf("INQUIRE_BLOCK: BLOCK:%i \n",
+            packet->payload[i].block_index
+            );
+        payload++;
         buffer = buffer + 8;
       }
     break;
     default:
+      return 1;
     break;
   }
+
+  printf("\n");
 
   return 0;
 }

@@ -26,13 +26,13 @@ struct ddhcp_mcast_packet {
   uint8_t command;
   uint8_t count;
 
-  void* payload;
+  struct ddhcp_payload* payload;
 };
 
-struct ddhcp_update_claim {
+struct ddhcp_payload {
    uint32_t block_index;
    uint16_t timeout;
-   uint8_t  usage;
+   uint16_t reserved;
 };
 
 int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet);
