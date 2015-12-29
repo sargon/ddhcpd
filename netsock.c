@@ -43,33 +43,34 @@ const struct in6_addr in6addr_localmcast = {{{ 0xff, 0x02, 0x00, 0x00,
 					       0x00, 0x00, 0x00, 0x00,
 					       0x00, 0x00, 0x12, 0x34 } } };
 
-int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)               
-{                                                                                  
-  memset(addr, 0, sizeof(*addr));                                                  
-  addr->s6_addr[0] = 0xfe;                                                         
-  addr->s6_addr[1] = 0x80;                                                         
+int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)
+{
+  memset(addr, 0, sizeof(*addr));
+  addr->s6_addr[0] = 0xfe;
+  addr->s6_addr[1] = 0x80;
 
-  addr->s6_addr[8] = mac->ether_addr_octet[0] ^ 0x02;                              
-  addr->s6_addr[9] = mac->ether_addr_octet[1];                                     
-  addr->s6_addr[10] = mac->ether_addr_octet[2];                                    
+  addr->s6_addr[8] = mac->ether_addr_octet[0] ^ 0x02;
+  addr->s6_addr[9] = mac->ether_addr_octet[1];
+  addr->s6_addr[10] = mac->ether_addr_octet[2];
 
-  addr->s6_addr[11] = 0xff;                                                        
-  addr->s6_addr[12] = 0xfe;                                                        
+  addr->s6_addr[11] = 0xff;
+  addr->s6_addr[12] = 0xfe;
 
-  addr->s6_addr[13] = mac->ether_addr_octet[3];                                    
-  addr->s6_addr[14] = mac->ether_addr_octet[4];                                    
-  addr->s6_addr[15] = mac->ether_addr_octet[5];                                    
+  addr->s6_addr[13] = mac->ether_addr_octet[3];
+  addr->s6_addr[14] = mac->ether_addr_octet[4];
+  addr->s6_addr[15] = mac->ether_addr_octet[5];
 
-  return 0;                                                                        
-}                                                                                  
-               
+  return 0;
+}
 
-int netsock_open(char* interface,int* interface_mcast)
+
+int netsock_open(char* interface,int* interface_mcast, ddhcp_config *state)
 {
 	int sock;
 	int sock_mc;
 	struct sockaddr_in6 sin6, sin6_mc;
 	struct ipv6_mreq mreq;
+  unsigned int mloop = 0;
 	struct ifreq ifr;
 	int ret;
 
@@ -95,6 +96,7 @@ int netsock_open(char* interface,int* interface_mcast)
 	}
 
 	uint32_t scope_id = ifr.ifr_ifindex;
+  state->mcast_scope_id = ifr.ifr_ifindex;
 
 	if (ioctl(sock, SIOCGIFHWADDR, &ifr) == -1) {
 		perror("can't get MAC address");
@@ -150,6 +152,12 @@ int netsock_open(char* interface,int* interface_mcast)
 	if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
 		       &mreq, sizeof(mreq))) {
 		perror("can't add multicast membership");
+		goto err;
+	}
+
+	if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+		       &mloop, sizeof(mloop))) {
+		perror("can't unset multicast loop");
 		goto err;
 	}
 

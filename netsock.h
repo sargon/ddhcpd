@@ -6,7 +6,8 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include "packet.h"
+#include "ddhcp.h"
 
 #define DDHCP_MULTICAST_PORT 1234
 
-int netsock_open(char* interface,int* interface_mcast);
+int netsock_open(char* interface,int* interface_mcast,ddhcp_config *state);

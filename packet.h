@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 struct ddhcp_mcast_packet {
+  uint16_t node_id;
   struct in_addr prefix;
   uint8_t prefix_len;
   uint8_t blocksize;
@@ -36,5 +37,7 @@ struct ddhcp_payload {
 };
 
 int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet);
+
+int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id );
 
 #endif

@@ -1,12 +1,14 @@
 #include "packet.h"
 #include <endian.h>
 #include <assert.h>
+#include <errno.h>
 
 int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet){
   
   // Header
   uint64_t node;
   memcpy (&node,buffer,8); node = be64toh(node);
+
 
   // The Python implementation prefixes with a node number?
   // prefix address
@@ -77,5 +79,79 @@ int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet){
 
   printf("\n");
 
+  return 0;
+}
+
+int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id ) {
+  int len = 0;
+  switch(packet->command) {
+    case 1:
+      len = 16 + packet->count * 7;
+    break;
+    case 2:
+      len = 16 + packet->count * 4;
+    break;
+    default:
+      printf("Error: unknown packet format\n");
+    break;
+  }
+  char* buffer = (char*) calloc(1, len);
+  errno = 0;
+
+  memcpy(buffer,&(packet->prefix),sizeof(struct in_addr));
+  memcpy(buffer+4,&(packet->prefix),sizeof(struct in_addr));
+  memcpy(buffer+8,&(packet->prefix),sizeof(struct in_addr));
+
+  // prefix length
+  buffer[12] = packet->prefix_len;
+  // size of a block
+  buffer[13] = packet->blocksize;
+  // the command
+  buffer[14] = packet->command;
+  // count of payload entries
+  buffer[15] = packet->count;
+
+  uint8_t  tmp8;
+  uint16_t tmp16;
+  uint32_t tmp32;
+  struct ddhcp_payload* payload;
+
+  char *pbuf = buffer + 16;
+  switch(packet->command) {
+    case 1:
+      payload = packet->payload;
+			for ( unsigned int index = 0 ; index < packet->count ; index++ ) {
+				tmp32 = htonl(payload->block_index); memcpy(pbuf,&tmp32,4 ); 
+				tmp16 = htons(payload->timeout); memcpy(pbuf+4,&tmp16,2);
+				memcpy(pbuf+6,&payload->reserved,1); 
+        payload++;
+        pbuf += 7;
+			}
+    break;
+    case 2:
+      payload = packet->payload;
+			for ( unsigned int index = 0 ; index < packet->count ; index++ ) {
+				tmp32 = htonl(payload->block_index); 
+        memcpy(pbuf,&tmp32,4); 
+        payload++;
+        pbuf += 4;
+      }
+    break;
+  }
+
+  struct sockaddr_in6 dest_addr; 
+  const struct in6_addr dest = {{{ 0xff, 0x02, 0x00, 0x00,
+					       0x00, 0x00, 0x00, 0x00,
+					       0x00, 0x00, 0x00, 0x00,
+					       0x00, 0x00, 0x12, 0x34 } } };
+
+	memset(&dest_addr, 0, sizeof(dest_addr));                                      
+	dest_addr.sin6_family = AF_INET6;                                              
+	dest_addr.sin6_port = htons(1234);
+	dest_addr.sin6_scope_id = scope_id;
+	memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
+
+  int bsend = sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr* ) &dest_addr,sizeof(dest_addr));
+  free(buffer);
   return 0;
 }
