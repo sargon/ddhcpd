@@ -3,10 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include "ddhcp.h"
+#include "dhcp.h"
+#include "dhcp_packet.h"
 #include "netsock.h"
 #include "packet.h"
+#include "tools.h"
 
 const int NET = 0;
 const int NET_LEN = 10;
@@ -15,6 +19,7 @@ struct ddhcp_block* blocks;
 
 int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config){
   *blocks = (struct ddhcp_block*) malloc( sizeof(struct ddhcp_block) * config->number_of_blocks);
+  int now = time(NULL);
 
   if ( blocks == 0 ) {
     return 1;
@@ -26,10 +31,10 @@ int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config){
   for ( int index = 0; index < config->number_of_blocks; index++ ) {
     block->index = index;
     block->state = DDHCP_FREE;
-    block->subnet = NET + (index * NET_LEN);
+    addr_add(&config->prefix,&block->subnet,index * config->block_size);
     block->subnet_len = config->block_size;
     block->address = 0;
-    block->valid_until = 0;
+    block->timeout = now + config->block_timeout;
     block->claiming_counts = 0;
     block->lease_block = NULL;
     block++;
@@ -43,12 +48,17 @@ void ddhcp_block_process_claims( struct ddhcp_block *blocks , struct ddhcp_mcast
   time_t now = time(NULL);
   for ( unsigned int i = 0 ; i < packet->count ; i++ ) {
     struct ddhcp_payload *claim = ((struct ddhcp_payload*) packet->payload)+i;
-    if ( claim->block_index >= config->number_of_blocks ) {
+    uint32_t block_index = claim->block_index;
+    if ( block_index >= config->number_of_blocks ) {
       printf("warning: malformed block number");
-      continue;
+    } 
+    if ( blocks[block_index].state == DDHCP_OURS ) {
+      printf("Someone tries to steel our block");
+    } else {
+        blocks[block_index].state = DDHCP_CLAIMED;
+        blocks[block_index].timeout = now + claim->timeout;
+        printf("UpdateClaim [ node_id: %lu, block_index: %i, timeout: %i ]\n",packet->node_id,block_index,claim->timeout);
     }
-    blocks[claim->block_index].state = DDHCP_CLAIMED;
-    blocks[claim->block_index].valid_until = now + claim->timeout;
   }
 }
 
@@ -61,19 +71,21 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
       printf("warning: malformed block number");
       continue;
     }
+    printf("Inquire [ node_id: %lu, block_index: %i ]\n",packet->node_id,tmp->block_index);
     if ( blocks[tmp->block_index].state == DDHCP_OURS ) {
       // Update Claims
+      blocks[tmp->block_index].timeout = 0;
       block_update_claims( blocks, config );
     } else if ( blocks[tmp->block_index].state == DDHCP_CLAIMING ) {
       if ( packet->node_id > config->node_id ) {
         blocks[tmp->block_index].state = DDHCP_TENTATIVE;
-        blocks[tmp->block_index].valid_until = now + config->tentative_timeout;
+        blocks[tmp->block_index].timeout = now + config->tentative_timeout;
       } 
       // otherwise keep inquiring, the other node should see our inquires and step back.
     } else {
       printf("Marking block as  tentative %i\n",tmp->block_index);
       blocks[tmp->block_index].state = DDHCP_TENTATIVE;
-      blocks[tmp->block_index].valid_until = now + config->tentative_timeout;
+      blocks[tmp->block_index].timeout = now + config->tentative_timeout;
     }
   }
 }
@@ -100,7 +112,12 @@ ddhcp_block* block_find_lease( ddhcp_block *blocks , ddhcp_config *config) {
 int block_own( ddhcp_block *block ) {
   block->state = DDHCP_OURS;
   // TODO Have a preallocated list of dhcp_lease_blocks?
-  return  dhcp_new_lease_block(&(block->lease_block),block->subnet,block->subnet_len);
+  uint32_t addr;
+  memcpy(&addr,&block->subnet,sizeof(struct in_addr));
+  addr = ntohl(addr);
+  addr += block->index * block->subnet_len;
+  addr = htonl(addr);
+  return  dhcp_new_lease_block(&(block->lease_block),(struct in_addr*) &addr,block->subnet_len);
 }
 
 ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
@@ -120,7 +137,10 @@ ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
   }
 
   ddhcp_block *random_free = NULL;
-  int r = rand() % num_free_blocks;
+  int r = -1;
+  if ( num_free_blocks > 0 ) {
+    r = rand() % num_free_blocks;
+  }
   
   struct list_head *pos, *q;
   list_for_each_safe(pos, q, &free_blocks.list){
@@ -138,21 +158,22 @@ ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
 int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
   // Handle blocks already in claiming prozess
   struct list_head *pos, *q;
+  int now = time(NULL);
   list_for_each_safe(pos,q,&(config->claiming_blocks).list) {
-    ddhcp_block_list  *tmp = list_entry(pos, ddhcp_block_list, list);
-    ddhcp_block *block = tmp->block;
-    if ( block->claiming_counts == 3 ) {
-      block_own(block);
-      printf("Claiming Block: %i\n",block->index);
-      num_blocks--;
-      list_del(pos);
-      config->claiming_blocks_amount--;
-      free(tmp);
-    } else if ( block->state != DDHCP_CLAIMING ) {
-      list_del(pos);
-      config->claiming_blocks_amount--;
-      free(tmp);
-    } 
+      ddhcp_block_list  *tmp = list_entry(pos, ddhcp_block_list, list);
+      ddhcp_block *block = tmp->block;
+      if ( block->claiming_counts == 3 ) {
+          block_own(block);
+          printf("Claiming Block: %i\n",block->index);
+          num_blocks--;
+          list_del(pos);
+          config->claiming_blocks_amount--;
+          free(tmp);
+      } else if ( block->state != DDHCP_CLAIMING ) {
+          list_del(pos);
+          config->claiming_blocks_amount--;
+          free(tmp);
+      } 
   }
 
   // Do we still need more, then lets find some.
@@ -165,6 +186,7 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
         ddhcp_block_list* list = (ddhcp_block_list*) malloc( sizeof ( ddhcp_block_list ) );
         block->state = DDHCP_CLAIMING;
         block->claiming_counts = 0;
+        block->timeout = now + config->tentative_timeout;
         list->block = block;
         list_add_tail(&(list->list), &(config->claiming_blocks.list));
         config->claiming_blocks_amount++;
@@ -177,7 +199,8 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
 
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet packet;
-  packet.prefix = config->prefix;
+  packet.node_id = config->node_id;
+  memcpy(&(packet.prefix),&config->prefix,sizeof(struct in_addr));
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
   packet.command = 2;
@@ -188,7 +211,10 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
     ddhcp_block_list  *tmp = list_entry(pos, ddhcp_block_list, list);
     ddhcp_block *block = tmp->block;
     block->claiming_counts++;
-    packet.payload[index++].block_index = block->index;
+    packet.payload[index].block_index = block->index;
+    packet.payload[index].timeout = 0;
+    packet.payload[index].reserved = 0;
+    index++;
   }
   if( packet.count > 0 ) {
     send_packet_mcast( &packet , config->mcast_socket, config->mcast_scope_id );
@@ -208,17 +234,30 @@ int block_num_free_leases( ddhcp_block *block, ddhcp_config *config ) {
   return free_leases;
 }
 
+/**
+ *  Update the timeout of claimed blocks and then send packets to
+ *  distribute the continuations of that claim. 
+ *
+ *  Due to fragmented timeouts this packet may send 2 times more packets 
+ *  than optimal.
+ */
 void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
   int our_blocks = 0;  
   ddhcp_block *block = blocks;
+  int now = time(NULL);
+  int timeout_half = floor( (double) config->block_timeout / 2 );
   for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
-    if ( block->state == DDHCP_OURS ) 
+    if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
       our_blocks++;
-      block++;
+    }
+    block++;
   }
 
+  if( our_blocks == 0 ) return;
+
   struct ddhcp_mcast_packet packet;
-  packet.prefix = config->prefix;
+  packet.node_id = config->node_id;
+  memcpy(&packet.prefix,&config->prefix,sizeof(struct in_addr));
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
   packet.command = 1;
@@ -227,11 +266,12 @@ void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
   int index = 0;
   block = blocks;
   for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
-    if ( block->state == DDHCP_OURS ) {
+    if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
       packet.payload[index].block_index = block->index;
-      packet.payload[index].timeout     = 30;
+      packet.payload[index].timeout     = config->block_timeout;
       packet.payload[index].reserved    = 0;
       index++;
+      block->timeout = now + config->block_timeout;
     }
     block++;
   }
@@ -239,7 +279,19 @@ void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
     send_packet_mcast( &packet , config->mcast_socket, config->mcast_scope_id );
   } 
   free(packet.payload);
-  
+}
+
+void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
+  ddhcp_block *block = blocks;
+  int now = time(NULL);
+  for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
+    if ( block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE ) {
+      printf("Freeing Block: %i\n",block->index);
+      block->state = DDHCP_FREE;
+      block->timeout = now + config->block_timeout;
+    } 
+    block++;
+  }
 }
 
 /** 
@@ -256,38 +308,50 @@ void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  int blocks_needed = config->spare_blocks_needed - spare_blocks;
  block_claim( blocks, blocks_needed, config );
  block_update_claims( blocks, config );
+ block_check_timeouts( blocks, config );
 }
 
 int main(int argc, char **argv) {
+  
+  srand(time(NULL));
 
   ddhcp_config *config = (ddhcp_config*) malloc( sizeof(ddhcp_config) );
+  config->node_id = 0xffffffffffffffff;
   config->block_size = 4;
   config->spare_blocks_needed = 1;
   config->claiming_blocks_amount = 0;
 
   inet_aton("10.0.0.0",&config->prefix);
-  printf("Prefix: %s\n", inet_ntoa(config->prefix));
   config->prefix_len = 27;
+  printf("Prefix: %s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
   config->number_of_blocks = pow(2, floor((32 - config->prefix_len - log(config->block_size))));
+  config->spare_blocks_needed = config->number_of_blocks - 1;
+  config->block_timeout = 30;
   config->tentative_timeout = 15;
+
+  // DHCP
+  config->dhcp_port = 67;
 
   INIT_LIST_HEAD(&(config->claiming_blocks).list);
 
-  char* interface = "veth2";
+  char* interface = "server0";
+  char* interface_client = "client0";
 
   int c;
   while (( c = getopt(argc,argv,"i:")) != -1 ) {
     switch(c) {
       case 'i': 
         interface = optarg;
-        printf("Using interface: %s\n",interface);
         break;
+      case 'c':
+        interface_client = optarg;
       default:
         printf("ARGC: %i",argc);
         abort ();
     }
   }
-  srand(time(NULL));
+  printf("Using client interface: %s\n",interface_client);
+  printf("Using interface: %s\n",interface);
   printf("Number of blocks: %i\n",config->number_of_blocks);
 
   // init block stucture
@@ -295,32 +359,62 @@ int main(int argc, char **argv) {
 
   // init network and event loops
   // TODO
-  int interface_msock = 0; 
-  if ( netsock_open(interface,&interface_msock,config) == -1 ) {
+  if ( netsock_open(interface,interface_client,config) == -1 ) {
     return 1;
   }
-  config->mcast_socket = interface_msock;
 
-  char* buffer = (char*) malloc( 10000 );
+  char* buffer = (char*) malloc( sizeof(char) * 1500 );
   struct ddhcp_mcast_packet packet;
+  struct dhcp_packet dhcp_packet;
+  int ret = 0, bytes = 0;
+  int client_id = 1;
   while(1) {
-    int byte = recv(interface_msock, buffer, 10000,0);
-    if ( byte > 0 ) {
-      ntoh_mcast_packet(buffer,byte, &packet);
-      switch(packet.command) {
-        case 1:
-          ddhcp_block_process_claims(blocks,&packet,config);
-        break;
-        case 2:
-          ddhcp_block_process_inquire(blocks,&packet,config);
-        default:
-        break;
-      }
-      free(packet.payload);
+    bytes = recv(config->mcast_socket, buffer, 1500,0);
+    if ( bytes > 0 ) {
+        ret = ntoh_mcast_packet(buffer,bytes, &packet);
+        if ( ret == 0 ) {
+            switch(packet.command) {
+                case DHCPDISCOVER:
+                    
+                    ddhcp_block_process_claims(blocks,&packet,config);
+                    break;
+                case 2:
+                    ddhcp_block_process_inquire(blocks,&packet,config);
+                default:
+                    break;
+            }
+            free(packet.payload);
+        } else {
+          printf("%i",ret);
+        }
     }
     house_keeping( blocks, config );
-    usleep(1000000);
+    bytes = recv(config->client_socket,buffer, 1500,0);
+    if ( bytes > 0 ) {
+      ret = ntoh_dhcp_packet(&dhcp_packet,buffer,bytes);
+      if ( ret == 0 ) {
+        int message_type = dhcp_packet_message_type(&dhcp_packet);
+        ddhcp_block *block;
+        switch( message_type ) {
+          case DHCPDISCOVER:
+            block = block_find_lease( blocks , config);
+            if ( block != NULL ) {
+              dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block, client_id);
+            } else {
+              printf("Warning: No block with free lease!\n");
+            }
+          break;
+          default:
+            printf("Warning: Unknown DHCP Message Type: %i\n",message_type);
+          break; 
+        }
+        free(dhcp_packet.options);
+      }
+    }
+    usleep(1000);
   }
+  // TODO free dhcp_leases
   free(blocks);
+  free(buffer);
   return 0;
 }

@@ -1,4 +1,4 @@
-OBJ=ddhcp.o netsock.o packet.o dhcp.o
+OBJ=ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o tools.o
 
 CC=gcc
 CFLAGS+=-Wall -W -std=gnu99 -fno-strict-aliasing -MD -MP -g 

@@ -64,17 +64,19 @@ int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)
 }
 
 
-int netsock_open(char* interface,int* interface_mcast, ddhcp_config *state)
+int netsock_open(char* interface,char* interface_client, ddhcp_config *state)
 {
 	int sock;
 	int sock_mc;
-	struct sockaddr_in6 sin6, sin6_mc;
+	struct sockaddr_in6 sin6_mc;
+  struct sockaddr_in sin;
 	struct ipv6_mreq mreq;
-  unsigned int mloop = 0;
+	unsigned int mloop = 0;
+  unsigned int broadcast = 1;
 	struct ifreq ifr;
 	int ret;
 
-	sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock  < 0) {
 		perror("can't open socket");
 		return -1;
@@ -96,47 +98,49 @@ int netsock_open(char* interface,int* interface_mcast, ddhcp_config *state)
 	}
 
 	uint32_t scope_id = ifr.ifr_ifindex;
-  state->mcast_scope_id = ifr.ifr_ifindex;
+	state->mcast_scope_id = ifr.ifr_ifindex;
 
 	if (ioctl(sock, SIOCGIFHWADDR, &ifr) == -1) {
 		perror("can't get MAC address");
 		goto err;
 	}
 
-  struct ether_addr hwaddr;
-  struct in6_addr address;
+	struct ether_addr hwaddr;
+	struct in6_addr address;
+  struct in_addr address_client;
 
 	memcpy(&hwaddr, &ifr.ifr_hwaddr.sa_data, 6);
 	mac_to_ipv6(&hwaddr, &address);
 
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_port = htons(DDHCP_MULTICAST_PORT);
-	sin6.sin6_family = AF_INET6;
-	memcpy(&sin6.sin6_addr, &address, sizeof(sin6.sin6_addr));
-	sin6.sin6_scope_id = scope_id;
+  inet_aton("0.0.0.0",&address_client);
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_port = htons(state->dhcp_port);
+	sin.sin_family = AF_INET;
+	memcpy(&sin.sin_addr, &address_client, sizeof(sin.sin_addr));
+	// sin.sin_scope_id = scope_id;
 
 	memset(&sin6_mc, 0, sizeof(sin6_mc));
 	sin6_mc.sin6_port = htons(DDHCP_MULTICAST_PORT);
 	sin6_mc.sin6_family = AF_INET6;
 	memcpy(&sin6_mc.sin6_addr, &in6addr_localmcast,
-	       sizeof(sin6_mc.sin6_addr));
+			sizeof(sin6_mc.sin6_addr));
 	sin6_mc.sin6_scope_id = scope_id;
 
-	if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface,
-		       strlen(interface) + 1)) {
+	if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
+				strlen(interface_client) + 1)) {
 		perror("can't bind to device");
 		goto err;
 	}
 
 	if (setsockopt(sock_mc, SOL_SOCKET, SO_BINDTODEVICE,
-		       interface,
-		       strlen(interface) + 1)) {
+				interface,
+				strlen(interface) + 1)) {
 		perror("can't bind to device");
 		goto err;
 	}
 
-	if (bind(sock, (struct sockaddr *)&sin6, sizeof(sin6)) < 0) {
-		perror("can't bind");
+	if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		perror("can't bind dhcp socket");
 		goto err;
 	}
 
@@ -146,18 +150,23 @@ int netsock_open(char* interface,int* interface_mcast, ddhcp_config *state)
 	}
 
 	memcpy(&mreq.ipv6mr_multiaddr, &in6addr_localmcast,
-	       sizeof(mreq.ipv6mr_multiaddr));
+			sizeof(mreq.ipv6mr_multiaddr));
 	mreq.ipv6mr_interface = scope_id;
 
 	if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
-		       &mreq, sizeof(mreq))) {
+				&mreq, sizeof(mreq))) {
 		perror("can't add multicast membership");
 		goto err;
 	}
 
 	if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-		       &mloop, sizeof(mloop))) {
+				&mloop, sizeof(mloop))) {
 		perror("can't unset multicast loop");
+		goto err;
+	}
+
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(unsigned int))) {
+		perror("can't set boardcast on client socket");
 		goto err;
 	}
 
@@ -185,8 +194,9 @@ int netsock_open(char* interface,int* interface_mcast, ddhcp_config *state)
 		goto err;
 	}
 
-  //interface->netsock = sock;
-  *interface_mcast = sock_mc;
+	//interface->netsock = sock;
+	state->mcast_socket = sock_mc;
+	state->client_socket = sock;
 
 	return 0;
 err:

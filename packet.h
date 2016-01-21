@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 struct ddhcp_mcast_packet {
-  uint16_t node_id;
+  uint64_t node_id;
   struct in_addr prefix;
   uint8_t prefix_len;
   uint8_t blocksize;

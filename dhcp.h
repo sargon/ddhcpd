@@ -5,6 +5,7 @@
  */
 
 #include <stdint.h>
+#include "dhcp_packet.h"
 
 enum dhcp_lease_state {
   FREE,
@@ -16,23 +17,23 @@ enum dhcp_lease_state {
 struct dhcp_lease {
   uint32_t client_id;
   enum dhcp_lease_state state;
+  uint32_t xid;
   uint32_t lease_end;
 };
 typedef struct dhcp_lease dhcp_lease;
 
 struct dhcp_lease_block {
-  uint32_t subnet;
+  struct in_addr subnet;
   uint32_t subnet_len;  
   struct dhcp_lease* addresses;
 };
 typedef struct dhcp_lease_block dhcp_lease_block;
 
-
 /**
  * dhcp_new_lease_block
  * Create a new lease block. Return 0 on success.
  */ 
-int dhcp_new_lease_block(struct dhcp_lease_block** lease_block,uint32_t subnet_begin,uint32_t subnet_len);
+int dhcp_new_lease_block(struct dhcp_lease_block** lease_block,struct in_addr *subnet,uint32_t subnet_len);
 
 /**
  * dhcp_free_lease_block
@@ -44,10 +45,11 @@ void dhcp_free_lease_block(struct dhcp_lease_block** lease_block);
  * DHCP Discover
  * Performs a search for a available, not already offered address in the 
  * available block. When the block has no further available addresses 0 is returned,
- * otherwise the then reserved address. Reservation will set a lease_end on the
- * address, so an dhcp_request COULD make the pre-reservation to an real lease.
+ * otherwise the then reserved address. Will set a lease_timout on the lease.
+ *
+ * In a second step a dhcp_packet is created an send back.
  */ 
-int32_t dhcp_discover(struct dhcp_lease_block** lease_block, uint32_t client_id);
+int dhcp_discover(int socket,struct dhcp_packet *discover,struct dhcp_lease_block *lease_block, uint32_t client_id);
 
 /** 
  * DHCP Request
