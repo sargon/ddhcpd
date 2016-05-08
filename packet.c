@@ -142,16 +142,15 @@ int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, 
     break;
   }
 
-  struct sockaddr_in6 dest_addr; 
+  struct sockaddr_in6 dest_addr = { 
+    .sin6_family = AF_INET6,
+    .sin6_port = htons(1234),
+    .sin6_scope_id = scope_id
+  }; 
   const struct in6_addr dest = {{{ 0xff, 0x02, 0x00, 0x00,
 					       0x00, 0x00, 0x00, 0x00,
 					       0x00, 0x00, 0x00, 0x00,
 					       0x00, 0x00, 0x12, 0x34 } } };
-
-	memset(&dest_addr, 0, sizeof(dest_addr));                                      
-	dest_addr.sin6_family = AF_INET6;                                              
-	dest_addr.sin6_port = htons(1234);
-	dest_addr.sin6_scope_id = scope_id;
 	memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
   sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr* ) &dest_addr,sizeof(dest_addr));
