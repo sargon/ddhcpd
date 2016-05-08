@@ -242,6 +242,8 @@ int send_dhcp_packet(int socket, dhcp_packet *packet) {
   // Network send
   printf("Message LEN: %i\n",_dhcp_packet_len(packet));
 
+  broadcast.sin_port = htons(68);
+  
   int err = sendto(socket, buffer, _dhcp_packet_len(packet), 0,(struct sockaddr*)&broadcast, sizeof(broadcast));
   if ( err ) {
     perror("sendto");
