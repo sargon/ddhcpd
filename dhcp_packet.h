@@ -10,7 +10,7 @@
 struct dhcp_option {
     uint8_t code;
     uint8_t len;
-    char *payload;
+    uint8_t *payload;
 };
 typedef struct dhcp_option dhcp_option;
 
@@ -64,7 +64,7 @@ void printf_dhcp(dhcp_packet *packet);
  * make pointer to the buffer inside of the dhcp_packet structure. Do not free
  * the buffer before the last operation on that struture!
  */
-int ntoh_dhcp_packet(dhcp_packet *packet,char* buffer,int len);
+int ntoh_dhcp_packet(dhcp_packet *packet,uint8_t* buffer,int len);
 int send_dhcp_packet(int socket,dhcp_packet *packet);
 
 uint8_t dhcp_packet_message_type(dhcp_packet *packet);

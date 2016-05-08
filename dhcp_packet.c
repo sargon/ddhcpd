@@ -76,7 +76,7 @@ int _dhcp_packet_len( dhcp_packet *packet ) {
   return len;
 }
 
-int ntoh_dhcp_packet(dhcp_packet *packet,char* buffer,int len) {
+int ntoh_dhcp_packet(dhcp_packet *packet,uint8_t* buffer,int len) {
 
   uint16_t tmp16;
   uint32_t tmp32;
@@ -112,7 +112,6 @@ int ntoh_dhcp_packet(dhcp_packet *packet,char* buffer,int len) {
     return -7;
   }
 
-  char *option = buffer + 236 + 4;
   uint8_t *option = buffer + 236 + 4;
   
   // Count options
@@ -197,7 +196,7 @@ int send_dhcp_packet(int socket, dhcp_packet *packet) {
   uint16_t tmp16;
   uint32_t tmp32;
 
-  char* buffer = calloc(sizeof(char),_dhcp_packet_len(packet));
+  uint8_t* buffer = calloc(sizeof(char),_dhcp_packet_len(packet));
   
   // Header
   buffer[0] = packet->op;
@@ -222,7 +221,7 @@ int send_dhcp_packet(int socket, dhcp_packet *packet) {
   buffer[239] = 99;
   
   // Options
-  char* obuf = buffer + 240;
+  uint8_t* obuf = buffer + 240;
   dhcp_option *option = packet->options;
   for( int i = 0 ; i < packet->options_len; i++ ) {
     obuf[0] = option->code;

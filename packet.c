@@ -20,7 +20,7 @@ int _packet_size(int command,int payload_count) {
   return len;
 }
 
-int ntoh_mcast_packet(char* buffer,int len, struct ddhcp_mcast_packet* packet){
+int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet){
   
   // Header
   uint64_t node;
