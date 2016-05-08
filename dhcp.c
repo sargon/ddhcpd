@@ -13,7 +13,7 @@ int DHCP_OFFER_TIMEOUT = 600;
 int DHCP_LEASE_TIME    = 3600;
 
 void printf_lease(dhcp_lease *lease) {
-  printf("DHCP LEASE [ cid %i, state %i, xid %u, end %i ]\n",lease->client_id,lease->state,lease->xid,lease->lease_end); 
+  printf("DHCP LEASE [ state %i, xid %u, end %i ]\n",lease->state,lease->xid,lease->lease_end); 
 }
 
 int dhcp_new_lease_block(struct dhcp_lease_block** lease_block,struct in_addr *subnet,uint32_t subnet_len) {
@@ -27,7 +27,7 @@ int dhcp_new_lease_block(struct dhcp_lease_block** lease_block,struct in_addr *s
     return 1;
   }
   for ( unsigned int index = 0; index < subnet_len; index++ ) {
-    (*lease_block)->addresses[index].client_id = 0;
+    memset(&(*lease_block)->addresses[index].chaddr,0,16);
     (*lease_block)->addresses[index].state = FREE;
     (*lease_block)->addresses[index].lease_end = 0;
   }
@@ -39,7 +39,7 @@ void dhcp_free_lease_block(struct dhcp_lease_block** lease_block) {
   free(*lease_block);
 }
 
-int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lease_block, uint32_t client_id) {
+int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lease_block) {
   time_t now = time(NULL);
   dhcp_lease *lease = NULL;
   int lease_index = 0;
@@ -49,11 +49,10 @@ int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lea
           && lease_block->addresses[index].lease_end < now )) {
       lease = lease_block->addresses + index;
       lease_index = index;
-      lease->client_id = client_id;
+      memcpy(&lease->chaddr,&discover->chaddr,16);
       lease->xid = discover->xid;
       lease->state = OFFERED;
       lease->lease_end = now + DHCP_OFFER_TIMEOUT;
-      printf("SET\n");
     }
   }
 
@@ -129,13 +128,13 @@ int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lea
   return 0;
 }
 
-int dhcp_request(struct dhcp_lease_block** lease_block,uint32_t client_id,uint32_t offer){
+int dhcp_request(struct dhcp_lease_block** lease_block,uint8_t* chaddr, uint32_t offer){
   time_t now = time(NULL);
   if ( (*lease_block)->subnet_len < offer) {
     // Requested offer is out of scope
     return 1;
   }
-  if ( (*lease_block)->addresses[offer].client_id != client_id) {
+  if ( memcmp(&(*lease_block)->addresses[offer].chaddr,chaddr,16) != 0 ) {
     // Requested offer is not offered to client
     return 2;
   }

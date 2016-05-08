@@ -378,7 +378,6 @@ int main(int argc, char **argv) {
   struct ddhcp_mcast_packet packet;
   struct dhcp_packet dhcp_packet;
   int ret = 0, bytes = 0;
-  int client_id = 1;
 
   int efd;
   int maxevents = 64;
@@ -436,7 +435,7 @@ int main(int argc, char **argv) {
             case DHCPDISCOVER:
               block = block_find_lease( blocks , config);
               if ( block != NULL ) {
-                dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block, client_id);
+                dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block);
               } else {
                 printf("Warning: No block with free lease!\n");
               }

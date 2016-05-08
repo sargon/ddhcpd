@@ -15,7 +15,7 @@ enum dhcp_lease_state {
 
 // DHCP lease 
 struct dhcp_lease {
-  uint32_t client_id;
+  uint8_t chaddr[16];
   enum dhcp_lease_state state;
   uint32_t xid;
   uint32_t lease_end;
@@ -49,13 +49,13 @@ void dhcp_free_lease_block(struct dhcp_lease_block** lease_block);
  *
  * In a second step a dhcp_packet is created an send back.
  */ 
-int dhcp_discover(int socket,struct dhcp_packet *discover,struct dhcp_lease_block *lease_block, uint32_t client_id);
+int dhcp_discover(int socket,struct dhcp_packet *discover,struct dhcp_lease_block *lease_block);
 
 /** 
  * DHCP Request
  * Performs on base of de
  */
-int dhcp_request(struct dhcp_lease_block** lease_block,uint32_t client_id,uint32_t offer);
+int dhcp_request(struct dhcp_lease_block** lease_block,uint8_t* chaddr, uint32_t offer);
 
 
 /**
