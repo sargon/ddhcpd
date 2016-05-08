@@ -59,7 +59,7 @@ void printf_dhcp(dhcp_packet *packet) {
 }
 
 int _dhcp_packet_len( dhcp_packet *packet ) {
-  int len = 240;
+  int len = 240 + 1;
   dhcp_option *option = packet->options;
   for ( int i = 0 ; i < packet->options_len; i++ ) {
     switch ( option->code ) {
@@ -113,6 +113,7 @@ int ntoh_dhcp_packet(dhcp_packet *packet,char* buffer,int len) {
   }
 
   char *option = buffer + 236 + 4;
+  uint8_t *option = buffer + 236 + 4;
   
   // Count options
   int options = 0;
@@ -238,7 +239,8 @@ int send_dhcp_packet(int socket, dhcp_packet *packet) {
     }
     option++;
   }
-  assert(obuf == buffer + _dhcp_packet_len(packet));
+  buffer[_dhcp_packet_len(packet) - 1] = 255;
+  assert(obuf + 1 == buffer + _dhcp_packet_len(packet));
   // Network send
   printf("Message LEN: %i\n",_dhcp_packet_len(packet));
 
