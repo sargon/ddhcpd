@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 
 #include "ddhcp.h"
 #include "dhcp.h"
@@ -311,6 +312,16 @@ void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  block_check_timeouts( blocks, config );
 }
 
+void add_fd(int efd, int fd, uint32_t events) {
+  struct epoll_event event = {};
+  event.data.fd = fd;
+  event.events = events;
+
+  int s = epoll_ctl(efd, EPOLL_CTL_ADD, fd, &event);
+  if (s == -1)
+    exit(1);  //("epoll_ctl");
+}
+
 int main(int argc, char **argv) {
   
   srand(time(NULL));
@@ -363,58 +374,88 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  char* buffer = (char*) malloc( sizeof(char) * 1500 );
+  uint8_t* buffer = (uint8_t*) malloc( sizeof(uint8_t) * 1500 );
   struct ddhcp_mcast_packet packet;
   struct dhcp_packet dhcp_packet;
   int ret = 0, bytes = 0;
   int client_id = 1;
+
+  int efd;
+  int maxevents = 64;
+  struct epoll_event *events;
+
+  efd = epoll_create1(0);
+  if (efd == -1) {
+    perror("epoll_create");
+    abort();
+  }
+
+  add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
+
+  /* Buffer where events are returned */
+  events = calloc(maxevents, sizeof(struct epoll_event));
+
   while(1) {
-    bytes = recv(config->mcast_socket, buffer, 1500,0);
-    if ( bytes > 0 ) {
+    int n;
+    n = epoll_wait(efd, events, maxevents, 500);
+
+    for( int i = 0; i < n; i++ ) {
+      if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
+        fprintf(stderr, "epoll error\n");
+        close(events[i].data.fd);
+      } else if (config->mcast_socket == events[i].data.fd) {
+        bytes = read(config->mcast_socket, buffer, 1500);
+        // TODO Error Handling
         ret = ntoh_mcast_packet(buffer,bytes, &packet);
         if ( ret == 0 ) {
-            switch(packet.command) {
-                case DHCPDISCOVER:
-                    
-                    ddhcp_block_process_claims(blocks,&packet,config);
-                    break;
-                case 2:
-                    ddhcp_block_process_inquire(blocks,&packet,config);
-                default:
-                    break;
-            }
-            free(packet.payload);
+          switch(packet.command) {
+            case DHCPDISCOVER:
+
+              ddhcp_block_process_claims(blocks,&packet,config);
+              break;
+            case 2:
+              ddhcp_block_process_inquire(blocks,&packet,config);
+            default:
+              break;
+          }
+          free(packet.payload);
         } else {
           printf("%i",ret);
         }
-    }
-    house_keeping( blocks, config );
-    bytes = recv(config->client_socket,buffer, 1500,0);
-    if ( bytes > 0 ) {
-      ret = ntoh_dhcp_packet(&dhcp_packet,buffer,bytes);
-      if ( ret == 0 ) {
-        int message_type = dhcp_packet_message_type(&dhcp_packet);
-        ddhcp_block *block;
-        switch( message_type ) {
-          case DHCPDISCOVER:
-            block = block_find_lease( blocks , config);
-            if ( block != NULL ) {
-              dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block, client_id);
-            } else {
-              printf("Warning: No block with free lease!\n");
-            }
-          break;
-          default:
-            printf("Warning: Unknown DHCP Message Type: %i\n",message_type);
-          break; 
+        house_keeping( blocks, config );
+      } else if ( config->client_socket == events[i].data.fd) {
+        bytes = read(config->client_socket,buffer, 1500);
+  
+        // TODO Error Handling
+        ret = ntoh_dhcp_packet(&dhcp_packet,buffer,bytes);
+        if ( ret == 0 ) {
+          int message_type = dhcp_packet_message_type(&dhcp_packet);
+          ddhcp_block *block;
+          switch( message_type ) {
+            case DHCPDISCOVER:
+              block = block_find_lease( blocks , config);
+              if ( block != NULL ) {
+                dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block, client_id);
+              } else {
+                printf("Warning: No block with free lease!\n");
+              }
+              break;
+            default:
+              printf("Warning: Unknown DHCP Message Type: %i\n",message_type);
+              break; 
+          }
+          if( dhcp_packet.options_len > 0 )
+            free(dhcp_packet.options);
         }
-        free(dhcp_packet.options);
       }
     }
-    usleep(1000);
+    house_keeping( blocks, config );
   }
   // TODO free dhcp_leases
+  free(events);
   free(blocks);
   free(buffer);
   return 0;
 }
+
