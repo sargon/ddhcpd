@@ -26,7 +26,7 @@ struct dhcp_packet {
       struct in_addr yiaddr; 
       struct in_addr siaddr; 
       struct in_addr giaddr; 
-      uint16_t chaddr;
+      int8_t chaddr[16];
       char sname[64];
       char file[128];
       int options_len;

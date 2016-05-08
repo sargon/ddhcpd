@@ -98,7 +98,7 @@ int ntoh_dhcp_packet(dhcp_packet *packet,uint8_t* buffer,int len) {
   memcpy(&packet->yiaddr, buffer+16,4);
   memcpy(&packet->siaddr, buffer+20,4); 
   memcpy(&packet->giaddr, buffer+24,4); 
-  memcpy(&tmp16,buffer+28,16); packet->chaddr = ntohs(tmp16);
+  memcpy(&packet->chaddr,buffer+28,16);
   memcpy(&packet->sname,buffer+44,64); 
   memcpy(&packet->file,buffer+108,128); 
 
@@ -210,7 +210,7 @@ int send_dhcp_packet(int socket, dhcp_packet *packet) {
   memcpy(buffer+16 ,&packet->yiaddr, 4);
   memcpy(buffer+20 ,&packet->siaddr, 4); 
   memcpy(buffer+24 ,&packet->giaddr, 4); 
-  tmp16 = htons(packet->chaddr); memcpy(buffer+28 ,&tmp16, 16); 
+  memcpy(buffer+28 ,&packet->chaddr, 16); 
   memcpy(buffer+44, &packet->sname, 64); 
   memcpy(buffer+108, &packet->file, 128); 
 
