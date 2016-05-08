@@ -84,6 +84,45 @@ int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lea
   packet->options[0].len = 1;
   packet->options[0].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 1 );
   packet->options[0].payload[0] = 2;
+
+  // subnet mask
+  packet->options[1].code = 1;
+  packet->options[1].len = 4;
+  packet->options[1].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // lease_block
+  packet->options[1].payload[0] = 255;
+  packet->options[1].payload[1] = 255;
+  packet->options[1].payload[2] = 255;
+  packet->options[1].payload[3] = 0;
+
+  // broadcast address
+  packet->options[2].code = 28;
+  packet->options[2].len = 4;
+  packet->options[2].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  packet->options[2].payload[0] = 10;
+  packet->options[2].payload[1] = 0;
+  packet->options[2].payload[2] = 0;
+  packet->options[2].payload[3] = 255;
+
+  // time offset
+  packet->options[3].code = 2;
+  packet->options[3].len = 4;
+  packet->options[3].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  packet->options[3].payload[0] = 0;
+  packet->options[3].payload[1] = 0;
+  packet->options[3].payload[2] = 0;
+  packet->options[3].payload[3] = 0;
+
+  // routers
+  packet->options[4].code = 3;
+  packet->options[4].len = 4;
+  packet->options[4].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  packet->options[4].payload[0] = 0;
+  packet->options[4].payload[1] = 0;
+  packet->options[4].payload[2] = 0;
+  packet->options[4].payload[3] = 0;
+
+  printf_dhcp(packet);
   
   send_dhcp_packet(socket, packet);
   free(packet);
