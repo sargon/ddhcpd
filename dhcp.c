@@ -63,33 +63,30 @@ int dhcp_discover(int socket, dhcp_packet *discover,struct dhcp_lease_block *lea
 
   //struct in_addr tmpaddr;
 
-  dhcp_packet packet;
-  packet.op    = 2;
-  packet.htype = discover->htype;
-  packet.hlen  = discover->hlen;
-  packet.hops  = discover->hops;
-  packet.xid   = discover->xid;
-  packet.secs  = 0;
-  packet.flags = discover->flags;
+  dhcp_packet* packet = (dhcp_packet*) calloc(sizeof(dhcp_packet),1);
+  packet->op    = 2;
+  packet->htype = discover->htype;
+  packet->hlen  = discover->hlen;
+  packet->hops  = discover->hops;
+  packet->xid   = discover->xid;
+  packet->secs  = 0;
+  packet->flags = discover->flags;
   // ciaddr
-  addr_add(&lease_block->subnet,&packet.yiaddr,lease_index);
+  addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
   // siaddr
-  // giaddr 
-  // chaddr  
+  memcpy(&packet->giaddr,&discover->giaddr,4);
+  memcpy(&packet->chaddr,&discover->chaddr,16);
   // sname
   // file
-  packet.options_len = 1;
-  packet.options = (dhcp_option*) calloc(sizeof(dhcp_option) , packet.options_len);
-  packet.options[0].code = 53;
-  packet.options[0].len = 1;
-  packet.options[0].payload = (char*)  malloc(sizeof(char) * 1 );
-  packet.options[0].payload[0] = 1;
+  packet->options_len = 5;
+  packet->options = (dhcp_option*) calloc(sizeof(dhcp_option) , packet->options_len);
+  packet->options[0].code = 53;
+  packet->options[0].len = 1;
+  packet->options[0].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 1 );
+  packet->options[0].payload[0] = 2;
   
-
-  // printf_dhcp(&packet);
-  printf("DHCP Socket: %i\n",socket);
-  // TODO Send the packet we build, not the discovered
-  send_dhcp_packet(socket, discover);
+  send_dhcp_packet(socket, packet);
+  free(packet);
   return 0;
 }
 
