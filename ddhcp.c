@@ -102,6 +102,7 @@ ddhcp_block* block_find_lease( ddhcp_block *blocks , ddhcp_config *config) {
         return block;
       }
     }
+    block++;
  }
  return NULL;
 }
