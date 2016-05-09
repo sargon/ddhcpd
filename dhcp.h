@@ -69,4 +69,9 @@ int dhcp_has_free(struct dhcp_lease_block *lease_block);
  * Enumerate the free leases in a block 
  */
 int dhcp_num_free(struct dhcp_lease_block *lease_block);
+
+/**
+ * HouseKeeping: Check for timed out leases.
+ */
+void dhcp_check_timeouts( dhcp_lease_block * lease_block );
 #endif

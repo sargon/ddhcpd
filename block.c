@@ -180,6 +180,9 @@ void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
       block->state = DDHCP_FREE;
       block->timeout = now + config->block_timeout;
     }
+    if ( block->state == DDHCP_OURS ) {
+      dhcp_check_timeouts( block->lease_block );
+    }
     block++;
   }
 }

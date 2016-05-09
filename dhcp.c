@@ -174,3 +174,15 @@ int dhcp_num_free( struct dhcp_lease_block *lease_block ) {
   }
   return num;
 }
+
+void dhcp_check_timeouts( dhcp_lease_block * lease_block ) {
+  dhcp_lease *lease = lease_block->addresses;
+  time_t now = time(NULL);
+  for ( unsigned int i = 0 ; i < lease_block->subnet_len ; i++ ) {
+    if ( lease->state != FREE && lease->lease_end < now ) {
+      printf("Free Lease\n");
+      lease->state = FREE;
+    }
+    lease++;
+  }
+}
