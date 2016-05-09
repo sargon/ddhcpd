@@ -55,7 +55,7 @@ ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
 int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
   // Handle blocks already in claiming prozess
   struct list_head *pos, *q;
-  int now = time(NULL);
+  time_t now = time(NULL);
   list_for_each_safe(pos,q,&(config->claiming_blocks).list) {
       ddhcp_block_list  *tmp = list_entry(pos, ddhcp_block_list, list);
       ddhcp_block *block = tmp->block;
@@ -134,7 +134,7 @@ int block_num_free_leases( ddhcp_block *block, ddhcp_config *config ) {
 void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
   int our_blocks = 0;
   ddhcp_block *block = blocks;
-  int now = time(NULL);
+  time_t now = time(NULL);
   int timeout_half = floor( (double) config->block_timeout / 2 );
   for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
@@ -173,7 +173,7 @@ void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
 
 void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
   ddhcp_block *block = blocks;
-  int now = time(NULL);
+  time_t now = time(NULL);
   for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE ) {
       printf("Freeing Block: %i\n",block->index);
