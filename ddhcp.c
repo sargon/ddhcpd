@@ -109,7 +109,7 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
 ddhcp_block* block_find_lease( ddhcp_block *blocks , ddhcp_config *config) {
   DEBUG("block_find_lease( blocks, config )");
   ddhcp_block *block = blocks;
-  for ( int i = 0 ; i < config->number_of_blocks; i++ ) {
+  for ( uint32_t i = 0 ; i < config->number_of_blocks; i++ ) {
     if ( block->state == DDHCP_OURS ) {
       if ( dhcp_has_free(block->lease_block) ) {
         DEBUG("block_find_lease(...) -> block %i has free leases",block->index);
@@ -163,8 +163,8 @@ int main(int argc, char **argv) {
   inet_aton("10.0.0.0",&config->prefix);
   config->prefix_len = 27;
   printf("Prefix: %s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
-  config->number_of_blocks = pow(2, floor((32 - config->prefix_len - log(config->block_size))));
-  config->spare_blocks_needed = config->number_of_blocks - 1;
+  config->number_of_blocks = pow(2, (32 - config->prefix_len - log(config->block_size)));
+  config->spare_blocks_needed = 1;
   config->block_timeout = 30;
   config->tentative_timeout = 15;
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);

@@ -213,7 +213,7 @@ void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
   DEBUG("block_check_timeouts(blocks, config)\n");
   ddhcp_block *block = blocks;
   time_t now = time(NULL);
-  for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
+  for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE ) {
       INFO("Block %i FREE throught timeout.\n",block->index);
       block_free(block);

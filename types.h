@@ -34,7 +34,7 @@ typedef struct ddhcp_block_list ddhcp_block_list;
 // This should be named state ...
 struct ddhcp_config {
   uint64_t node_id;
-  uint8_t number_of_blocks;
+  uint32_t number_of_blocks;
   uint16_t block_timeout;
   uint16_t tentative_timeout;
   uint8_t block_size;
