@@ -9,8 +9,9 @@
 #include "dhcp.h"
 #include "tools.h"
 
-int DHCP_OFFER_TIMEOUT = 600;
-int DHCP_LEASE_TIME    = 3600;
+// Free an offered lease after 12 seconds.
+uint16_t DHCP_OFFER_TIMEOUT = 12;
+uint16_t DHCP_LEASE_TIME    = 3600;
 
 void printf_lease(dhcp_lease *lease) {
   printf("DHCP LEASE [ state %i, xid %u, end %i ]\n",lease->state,lease->xid,lease->lease_end); 
