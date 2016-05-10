@@ -10,4 +10,4 @@ dhcp: dhcp.o netsock.o
 	gcc --std=c11 netsock.o dhcp.o -o dhcp
 
 clean:
-	rm ${OBJ}
+	rm ddhcp ${OBJ} *.d
