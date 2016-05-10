@@ -13,6 +13,7 @@
 #include "packet.h"
 #include "tools.h"
 #include "logger.h"
+#include "block.h"
 
 const int NET = 0;
 const int NET_LEN = 10;
@@ -287,8 +288,11 @@ int main(int argc, char **argv) {
   }
   // TODO free dhcp_leases
   free(events);
+  ddhcp_block *block = blocks;
+  for ( uint32_t i = 0; i < config->number_of_blocks; i++ ) 
+    block_free(block++);
   free(blocks);
   free(buffer);
+  free(config);
   return 0;
 }
-

@@ -11,6 +11,11 @@
 int block_own( ddhcp_block *block );
 
 /**
+ * Free a block and release dhcp_lease_block when allocated.
+ */
+void block_free( ddhcp_block *block );
+
+/**
  * Find a free block and return it or otherwise null.
  * A block is called free, when no other node claims it.
  */

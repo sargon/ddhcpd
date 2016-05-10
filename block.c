@@ -19,8 +19,12 @@ int block_own( ddhcp_block *block ) {
 }
 
 void block_free( ddhcp_block *block ) {
+  DEBUG("block_free(%i)\n",block->index);
   block->state = DDHCP_FREE;
-  dhcp_free_lease_block( &block->lease_block );
+  if ( block->lease_block ) {
+    DEBUG("Free DHCP leases for Block%i\n",block->index);
+    dhcp_free_lease_block( &block->lease_block );
+  }
 }
 
 ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
