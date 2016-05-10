@@ -34,7 +34,7 @@ int block_num_free_leases( ddhcp_block *block, ddhcp_config *config );
  *  Due to fragmented timeouts this packet may send 2 times more packets
  *  than optimal. TODO fixthis
  */
-void block_update_claims( ddhcp_block *blocks, ddhcp_config *config );
+void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *config );
 
 /**
  * Check the timeout of all blocks, and mark timed out once as FREE.

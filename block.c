@@ -17,6 +17,11 @@ int block_own( ddhcp_block *block ) {
   return  dhcp_new_lease_block(&(block->lease_block),(struct in_addr*) &addr,block->subnet_len);
 }
 
+void block_free( ddhcp_block *block ) {
+  block->state = DDHCP_FREE;
+  dhcp_free_lease_block( &block->lease_block );
+}
+
 ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
   ddhcp_block *block = blocks;
 
@@ -131,14 +136,21 @@ int block_num_free_leases( ddhcp_block *block, ddhcp_config *config ) {
   return free_leases;
 }
 
-void block_update_claims( ddhcp_block *blocks, ddhcp_config *config ) {
+void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *config ) {
   int our_blocks = 0;
   ddhcp_block *block = blocks;
   time_t now = time(NULL);
   int timeout_half = floor( (double) config->block_timeout / 2 );
+  int blocks_needed_tmp = blocks_needed;
+  // TODO Use a linked list instead of processing the block list twice. 
   for ( int i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
-      our_blocks++;
+      if ( blocks_needed_tmp < 0 && dhcp_num_free ( block->lease_block ) == config->block_size ) {
+         blocks_needed_tmp--;
+         block_free( block );
+      } else {
+        our_blocks++;
+      }
     }
     block++;
   }

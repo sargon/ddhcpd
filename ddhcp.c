@@ -76,7 +76,7 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
     if ( blocks[tmp->block_index].state == DDHCP_OURS ) {
       // Update Claims
       blocks[tmp->block_index].timeout = 0;
-      block_update_claims( blocks, config );
+      block_update_claims( blocks, 0, config );
     } else if ( blocks[tmp->block_index].state == DDHCP_CLAIMING ) {
       if ( packet->node_id > config->node_id ) {
         blocks[tmp->block_index].state = DDHCP_TENTATIVE;
@@ -120,8 +120,8 @@ void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  int spare_blocks = ceil( (double) spares / (double) config->block_size );
  int blocks_needed = config->spare_blocks_needed - spare_blocks;
  block_claim( blocks, blocks_needed, config );
- block_update_claims( blocks, config );
  block_check_timeouts( blocks, config );
+ block_update_claims( blocks, blocks_needed, config );
 }
 
 void add_fd(int efd, int fd, uint32_t events) {
