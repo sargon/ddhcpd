@@ -228,11 +228,14 @@ int main(int argc, char **argv) {
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
 
+  uint8_t need_house_keeping;
+  uint32_t loop_timeout = floor( config->tentative_timeout / 2 * 1000 );
   INFO("loop timeout: %i msecs\n", loop_timeout);
   // TODO wait loop_timeout before first time housekeeping
   while(1) {
     int n;
-    n = epoll_wait(efd, events, maxevents, 500);
+    n = epoll_wait(efd, events, maxevents, loop_timeout );
+    need_house_keeping = 1;
 
     for( int i = 0; i < n; i++ ) {
       if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
@@ -258,6 +261,7 @@ int main(int argc, char **argv) {
           printf("%i",ret);
         }
         house_keeping( blocks, config );
+        need_house_keeping = 0;
       } else if ( config->client_socket == events[i].data.fd) {
         bytes = read(config->client_socket,buffer, 1500);
   
@@ -273,6 +277,7 @@ int main(int argc, char **argv) {
                 dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block);
               } else {
                 INFO("we need to inquire new blocks\n");
+                need_house_keeping = 1;
               }
               break;
             default:
@@ -284,7 +289,8 @@ int main(int argc, char **argv) {
         }
       }
     }
-    house_keeping( blocks, config );
+    if( need_house_keeping ) 
+      house_keeping( blocks, config );
   }
   // TODO free dhcp_leases
   free(events);
