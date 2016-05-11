@@ -5,6 +5,7 @@
  */
 
 #include <stdint.h>
+#include "types.h"
 #include "dhcp_packet.h"
 
 enum dhcp_lease_state {
@@ -55,7 +56,7 @@ int dhcp_discover(int socket,struct dhcp_packet *discover,struct dhcp_lease_bloc
  * DHCP Request
  * Performs on base of de
  */
-int dhcp_request(struct dhcp_lease_block** lease_block,uint8_t* chaddr, uint32_t offer);
+int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, ddhcp_config *config );
 
 
 /**

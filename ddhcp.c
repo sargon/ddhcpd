@@ -280,6 +280,9 @@ int main(int argc, char **argv) {
                 need_house_keeping = 1;
               }
               break;
+            case DHCPREQUEST:
+               dhcp_request( config->client_socket, &dhcp_packet, blocks, config);
+            break;
             default:
               WARNING("Unknown DHCP message of type: %i\n",message_type);
               break; 
