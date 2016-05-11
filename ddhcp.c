@@ -103,25 +103,6 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
   }
 }
 
-/**
- * Either find and return a block with free leases or otherwise return NULL.
- */
-ddhcp_block* block_find_lease( ddhcp_block *blocks , ddhcp_config *config) {
-  DEBUG("block_find_lease( blocks, config )");
-  ddhcp_block *block = blocks;
-  for ( uint32_t i = 0 ; i < config->number_of_blocks; i++ ) {
-    if ( block->state == DDHCP_OURS ) {
-      if ( dhcp_has_free(block->lease_block) ) {
-        DEBUG("block_find_lease(...) -> block %i has free leases",block->index);
-        return block;
-      }
-    }
-    block++;
- }
- DEBUG("block_find_lease(...) -> no free leases found");
- return NULL;
-}
-
 /** 
  * House Keeping
  * 
@@ -248,7 +229,6 @@ int main(int argc, char **argv) {
         if ( ret == 0 ) {
           switch(packet.command) {
             case DHCPDISCOVER:
-
               ddhcp_block_process_claims(blocks,&packet,config);
               break;
             case 2:
@@ -269,13 +249,10 @@ int main(int argc, char **argv) {
         ret = ntoh_dhcp_packet(&dhcp_packet,buffer,bytes);
         if ( ret == 0 ) {
           int message_type = dhcp_packet_message_type(&dhcp_packet);
-          ddhcp_block *block;
           switch( message_type ) {
             case DHCPDISCOVER:
-              block = block_find_lease( blocks , config);
-              if ( block != NULL ) {
-                dhcp_discover(config->client_socket,&dhcp_packet,block->lease_block);
-              } else {
+              ret = dhcp_discover( config->client_socket, &dhcp_packet, blocks, config);
+              if ( ret == 1 ) {
                 INFO("we need to inquire new blocks\n");
                 need_house_keeping = 1;
               }
