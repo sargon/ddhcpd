@@ -257,6 +257,8 @@ void dhcp_check_timeouts( dhcp_lease_block * lease_block ) {
   for ( unsigned int i = 0 ; i < lease_block->subnet_len ; i++ ) {
     if ( lease->state != FREE && lease->lease_end < now ) {
       printf("Free Lease\n");
+      memset(lease->chaddr,0,16);
+      lease->xid   = 0;
       lease->state = FREE;
     }
     lease++;
