@@ -1,11 +1,5 @@
-/**
- * DHCP Structures
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include <string.h>
+
 #include "dhcp.h"
 #include "tools.h"
 #include "logger.h"
@@ -58,7 +52,7 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
     if ( block->state == DDHCP_OURS ) {
       int free_leases = dhcp_num_free( block->lease_block);
       if ( free_leases > 0 ) {
-        DEBUG("dhcp_discover(...) -> block %i has free leases\n",block->index);
+        DEBUG("dhcp_discover(...) -> block %i has %i free leases\n", block->index, free_leases);
         lease_block = block->lease_block;
         if ( free_leases < lease_ratio ) {
           DEBUG("dhcp_discover(...) -> block %i has best lease ratio until now\n",block->index);

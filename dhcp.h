@@ -4,31 +4,8 @@
  * DHCP Structures
  */
 
-#include <stdint.h>
 #include "types.h"
 #include "dhcp_packet.h"
-
-enum dhcp_lease_state {
-  FREE,
-  OFFERED,
-  LEASED,
-};
-
-// DHCP lease 
-struct dhcp_lease {
-  uint8_t chaddr[16];
-  enum dhcp_lease_state state;
-  uint32_t xid;
-  uint32_t lease_end;
-};
-typedef struct dhcp_lease dhcp_lease;
-
-struct dhcp_lease_block {
-  struct in_addr subnet;
-  uint32_t subnet_len;  
-  struct dhcp_lease* addresses;
-};
-typedef struct dhcp_lease_block dhcp_lease_block;
 
 /**
  * dhcp_new_lease_block

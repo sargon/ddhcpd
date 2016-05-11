@@ -1,7 +1,12 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#include <arpa/inet.h>
+#include <time.h>
+
 #include "list.h"
+
+// block structures
 
 enum ddhcp_block_state {
   DDHCP_FREE,
@@ -31,7 +36,32 @@ struct ddhcp_block_list {
 };
 typedef struct ddhcp_block_list ddhcp_block_list;
 
-// This should be named state ...
+// DHCP structures
+
+enum dhcp_lease_state {
+  FREE,
+  OFFERED,
+  LEASED,
+};
+
+struct dhcp_lease {
+  uint8_t chaddr[16];
+  enum dhcp_lease_state state;
+  uint32_t xid;
+  uint32_t lease_end;
+};
+typedef struct dhcp_lease dhcp_lease;
+
+struct dhcp_lease_block {
+  struct in_addr subnet;
+  uint32_t subnet_len;  
+  struct dhcp_lease* addresses;
+};
+typedef struct dhcp_lease_block dhcp_lease_block;
+
+// state
+
+// TODO Rename to state
 struct ddhcp_config {
   uint64_t node_id;
   uint32_t number_of_blocks;
