@@ -40,6 +40,33 @@ void dhcp_free_lease_block(struct dhcp_lease_block** lease_block) {
   free(*lease_block);
 }
 
+dhcp_packet* build_initial_packet( dhcp_packet *from_client ) {
+  DEBUG("build_initial_packet( from_client, packet )\n");
+
+  dhcp_packet *packet = (dhcp_packet*) calloc(sizeof(dhcp_packet),1);
+  if ( packet == NULL ) {
+    DEBUG("build_initial_packet(...) -> memory allocation failure\n");
+    return NULL;
+  }
+  packet->op    = 2;
+  packet->htype = from_client->htype;
+  packet->hlen  = from_client->hlen;
+  packet->hops  = from_client->hops;
+  packet->xid   = from_client->xid;
+  packet->secs  = 0;
+  packet->flags = from_client->flags;
+  memcpy(&packet->ciaddr,&from_client->ciaddr,4);
+  // yiaddr
+  // siaddr
+  memcpy(&packet->giaddr,&from_client->giaddr,4);
+  memcpy(&packet->chaddr,&from_client->chaddr,16);
+  // sname
+  // file
+  // options
+
+  return packet;
+}
+
 int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_config *config ) {
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n",socket);
   time_t now = time(NULL);
@@ -69,30 +96,22 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
 
   if ( lease == NULL ) {
     DEBUG("dhcp_discover(...) -> no free leases found");
-    return 1;
+    return 2;
   } 
+
+  dhcp_packet* packet = build_initial_packet(discover);
+  if ( ! packet ) { 
+    DEBUG("dhcp_discover(...) -> memory allocation failure");
+    return 1;
+  }
 
   // Mark lease as offered and register client
   memcpy(&lease->chaddr,&discover->chaddr,16);
   lease->xid = discover->xid;
   lease->state = OFFERED;
   lease->lease_end = now + DHCP_OFFER_TIMEOUT;
-
-  dhcp_packet* packet = (dhcp_packet*) calloc(sizeof(dhcp_packet),1);
-  packet->op    = 2;
-  packet->htype = discover->htype;
-  packet->hlen  = discover->hlen;
-  packet->hops  = discover->hops;
-  packet->xid   = discover->xid;
-  packet->secs  = 0;
-  packet->flags = discover->flags;
-  memcpy(&packet->ciaddr,&discover->ciaddr,4);
+ 
   addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
-  // siaddr
-  memcpy(&packet->giaddr,&discover->giaddr,4);
-  memcpy(&packet->chaddr,&discover->chaddr,16);
-  // sname
-  // file
   packet->options_len = fill_options( discover->options, discover->options_len, &config->options , 2, &packet->options) ;
   
   // TODO Error handling
@@ -107,6 +126,7 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
 int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, ddhcp_config *config ){
   DEBUG("dhcp_request( %i, dhcp_packet, blocks, config)\n",socket);
   // search the lease we may have offered
+  time_t now = time(NULL);
   ddhcp_block *block = blocks;
   dhcp_lease_block *lease_block = NULL;
   dhcp_lease *lease = NULL ;
@@ -136,21 +156,20 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
     return 1;
   } 
 
-  dhcp_packet* packet = (dhcp_packet*) calloc(sizeof(dhcp_packet),1);
-  packet->op    = 2;
-  packet->htype = request->htype;
-  packet->hlen  = request->hlen;
-  packet->hops  = request->hops;
-  packet->xid   = request->xid;
-  packet->secs  = 0;
-  packet->flags = request->flags;
-  memcpy(&packet->ciaddr,&request->ciaddr,4);
+  dhcp_packet* packet = build_initial_packet(request);
+  if ( ! packet ) { 
+    DEBUG("dhcp_request(...) -> memory allocation failure\n");
+    return 1;
+  }
+
+  // Mark lease as leased and register client
+  memcpy(&lease->chaddr,&request->chaddr,16);
+  lease->xid = request->xid;
+  lease->state = LEASED;
+  lease->lease_end = now + DHCP_LEASE_TIME;
+
+  
   addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
-  // siaddr
-  memcpy(&packet->giaddr,&request->giaddr,4);
-  memcpy(&packet->chaddr,&request->chaddr,16);
-  // sname
-  // file
 
   packet->options_len = fill_options( request->options, request->options_len, &(config->options) , 2, &packet->options) ;
 
