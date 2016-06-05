@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include <math.h>
 
 #include "dhcp.h"
@@ -10,12 +7,7 @@
 int block_own( ddhcp_block *block ) {
   block->state = DDHCP_OURS;
   // TODO Have a preallocated list of dhcp_lease_blocks?
-  uint32_t addr;
-  memcpy(&addr,&block->subnet,sizeof(struct in_addr));
-  addr = ntohl(addr);
-  addr += block->index * block->subnet_len;
-  addr = htonl(addr);
-  return  dhcp_new_lease_block(&(block->lease_block),(struct in_addr*) &addr,block->subnet_len);
+  return  dhcp_new_lease_block(&(block->lease_block),&(block->subnet),block->subnet_len);
 }
 
 void block_free( ddhcp_block *block ) {

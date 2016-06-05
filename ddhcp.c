@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
   inet_aton("10.0.0.0",&config->prefix);
   config->prefix_len = 27;
   printf("Prefix: %s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
-  config->number_of_blocks = pow(2, (32 - config->prefix_len - log(config->block_size)));
+  config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
   config->spare_blocks_needed = 1;
   config->block_timeout = 30;
   config->tentative_timeout = 15;
