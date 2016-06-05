@@ -65,6 +65,13 @@ struct dhcp_option {
     uint8_t *payload;
 };
 typedef struct dhcp_option dhcp_option;
+
+struct dhcp_option_list {
+  struct dhcp_option *option;
+  struct list_head list;
+};
+typedef struct dhcp_option_list dhcp_option_list;
+
 enum dhcp_option_code {
   // RFC 2132
   DHCP_CODE_PAD = 0,
@@ -97,6 +104,9 @@ struct ddhcp_config {
   time_t next_wakeup;
   unsigned int claiming_blocks_amount;
   ddhcp_block_list claiming_blocks;
+
+  // DHCP Options
+  dhcp_option_list options;
 
   // Network
   int mcast_socket;
