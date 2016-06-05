@@ -35,6 +35,8 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
  */
 int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block *blocks, ddhcp_config *config );
 
+int dhcp_nack( int socket, dhcp_packet *from_client );
+
 /**
  * DHCP Lease Available
  * Determan iff there is a free lease in lease_block.

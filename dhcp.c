@@ -153,7 +153,9 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
 
   if ( !lease ) {
     DEBUG("dhcp_request(...): Requested lease not found\n");
-    return 1;
+    // Send DHCP_NACK
+    dhcp_nack ( socket, request );
+    return 2;
   } 
 
   dhcp_packet* packet = build_initial_packet(request);
@@ -178,8 +180,25 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   // TODO correct type conversion, currently solution is simply wrong
   set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) { 0,0,0,DHCP_LEASE_TIME });
 
+  send_dhcp_packet(socket, packet);
+  free(packet);
 
+  return 0;
+}
 
+int dhcp_nack( int socket, dhcp_packet *from_client ) {
+  dhcp_packet* packet = build_initial_packet(from_client);
+  if ( ! packet ) { 
+    DEBUG("dhcp_discover(...) -> memory allocation failure\n");
+    return 1;
+  }
+
+  packet->options_len = 1;
+  packet->options = (dhcp_option*) calloc( sizeof(dhcp_option), 1);
+  // TODO Error handling
+
+  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) { DHCPNAK });
+  
   send_dhcp_packet(socket, packet);
   free(packet);
 
