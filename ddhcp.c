@@ -1,19 +1,21 @@
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include <arpa/inet.h>
+#include <assert.h>
+#include <getopt.h>
+#include <math.h>
+#include <netinet/in.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
+#include "block.h"
 #include "ddhcp.h"
 #include "dhcp.h"
 #include "dhcp_packet.h"
+#include "logger.h"
 #include "netsock.h"
 #include "packet.h"
 #include "tools.h"
-#include "logger.h"
-#include "block.h"
+#include "dhcp_options.h"
 
 const int NET = 0;
 const int NET_LEN = 10;
@@ -121,6 +123,72 @@ void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  block_update_claims( blocks, blocks_needed, config );
 }
 
+/**
+ * Initialize DHCP options
+ */
+void init_dhcp_options( ddhcp_config *config ){
+  dhcp_option* option;
+  // subnet mask
+  option = (dhcp_option*) calloc(sizeof(dhcp_option),1);
+  option->code = DHCP_CODE_SUBNET_MASK;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // TODO Check interface for address
+  option->payload[0] = 255;
+  option->payload[1] = 255;
+  option->payload[2] = 255;
+  option->payload[3] = 0;
+
+  set_option_in_store( &config->options, option );
+
+  option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  option->code = DHCP_CODE_TIME_OFFSET;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  option->payload[0] = 0;
+  option->payload[1] = 0;
+  option->payload[2] = 0;
+  option->payload[3] = 0;
+
+  set_option_in_store( &config->options, option );
+
+  option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  option->code = DHCP_CODE_ROUTER;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // TODO Configure this throught socket
+  option->payload[0] = 10;
+  option->payload[1] = 0;
+  option->payload[2] = 0;
+  option->payload[3] = 1;
+
+  set_option_in_store( &config->options, option );
+
+  option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  option->code = DHCP_CODE_BROADCAST_ADDRESS;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // TODO Check interface for address
+  option->payload[0] = 10;
+  option->payload[1] = 0;
+  option->payload[2] = 0;
+  option->payload[3] = 255;
+
+  set_option_in_store( &config->options, option );
+
+  option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  option->code = DHCP_CODE_SERVER_IDENTIFIER;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // TODO Check interface for address
+  option->payload[0] = 10;
+  option->payload[1] = 0;
+  option->payload[2] = 0;
+  option->payload[3] = 1;
+
+  set_option_in_store( &config->options, option );
+}
+
 void add_fd(int efd, int fd, uint32_t events) {
   struct epoll_event event = {};
   event.data.fd = fd;
@@ -157,6 +225,7 @@ int main(int argc, char **argv) {
 
   // DHCP
   config->dhcp_port = 67;
+  INIT_LIST_HEAD(&(config->options).list);
 
   INIT_LIST_HEAD(&(config->claiming_blocks).list);
 
@@ -181,6 +250,7 @@ int main(int argc, char **argv) {
 
   // init block stucture
   ddhcp_block_init(&blocks,config);
+  init_dhcp_options( config );
 
   // init network and event loops
   // TODO

@@ -3,6 +3,7 @@
 #include "dhcp.h"
 #include "tools.h"
 #include "logger.h"
+#include "dhcp_options.h"
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
@@ -92,49 +93,11 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
   memcpy(&packet->chaddr,&discover->chaddr,16);
   // sname
   // file
-  packet->options_len = 5;
-  packet->options = (dhcp_option*) calloc(sizeof(dhcp_option) , packet->options_len);
-  packet->options[0].code = 53;
-  packet->options[0].len = 1;
-  packet->options[0].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 1 );
-  packet->options[0].payload[0] = DHCPOFFER;
-
-  // subnet mask
-  packet->options[1].code = 1;
-  packet->options[1].len = 4;
-  packet->options[1].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  // lease_block
-  packet->options[1].payload[0] = 255;
-  packet->options[1].payload[1] = 255;
-  packet->options[1].payload[2] = 255;
-  packet->options[1].payload[3] = 0;
-
-  // broadcast address
-  packet->options[2].code = 28;
-  packet->options[2].len = 4;
-  packet->options[2].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[2].payload[0] = 10;
-  packet->options[2].payload[1] = 0;
-  packet->options[2].payload[2] = 0;
-  packet->options[2].payload[3] = 255;
-
-  // time offset
-  packet->options[3].code = 2;
-  packet->options[3].len = 4;
-  packet->options[3].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[3].payload[0] = 0;
-  packet->options[3].payload[1] = 0;
-  packet->options[3].payload[2] = 0;
-  packet->options[3].payload[3] = 0;
-
-  // routers
-  packet->options[4].code = 3;
-  packet->options[4].len = 4;
-  packet->options[4].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[4].payload[0] = 0;
-  packet->options[4].payload[1] = 0;
-  packet->options[4].payload[2] = 0;
-  packet->options[4].payload[3] = 0;
+  packet->options_len = fill_options( discover->options, discover->options_len, &config->options , 2, &packet->options) ;
+  
+  // TODO Error handling
+  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) { DHCPOFFER } );
+  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t[]) { DHCP_LEASE_TIME });
 
   send_dhcp_packet(socket, packet);
   free(packet);
@@ -188,49 +151,15 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   memcpy(&packet->chaddr,&request->chaddr,16);
   // sname
   // file
-  packet->options_len = 5;
-  packet->options = (dhcp_option*) calloc(sizeof(dhcp_option) , packet->options_len);
-  packet->options[0].code = 53;
-  packet->options[0].len = 1;
-  packet->options[0].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 1 );
-  packet->options[0].payload[0] = DHCPACK;
 
-  // subnet mask
-  packet->options[1].code = 1;
-  packet->options[1].len = 4;
-  packet->options[1].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  // lease_block
-  packet->options[1].payload[0] = 255;
-  packet->options[1].payload[1] = 255;
-  packet->options[1].payload[2] = 255;
-  packet->options[1].payload[3] = 0;
+  packet->options_len = fill_options( request->options, request->options_len, &(config->options) , 2, &packet->options) ;
 
-  // broadcast address
-  packet->options[2].code = 28;
-  packet->options[2].len = 4;
-  packet->options[2].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[2].payload[0] = 10;
-  packet->options[2].payload[1] = 0;
-  packet->options[2].payload[2] = 0;
-  packet->options[2].payload[3] = 255;
+  // TODO Error handling
+  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) { DHCPACK });
+  // TODO correct type conversion, currently solution is simply wrong
+  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) { 0,0,0,DHCP_LEASE_TIME });
 
-  // time offset
-  packet->options[3].code = 2;
-  packet->options[3].len = 4;
-  packet->options[3].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[3].payload[0] = 0;
-  packet->options[3].payload[1] = 0;
-  packet->options[3].payload[2] = 0;
-  packet->options[3].payload[3] = 0;
 
-  // routers
-  packet->options[4].code = 3;
-  packet->options[4].len = 4;
-  packet->options[4].payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  packet->options[4].payload[0] = 0;
-  packet->options[4].payload[1] = 0;
-  packet->options[4].payload[2] = 0;
-  packet->options[4].payload[3] = 0;
 
   send_dhcp_packet(socket, packet);
   free(packet);
