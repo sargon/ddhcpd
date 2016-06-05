@@ -205,13 +205,12 @@ int main(int argc, char **argv) {
 
   ddhcp_config *config = (ddhcp_config*) malloc( sizeof(ddhcp_config) );
   config->node_id = 0xffffffffffffffff;
-  config->block_size = 4;
+  config->block_size = 32;
   config->spare_blocks_needed = 1;
   config->claiming_blocks_amount = 0;
 
-  inet_aton("10.0.0.0",&config->prefix);
-  config->prefix_len = 27;
-  printf("Prefix: %s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
+  inet_aton("10.116.128.0",&config->prefix);
+  config->prefix_len = 18;
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
   config->spare_blocks_needed = 1;
   config->block_timeout = 30;
