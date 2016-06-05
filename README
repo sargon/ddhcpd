@@ -1,0 +1,43 @@
+A Distributed DHCP Daemon
+=========================
+
+    ./ddhcp [-i <server_interface>]
+
+Testing
+-------
+
+The network-test script can create a setup of virtual interfaces
+which is composed of a <number> of server and client interface pairs.
+Which are called srvX and cltX in the main network namespace and server0
+and client0 in the ''daemon'' network namespace. All srvX are bridged
+via br-srv, so the daemons can talk to each other.
+
+Inside the daemon network ns the client0 interface has the address 10.0.0.1/20
+, a ipv4 address is needed on this interface so the dhcp part of ddhcp is able
+to bind on this interface. There no need for an ipv4 address on the server0 
+interface because, we use ipv6 multicast and link local addresses for d2d communication.
+
+You can setup a basic ddhcp network testing enviroment by calling
+
+    # ./network-test net-init <number>
+
+to create a virtual network for <number> of ddhcp instances. You
+will need to have priviledges to create network namespaces. Short
+use sudo and check the network-test script upfront.
+
+To start the (n-1)-th instance of ddhcp in your test environment
+use for example:
+
+    # ./network-test srv-start <n> ./ddhcp 
+
+After starting multiple instances you can make dhcp request
+against specific instances of ddhcp by starting dhcp clients pointed
+to the cltX interfaces. For example by 
+
+    # dhclient -sf /dev/null -d -v clt0
+
+for the first ddhcp instance.
+
+To deconfigure the setup you can call.
+
+    # ./network-test net-stop
