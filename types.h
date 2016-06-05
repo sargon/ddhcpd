@@ -59,6 +59,20 @@ struct dhcp_lease_block {
 };
 typedef struct dhcp_lease_block dhcp_lease_block;
 
+struct dhcp_option {
+    uint8_t code;
+    uint8_t len;
+    uint8_t *payload;
+};
+typedef struct dhcp_option dhcp_option;
+enum dhcp_option_code {
+  // RFC 2132
+  DHCP_CODE_PAD = 0,
+  DHCP_CODE_MESSAGE_TYPE = 53,
+  DHCP_CODE_PARAMETER_REQUEST_LIST = 55,
+  DHCP_CODE_END = 255,
+};
+
 // state
 
 // TODO Rename to state

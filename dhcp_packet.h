@@ -5,12 +5,7 @@
 #include <string.h>
 #include <netinet/in.h>
 
-struct dhcp_option {
-    uint8_t code;
-    uint8_t len;
-    uint8_t *payload;
-};
-typedef struct dhcp_option dhcp_option;
+#include "types.h"
 
 struct dhcp_packet {
       uint8_t op;
@@ -27,7 +22,7 @@ struct dhcp_packet {
       int8_t chaddr[16];
       char sname[64];
       char file[128];
-      int options_len;
+      uint8_t options_len;
       dhcp_option *options;
 };
 typedef struct dhcp_packet dhcp_packet;
@@ -43,13 +38,6 @@ enum dhcp_message_type {
     DHCPINFORM    = 8,
 };
 
-enum dhcp_option_code {
-  // RFC 2132
-  DHCP_CODE_PAD = 0,
-  DHCP_CODE_MESSAGE_TYPE = 53,
-  DHCP_CODE_PARAMETER_REQUEST_LIST = 55,
-  DHCP_CODE_END = 255,
-};
 
 /** 
  * Print an representation of a dhcp_packet to stdout.
