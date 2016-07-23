@@ -115,11 +115,11 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
  */
 void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  DEBUG("house_keeping( blocks, config )\n");
- int spares = block_num_free_leases( blocks, config );  
+ block_check_timeouts( blocks, config );
+ int spares = block_num_free_leases( blocks, config );
  int spare_blocks = ceil( (double) spares / (double) config->block_size );
  int blocks_needed = config->spare_blocks_needed - spare_blocks;
  block_claim( blocks, blocks_needed, config );
- block_check_timeouts( blocks, config );
  block_update_claims( blocks, blocks_needed, config );
 }
 
