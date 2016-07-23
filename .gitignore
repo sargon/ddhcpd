@@ -1,4 +1,6 @@
 *.o
 *.d
-\.*.sw[po]
+\.*.sw[pno]
 ddhcp
+*.orig
+
