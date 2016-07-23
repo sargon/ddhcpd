@@ -27,3 +27,6 @@ dhcp: dhcp.o netsock.o
 
 clean:
 	rm -f ddhcp ${OBJ} *.d || true
+
+style:
+	astyle --mode=c --options=none -s2 -f -j *.c *.h
