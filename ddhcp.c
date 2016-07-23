@@ -241,6 +241,7 @@ int main(int argc, char **argv) {
 
     case 'c':
       interface_client = optarg;
+      break;
 
     default:
       printf("ARGC: %i\n",argc);
