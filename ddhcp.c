@@ -190,7 +190,7 @@ void init_dhcp_options( ddhcp_config *config ){
 }
 
 void add_fd(int efd, int fd, uint32_t events) {
-  struct epoll_event event = {};
+  struct epoll_event event = { 0 };
   event.data.fd = fd;
   event.events = events;
 
