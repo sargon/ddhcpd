@@ -19,14 +19,13 @@ LFLAGS+= \
     -fsanitize=address \
     -lm
 
-all: ${OBJ}
+all: ddhcp
+
+ddhcp: ${OBJ}
 	gcc ${OBJ} ${CFLAGS} -o ddhcp ${LFLAGS}
 
-dhcp: dhcp.o netsock.o
-	gcc ${CFLAGS} netsock.o dhcp.o -o dhcp ${LFLAGS}
-
 clean:
-	rm -f ddhcp ${OBJ} *.d || true
+	rm -f ddhcp ${OBJ} *.d *.orig || true
 
 style:
 	astyle --mode=c --options=none -s2 -f -j *.c *.h
