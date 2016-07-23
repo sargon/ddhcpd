@@ -232,7 +232,8 @@ int main(int argc, char **argv) {
   char* interface_client = "client0";
 
   int c;
-  while (( c = getopt(argc,argv,"i:")) != -1 ) {
+
+  while (( c = getopt(argc,argv,"c:i:")) != -1 ) {
     switch(c) {
       case 'i': 
         interface = optarg;
