@@ -9,7 +9,7 @@
 dhcp_option* find_option( dhcp_option* options, uint8_t len, uint8_t code) {
   dhcp_option *option = options;
 
-  for ( ; option < options + sizeof(dhcp_option) * len ; option++ ) {
+  for ( ; option < options + len ; option++ ) {
     if ( option->code == code ) {
       return option;
     }
