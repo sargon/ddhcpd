@@ -53,9 +53,9 @@ struct dhcp_lease {
 typedef struct dhcp_lease dhcp_lease;
 
 struct dhcp_option {
-    uint8_t code;
-    uint8_t len;
-    uint8_t *payload;
+  uint8_t code;
+  uint8_t len;
+  uint8_t *payload;
 };
 typedef struct dhcp_option dhcp_option;
 

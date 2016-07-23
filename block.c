@@ -26,6 +26,7 @@ void block_free( ddhcp_block *block ) {
   block->state = DDHCP_FREE;
 
   if ( block->addresses ) {
+    DEBUG("Free DHCP leases for Block%i\n",block->index);
     free(block->addresses);
   }
 }
@@ -37,6 +38,7 @@ ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
   ddhcp_block_list free_blocks, *tmp;
   INIT_LIST_HEAD(&free_blocks.list);
   uint32_t num_free_blocks = 0;
+
   for( uint32_t i = 0 ; i < config->number_of_blocks; i++ ) {
     if( block->state == DDHCP_FREE ) {
       tmp = (ddhcp_block_list*) malloc( sizeof ( ddhcp_block_list ) );
@@ -44,24 +46,32 @@ ddhcp_block* block_find_free(ddhcp_block *blocks, ddhcp_config *config) {
       list_add_tail((&tmp->list), &(free_blocks.list) );
       num_free_blocks++;
     }
+
     block++;
   }
+
   DEBUG("block_find_free(...): found %i free blocks\n",num_free_blocks);
 
   ddhcp_block *random_free = NULL;
   int r = -1;
+
   if ( num_free_blocks > 0 ) {
     r = rand() % num_free_blocks;
   }
 
   struct list_head *pos, *q;
-  list_for_each_safe(pos, q, &free_blocks.list){
-     tmp = list_entry(pos, ddhcp_block_list, list);
-     block = tmp->block;
-     list_del(pos);
-     free(tmp);
-     if(r == 0) random_free = block;
-     r--;
+
+  list_for_each_safe(pos, q, &free_blocks.list) {
+    tmp = list_entry(pos, ddhcp_block_list, list);
+    block = tmp->block;
+    list_del(pos);
+    free(tmp);
+
+    if(r == 0) {
+      random_free = block;
+    }
+
+    r--;
   }
 
   DEBUG("block_find_free(...)-> block %i\n",random_free->index);
@@ -73,31 +83,34 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
   // Handle blocks already in claiming prozess
   struct list_head *pos, *q;
   time_t now = time(NULL);
-  
+
   list_for_each_safe(pos,q,&(config->claiming_blocks).list) {
-      ddhcp_block_list *tmp = list_entry(pos, ddhcp_block_list, list);
-      ddhcp_block *block = tmp->block;
-      if ( block->claiming_counts == 3 ) {
-          block_own(block);
-          INFO("Block %i claimed after 3 claims.\n",block->index);
-          num_blocks--;
-          list_del(pos);
-          config->claiming_blocks_amount--;
-          free(tmp);
-      } else if ( block->state != DDHCP_CLAIMING ) {
-          DEBUG("block_claim(...): block %i is no longer marked as claiming\n",block->index);
-          list_del(pos);
-          config->claiming_blocks_amount--;
-          free(tmp);
-      }
+    ddhcp_block_list *tmp = list_entry(pos, ddhcp_block_list, list);
+    ddhcp_block *block = tmp->block;
+
+    if ( block->claiming_counts == 3 ) {
+      block_own(block);
+      INFO("Block %i claimed after 3 claims.\n",block->index);
+      num_blocks--;
+      list_del(pos);
+      config->claiming_blocks_amount--;
+      free(tmp);
+    } else if ( block->state != DDHCP_CLAIMING ) {
+      DEBUG("block_claim(...): block %i is no longer marked as claiming\n",block->index);
+      list_del(pos);
+      config->claiming_blocks_amount--;
+      free(tmp);
+    }
   }
 
   // Do we still need more, then lets find some.
   if ( (unsigned int) num_blocks > config->claiming_blocks_amount ) {
     // find num_blocks - config->claiming_blocks_amount free blocks
     int needed_blocks = num_blocks - config->claiming_blocks_amount;
+
     for ( int i = 0 ; i < needed_blocks ; i++ ) {
       ddhcp_block *block = block_find_free( blocks, config );
+
       if ( block != NULL ) {
         ddhcp_block_list* list = (ddhcp_block_list*) malloc( sizeof ( ddhcp_block_list ) );
         block->state = DDHCP_CLAIMING;
@@ -139,9 +152,11 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
     packet.payload[index].reserved = 0;
     index++;
   }
+
   if( packet.count > 0 ) {
     send_packet_mcast( &packet , config->mcast_socket, config->mcast_scope_id );
   }
+
   free(packet.payload);
   return 0;
 }
@@ -191,15 +206,25 @@ void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *
   }
 
   struct ddhcp_mcast_packet packet;
+
   packet.node_id = config->node_id;
+
   memcpy(&packet.prefix,&config->prefix,sizeof(struct in_addr));
+
   packet.prefix_len = config->prefix_len;
+
   packet.blocksize = config->block_size;
+
   packet.command = 1;
+
   packet.count = our_blocks;
+
   packet.payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * our_blocks);
+
   int index = 0;
+
   block = blocks;
+
   for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
       packet.payload[index].block_index = block->index;
@@ -209,11 +234,14 @@ void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *
       block->timeout = now + config->block_timeout;
       DEBUG("block_update_claims(...): update claim for block %i\n",block->index);
     }
+
     block++;
   }
+
   if( packet.count > 0 ) {
     send_packet_mcast( &packet , config->mcast_socket, config->mcast_scope_id );
   }
+
   free(packet.payload);
 }
 

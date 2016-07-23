@@ -25,6 +25,7 @@ uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_co
 
   uint32_t block_number = (ntohl(*(uint32_t*) address) - ntohl((uint32_t) config->prefix.s_addr)) / config->block_size;
   uint32_t lease_number = (ntohl(*(uint32_t*) address) - ntohl((uint32_t) config->prefix.s_addr)) % config->block_size;
+
   if ( block_number < config->number_of_blocks) {
     if ( blocks[block_number].state == DDHCP_OURS ) {
       DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n",block_number,lease_number);
@@ -35,6 +36,7 @@ uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_co
       return 1;
     }
   }
+
   DEBUG("find_lease_from_address(...) -> %i address out of network\n",block_number);
   return 1;
 }
@@ -43,10 +45,12 @@ dhcp_packet* build_initial_packet( dhcp_packet *from_client ) {
   DEBUG("build_initial_packet( from_client, packet )\n");
 
   dhcp_packet *packet = (dhcp_packet*) calloc(sizeof(dhcp_packet),1);
+
   if ( packet == NULL ) {
     DEBUG("build_initial_packet(...) -> memory allocation failure\n");
     return NULL;
   }
+
   packet->op    = 2;
   packet->htype = from_client->htype;
   packet->hlen  = from_client->hlen;
@@ -73,7 +77,7 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
   dhcp_lease *lease = NULL;
   ddhcp_block *lease_block = NULL;
   int lease_index = 0;
-  int lease_ratio = config->block_size + 1; 
+  int lease_ratio = config->block_size + 1;
 
   for ( uint32_t i = 0; i < config->number_of_blocks; i++) {
     if ( block->state == DDHCP_OURS ) {
@@ -92,16 +96,18 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
         }
       }
     }
+
     block++;
   }
 
   if ( lease == NULL ) {
     DEBUG("dhcp_discover(...) -> no free leases found");
     return 2;
-  } 
+  }
 
   dhcp_packet* packet = build_initial_packet(discover);
-  if ( ! packet ) { 
+
+  if ( ! packet ) {
     DEBUG("dhcp_discover(...) -> memory allocation failure");
     return 1;
   }
@@ -111,20 +117,27 @@ int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_
   lease->xid = discover->xid;
   lease->state = OFFERED;
   lease->lease_end = now + DHCP_OFFER_TIMEOUT;
- 
+
   addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
+  DEBUG("dhcp_discover(...) offering address %i %s\n",lease_index,inet_ntoa(lease_block->subnet));
+
+  // TODO We need a more extendable way to build up options
   packet->options_len = fill_options( discover->options, discover->options_len, &config->options , 2, &packet->options) ;
-  
+
   // TODO Error handling
-  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) { DHCPOFFER } );
-  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t[]) { DHCP_LEASE_TIME });
+  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
+    DHCPOFFER
+  } );
+  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t[]) {
+    DHCP_LEASE_TIME
+  });
 
   send_dhcp_packet(socket, packet);
   free(packet);
   return 0;
 }
 
-int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, ddhcp_config *config ){
+int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, ddhcp_config *config ) {
   DEBUG("dhcp_request( %i, dhcp_packet, blocks, config)\n",socket);
   // search the lease we may have offered
   time_t now = time(NULL);
@@ -134,9 +147,10 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
 
   uint8_t *requested_address = find_option_requested_address( request->options, request->options_len);
 
-  if ( requested_address ) { 
+  if ( requested_address ) {
     // Calculate block and dhcp_lease from address
     uint8_t found = find_lease_from_address( requested_address, blocks, config, &lease);
+
     if ( found == 0 ) {
       if ( lease->state != OFFERED || lease->xid != request->xid ) {
         // Check if lease is free
@@ -146,10 +160,10 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
           dhcp_nack ( socket, request );
           return 2;
         }
-      } 
+      }
     }
-  } else 
-    // Find lease from xid 
+  } else {
+    // Find lease from xid
     for ( uint32_t i = 0; i < config->number_of_blocks; i++) {
       if ( block->state == DDHCP_OURS ) {
         dhcp_lease *lease_iter = block->addresses;
@@ -163,22 +177,29 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
               break;
             }
           }
+
           lease_iter++;
         }
-        if ( lease ) break;
+
+        if ( lease ) {
+          break;
+        }
       }
+
       block++;
     }
+  }
 
   if ( !lease ) {
     DEBUG("dhcp_request(...): Requested lease not found\n");
     // Send DHCP_NACK
     dhcp_nack ( socket, request );
     return 2;
-  } 
+  }
 
   dhcp_packet* packet = build_initial_packet(request);
-  if ( ! packet ) { 
+
+  if ( ! packet ) {
     DEBUG("dhcp_request(...) -> memory allocation failure\n");
     return 1;
   }
@@ -189,15 +210,20 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   lease->state = LEASED;
   lease->lease_end = now + DHCP_LEASE_TIME;
 
-
   addr_add(&block->subnet,&packet->yiaddr,lease_index);
   DEBUG("dhcp_request(...) offering address %s\n",inet_ntoa(block->subnet));
+
+  // TODO We need a more extendable way to build up options
   packet->options_len = fill_options( request->options, request->options_len, &(config->options) , 2, &packet->options) ;
 
   // TODO Error handling
-  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) { DHCPACK });
+  set_option( packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
+    DHCPACK
+  });
   // TODO correct type conversion, currently solution is simply wrong
-  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) { 0,0,0,DHCP_LEASE_TIME });
+  set_option( packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) {
+    0,0,0,DHCP_LEASE_TIME
+  });
 
   send_dhcp_packet(socket, packet);
   free(packet);
@@ -207,7 +233,8 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
 
 int dhcp_nack( int socket, dhcp_packet *from_client ) {
   dhcp_packet* packet = build_initial_packet(from_client);
-  if ( ! packet ) { 
+
+  if ( ! packet ) {
     DEBUG("dhcp_discover(...) -> memory allocation failure\n");
     return 1;
   }

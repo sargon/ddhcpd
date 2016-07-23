@@ -31,9 +31,9 @@ struct ddhcp_mcast_packet {
 };
 
 struct ddhcp_payload {
-   uint32_t block_index;
-   uint16_t timeout;
-   uint16_t reserved;
+  uint32_t block_index;
+  uint16_t timeout;
+  uint16_t reserved;
 };
 
 int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet);

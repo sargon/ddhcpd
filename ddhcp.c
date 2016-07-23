@@ -22,9 +22,10 @@ const int NET_LEN = 10;
 
 struct ddhcp_block* blocks;
 
-int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config){
+int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config) {
   DEBUG("ddhcp_block_init( blocks, config)\n");
   *blocks = (struct ddhcp_block*) malloc( sizeof(struct ddhcp_block) * config->number_of_blocks);
+
   if ( *blocks == 0 ) {
     FATAL("ddhcp_block_init(...)-> Can't allocate memory for block structure\n");
     return 1;
@@ -35,6 +36,7 @@ int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config){
   // TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
   //      and assign one here instead of NULL. Performance boost, Memory defrag?
   struct ddhcp_block *block = (*blocks);
+
   for ( uint32_t index = 0; index < config->number_of_blocks; index++ ) {
     block->index = index;
     block->state = DDHCP_FREE;
@@ -54,20 +56,23 @@ void ddhcp_block_process_claims( struct ddhcp_block *blocks , struct ddhcp_mcast
   DEBUG("ddhcp_block_process_claims( blocks, packet, config )\n");
   assert(packet->command == 1);
   time_t now = time(NULL);
+
   for ( unsigned int i = 0 ; i < packet->count ; i++ ) {
     struct ddhcp_payload *claim = ((struct ddhcp_payload*) packet->payload)+i;
     uint32_t block_index = claim->block_index;
+
     if ( block_index >= config->number_of_blocks ) {
       WARNING("ddhcp_block_process_claims(...): Malformed block number\n");
-    } 
+    }
+
     if ( blocks[block_index].state == DDHCP_OURS ) {
       INFO("ddhcp_block_process_claims(...): node %lu claims our block %i\n", packet->node_id, block_index);
       // TODO Decide when and if we reclaim this block
       //      Which node has more leases in this block, ... , how has the better node_id.
     } else {
-        blocks[block_index].state = DDHCP_CLAIMED;
-        blocks[block_index].timeout = now + claim->timeout;
-        INFO("ddhcp_block_process_claims(...): node %lu claims block %i with ttl: %i\n",packet->node_id,block_index,claim->timeout);
+      blocks[block_index].state = DDHCP_CLAIMED;
+      blocks[block_index].timeout = now + claim->timeout;
+      INFO("ddhcp_block_process_claims(...): node %lu claims block %i with ttl: %i\n",packet->node_id,block_index,claim->timeout);
     }
   }
 }
@@ -76,13 +81,17 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
   DEBUG("ddhcp_block_process_inquire( blocks, packet, config )\n");
   assert(packet->command == 2);
   time_t now = time(NULL);
+
   for ( unsigned int i = 0 ; i < packet->count ; i++ ) {
     struct ddhcp_payload *tmp = ((struct ddhcp_payload*) packet->payload)+i;
+
     if ( tmp->block_index >= config->number_of_blocks ) {
       WARNING("ddhcp_block_process_inquire(...): Malformed block number\n");
       continue;
     }
+
     INFO("ddhcp_block_process_inquire(...): node %lu inquires block %i\n",packet->node_id,tmp->block_index);
+
     if ( blocks[tmp->block_index].state == DDHCP_OURS ) {
       // Update Claims
       INFO("ddhcp_block_process_inquire(...): block %i is ours notify network", tmp->block_index);
@@ -90,12 +99,14 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
       block_update_claims( blocks, 0, config );
     } else if ( blocks[tmp->block_index].state == DDHCP_CLAIMING ) {
       INFO("ddhcp_block_process_inquire(...): we are interested in block %i also\n",tmp->block_index);
+
       // QUESTION Why do we need multiple states for the same process?
       if ( packet->node_id > config->node_id ) {
         INFO("ddhcp_block_process_inquire(...): .. but other node wins.\n");
         blocks[tmp->block_index].state = DDHCP_TENTATIVE;
         blocks[tmp->block_index].timeout = now + config->tentative_timeout;
-      } 
+      }
+
       // otherwise keep inquiring, the other node should see our inquires and step back.
     } else {
       INFO("ddhcp_block_process_inquire(...): set block %i to tentative \n",tmp->block_index);
@@ -105,28 +116,28 @@ void ddhcp_block_process_inquire( struct ddhcp_block *blocks , struct ddhcp_mcas
   }
 }
 
-/** 
+/**
  * House Keeping
- * 
- * - Free timed-out DHCP leases. 
+ *
+ * - Free timed-out DHCP leases.
  * - Refresh timed-out blocks.
  * + Claim new blocks if we are low on spare leases.
  * + Update our claims.
  */
 void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
- DEBUG("house_keeping( blocks, config )\n");
- block_check_timeouts( blocks, config );
- int spares = block_num_free_leases( blocks, config );
- int spare_blocks = ceil( (double) spares / (double) config->block_size );
- int blocks_needed = config->spare_blocks_needed - spare_blocks;
- block_claim( blocks, blocks_needed, config );
- block_update_claims( blocks, blocks_needed, config );
+  DEBUG("house_keeping( blocks, config )\n");
+  block_check_timeouts( blocks, config );
+  int spares = block_num_free_leases( blocks, config );
+  int spare_blocks = ceil( (double) spares / (double) config->block_size );
+  int blocks_needed = config->spare_blocks_needed - spare_blocks;
+  block_claim( blocks, blocks_needed, config );
+  block_update_claims( blocks, blocks_needed, config );
 }
 
 /**
  * Initialize DHCP options
  */
-void init_dhcp_options( ddhcp_config *config ){
+void init_dhcp_options( ddhcp_config *config ) {
   dhcp_option* option;
   // subnet mask
   option = (dhcp_option*) calloc(sizeof(dhcp_option),1);
@@ -195,12 +206,14 @@ void add_fd(int efd, int fd, uint32_t events) {
   event.events = events;
 
   int s = epoll_ctl(efd, EPOLL_CTL_ADD, fd, &event);
-  if (s == -1)
+
+  if (s == -1) {
     exit(1);  //("epoll_ctl");
+  }
 }
 
 int main(int argc, char **argv) {
-  
+
   srand(time(NULL));
 
   ddhcp_config *config = (ddhcp_config*) malloc( sizeof(ddhcp_config) );
@@ -248,6 +261,7 @@ int main(int argc, char **argv) {
       abort ();
     }
   }
+
   INFO("CONFIG: client_interface=%s\n",interface_client);
   INFO("CONFIG: group_interface=%s\n",interface);
 
@@ -271,6 +285,7 @@ int main(int argc, char **argv) {
   struct epoll_event *events;
 
   efd = epoll_create1(0);
+
   if (efd == -1) {
     perror("epoll_create");
     abort();
@@ -285,6 +300,7 @@ int main(int argc, char **argv) {
   uint8_t need_house_keeping;
   uint32_t loop_timeout = floor( config->tentative_timeout / 2 * 1000 );
   INFO("loop timeout: %i msecs\n", loop_timeout);
+
   // TODO wait loop_timeout before first time housekeeping
   while(1) {
     int n;
@@ -299,57 +315,76 @@ int main(int argc, char **argv) {
         bytes = read(config->mcast_socket, buffer, 1500);
         // TODO Error Handling
         ret = ntoh_mcast_packet(buffer,bytes, &packet);
+
         if ( ret == 0 ) {
           switch(packet.command) {
-            case DHCPDISCOVER:
-              ddhcp_block_process_claims(blocks,&packet,config);
-              break;
-            case 2:
-              ddhcp_block_process_inquire(blocks,&packet,config);
-            default:
-              break;
+          case DHCPDISCOVER:
+            ddhcp_block_process_claims(blocks,&packet,config);
+            break;
+
+          case 2:
+            ddhcp_block_process_inquire(blocks,&packet,config);
+
+          default:
+            break;
           }
+
           free(packet.payload);
         } else {
           printf("%i\n",ret);
         }
+
         house_keeping( blocks, config );
         need_house_keeping = 0;
       } else if ( config->client_socket == events[i].data.fd) {
         bytes = read(config->client_socket,buffer, 1500);
-  
+
         // TODO Error Handling
         ret = ntoh_dhcp_packet(&dhcp_packet,buffer,bytes);
+
         if ( ret == 0 ) {
           int message_type = dhcp_packet_message_type(&dhcp_packet);
+
           switch( message_type ) {
-            case DHCPDISCOVER:
-              ret = dhcp_discover( config->client_socket, &dhcp_packet, blocks, config);
-              if ( ret == 1 ) {
-                INFO("we need to inquire new blocks\n");
-                need_house_keeping = 1;
-              }
-              break;
-            case DHCPREQUEST:
-               dhcp_request( config->client_socket, &dhcp_packet, blocks, config);
+          case DHCPDISCOVER:
+            ret = dhcp_discover( config->client_socket, &dhcp_packet, blocks, config);
+
+            if ( ret == 1 ) {
+              INFO("we need to inquire new blocks\n");
+              need_house_keeping = 1;
+            }
+
             break;
-            default:
-              WARNING("Unknown DHCP message of type: %i\n",message_type);
-              break; 
+
+          case DHCPREQUEST:
+            dhcp_request( config->client_socket, &dhcp_packet, blocks, config);
+            break;
+
+          default:
+            WARNING("Unknown DHCP message of type: %i\n",message_type);
+            break;
           }
-          if( dhcp_packet.options_len > 0 )
+
+          if( dhcp_packet.options_len > 0 ) {
             free(dhcp_packet.options);
+          }
         }
       }
     }
-    if( need_house_keeping ) 
+
+    if( need_house_keeping ) {
       house_keeping( blocks, config );
+    }
   }
+
   // TODO free dhcp_leases
   free(events);
   ddhcp_block *block = blocks;
-  for ( uint32_t i = 0; i < config->number_of_blocks; i++ ) 
+
+  for ( uint32_t i = 0; i < config->number_of_blocks; i++ ) {
     block_free(block++);
+  }
+
   free(blocks);
   free(buffer);
   free(config);
