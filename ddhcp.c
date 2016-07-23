@@ -235,14 +235,16 @@ int main(int argc, char **argv) {
 
   while (( c = getopt(argc,argv,"c:i:")) != -1 ) {
     switch(c) {
-      case 'i': 
-        interface = optarg;
-        break;
-      case 'c':
-        interface_client = optarg;
-      default:
-        printf("ARGC: %i",argc);
-        abort ();
+    case 'i':
+      interface = optarg;
+      break;
+
+    case 'c':
+      interface_client = optarg;
+
+    default:
+      printf("ARGC: %i\n",argc);
+      abort ();
     }
   }
   INFO("CONFIG: client_interface=%s\n",interface_client);
@@ -308,7 +310,7 @@ int main(int argc, char **argv) {
           }
           free(packet.payload);
         } else {
-          printf("%i",ret);
+          printf("%i\n",ret);
         }
         house_keeping( blocks, config );
         need_house_keeping = 0;
