@@ -43,7 +43,7 @@ int ddhcp_block_init(struct ddhcp_block **blocks, ddhcp_config *config){
     block->address = 0;
     block->timeout = now + config->block_timeout;
     block->claiming_counts = 0;
-    block->lease_block = NULL;
+    block->addresses = NULL;
     block++;
   }
 

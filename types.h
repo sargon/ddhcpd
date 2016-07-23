@@ -26,7 +26,7 @@ struct ddhcp_block {
   time_t timeout;
   uint8_t claiming_counts;
   // Only iff state is equal to CLAIMED lease_block is not equal to NULL.
-  struct dhcp_lease_block* lease_block;
+  struct dhcp_lease* addresses;
 };
 typedef struct ddhcp_block ddhcp_block;
 
@@ -51,13 +51,6 @@ struct dhcp_lease {
   uint32_t lease_end;
 };
 typedef struct dhcp_lease dhcp_lease;
-
-struct dhcp_lease_block {
-  struct in_addr subnet;
-  uint32_t subnet_len;  
-  struct dhcp_lease* addresses;
-};
-typedef struct dhcp_lease_block dhcp_lease_block;
 
 struct dhcp_option {
     uint8_t code;

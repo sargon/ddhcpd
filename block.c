@@ -7,15 +7,26 @@
 int block_own( ddhcp_block *block ) {
   block->state = DDHCP_OURS;
   // TODO Have a preallocated list of dhcp_lease_blocks?
-  return  dhcp_new_lease_block(&(block->lease_block),&(block->subnet),block->subnet_len);
+  block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease),block->subnet_len);
+
+  if ( block->addresses != NULL ) {
+    return 1;
+  }
+
+  for ( unsigned int index = 0; index < block->subnet_len; index++ ) {
+    block->addresses[index].state = FREE;
+    block->addresses[index].lease_end = 0;
+  }
+
+  return 0;
 }
 
 void block_free( ddhcp_block *block ) {
   DEBUG("block_free(%i)\n",block->index);
   block->state = DDHCP_FREE;
-  if ( block->lease_block ) {
-    DEBUG("Free DHCP leases for Block%i\n",block->index);
-    dhcp_free_lease_block( &block->lease_block );
+
+  if ( block->addresses ) {
+    free(block->addresses);
   }
 }
 
@@ -138,12 +149,15 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
 int block_num_free_leases( ddhcp_block *block, ddhcp_config *config ) {
   DEBUG("block_num_free_leases(blocks, config)\n");
   int free_leases = 0;
+
   for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->state == DDHCP_OURS ) {
-      free_leases += dhcp_num_free( block->lease_block );
+      free_leases += dhcp_num_free( block );
     }
+
     block++;
   }
+
   DEBUG("block_num_free_leases(...)-> Found %i free dhcp leases in OUR blocks\n",free_leases);
   return free_leases;
 }
@@ -155,17 +169,19 @@ void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *
   time_t now = time(NULL);
   int timeout_half = floor( (double) config->block_timeout / 2 );
   int blocks_needed_tmp = blocks_needed;
-  // TODO Use a linked list instead of processing the block list twice. 
+
+  // TODO Use a linked list instead of processing the block list twice.
   for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->state == DDHCP_OURS && block->timeout < now + timeout_half ) {
-      if ( blocks_needed_tmp < 0 && dhcp_num_free ( block->lease_block ) == config->block_size ) {
-         DEBUG("block_update_claims(...): block %i no longer needed\n", block->index);
-         blocks_needed_tmp--;
-         block_free( block );
+      if ( blocks_needed_tmp < 0 && dhcp_num_free ( block ) == config->block_size ) {
+        DEBUG("block_update_claims(...): block %i no longer needed\n", block->index);
+        blocks_needed_tmp--;
+        block_free( block );
       } else {
         our_blocks++;
       }
     }
+
     block++;
   }
 
@@ -205,14 +221,17 @@ void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
   DEBUG("block_check_timeouts(blocks, config)\n");
   ddhcp_block *block = blocks;
   time_t now = time(NULL);
+
   for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
     if ( block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE ) {
       INFO("Block %i FREE throught timeout.\n",block->index);
       block_free(block);
     }
+
     if ( block->state == DDHCP_OURS ) {
-      dhcp_check_timeouts( block->lease_block );
+      dhcp_check_timeouts( block );
     }
+
     block++;
   }
 }
