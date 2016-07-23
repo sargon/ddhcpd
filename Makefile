@@ -1,13 +1,29 @@
-OBJ=ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o 
+OBJ=ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o
 
 CC=gcc
-CFLAGS+=-Wall -fno-strict-aliasing -MD -MP -g
+CFLAGS+= \
+    -g \
+    -Wall \
+    -Wextra \
+    -pedantic \
+    -Wcast-align \
+    -Werror \
+    -flto \
+    -fno-strict-aliasing \
+    -fsanitize=address \
+    -std=gnu11 \
+    -MD -MP
+LFLAGS+= \
+    -g \
+    -flto \
+    -fsanitize=address \
+    -lm
 
 all: ${OBJ}
-	gcc ${OBJ} -o ddhcp -lm
+	gcc ${OBJ} ${CFLAGS} -o ddhcp ${LFLAGS}
 
 dhcp: dhcp.o netsock.o
-	gcc netsock.o dhcp.o -o dhcp
+	gcc ${CFLAGS} netsock.o dhcp.o -o dhcp ${LFLAGS}
 
 clean:
-	rm ddhcp ${OBJ} *.d || true
+	rm -f ddhcp ${OBJ} *.d || true
