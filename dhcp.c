@@ -17,7 +17,7 @@ uint16_t DHCP_LEASE_TIME    = 3600;
 #define DEBUG_LEASE(...)
 #endif
 
-uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_config *config, dhcp_lease** lease ) {
+uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_config *config, ddhcp_block ** lease_block, uint32_t *lease_index) {
 #if LOG_LEVEL >= LOG_DEBUG
   struct in_addr addr = { .s_addr = *((uint32_t*) address) };
   DEBUG("find_lease_from_address( %s, ...)\n",inet_ntoa(addr));
@@ -29,7 +29,8 @@ uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_co
   if ( block_number < config->number_of_blocks) {
     if ( blocks[block_number].state == DDHCP_OURS ) {
       DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n",block_number,lease_number);
-      *lease = blocks[block_number].addresses + lease_number;
+      *lease_block = blocks + block_number;
+      *lease_index = lease_number;
       return 0;
     } else {
       // TODO Try to aquire address for client
@@ -141,17 +142,18 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   DEBUG("dhcp_request( %i, dhcp_packet, blocks, config)\n",socket);
   // search the lease we may have offered
   time_t now = time(NULL);
-  ddhcp_block *block = blocks;
   dhcp_lease *lease = NULL ;
-  int lease_index = 0;
+  ddhcp_block *lease_block = NULL;
+  uint32_t lease_index = 0;
 
   uint8_t *requested_address = find_option_requested_address( request->options, request->options_len);
 
   if ( requested_address ) {
     // Calculate block and dhcp_lease from address
-    uint8_t found = find_lease_from_address( requested_address, blocks, config, &lease);
+    uint8_t found = find_lease_from_address( requested_address, blocks, config, &lease_block,&lease_index);
 
     if ( found == 0 ) {
+      lease = lease_block->addresses + lease_index;
       if ( lease->state != OFFERED || lease->xid != request->xid ) {
         // Check if lease is free
         if ( lease->state != FREE ) {
@@ -160,9 +162,10 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
           dhcp_nack ( socket, request );
           return 2;
         }
-      }
+      } 
     }
   } else {
+    ddhcp_block *block = blocks;
     // Find lease from xid
     for ( uint32_t i = 0; i < config->number_of_blocks; i++) {
       if ( block->state == DDHCP_OURS ) {
@@ -172,6 +175,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
           if ( lease_iter->state == OFFERED && lease_iter->xid == request->xid ) {
             if ( memcmp(request->chaddr, lease_iter->chaddr,16) == 0 ) {
               lease = lease_iter;
+              lease_block = block;
               lease_index = j;
               DEBUG("dhcp_request(...): Found requested lease\n");
               break;
@@ -210,8 +214,8 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   lease->state = LEASED;
   lease->lease_end = now + DHCP_LEASE_TIME;
 
-  addr_add(&block->subnet,&packet->yiaddr,lease_index);
-  DEBUG("dhcp_request(...) offering address %s\n",inet_ntoa(block->subnet));
+  addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
+  DEBUG("dhcp_request(...) offering address %i %s\n",lease_index,inet_ntoa(lease_block->subnet));
 
   // TODO We need a more extendable way to build up options
   packet->options_len = fill_options( request->options, request->options_len, &(config->options) , 2, &packet->options) ;
