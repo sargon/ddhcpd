@@ -1,7 +1,19 @@
 A Distributed DHCP Daemon
 =========================
 
-    ./ddhcp [-i <server_interface>]
+In self managed networks with decentralized client realms a central DHCP 
+server is not available. DDHCP allows every realm to have an own server,
+while preserving roaming features for the client, by maintaining a common
+consens about lease state.
+
+    Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
+
+    -h              This usage information.
+    -c CLT-IFACE    Interface on which requests from clients are handled
+    -i SRV-IFACE    Interface on which different servers communicate
+    -t TENTATIVE    Time required for a block to be claimed
+    -l              Deactivate learning phase
+
 
 Testing
 -------
@@ -41,3 +53,11 @@ for the first ddhcp instance.
 To deconfigure the setup you can call.
 
     # ./network-test net-stop
+
+Performance Factors
+-------------------
+
+### Life cycle packets
+
+We call packets life cycle packets if they would be send during scenario where
+the amount of instances is constant and no client interaction is happening.
