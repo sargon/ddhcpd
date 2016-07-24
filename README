@@ -6,13 +6,15 @@ server is not available. DDHCP allows every realm to have an own server,
 while preserving roaming features for the client, by maintaining a common
 consens about lease state.
 
-    Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
+    Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
 
     -h              This usage information.
     -c CLT-IFACE    Interface on which requests from clients are handled
     -i SRV-IFACE    Interface on which different servers communicate
     -t TENTATIVE    Time required for a block to be claimed
-    -l              Deactivate learning phase
+    -L              Deactivate learning phase
+    -d              Run in background and daemonize
+    -D              Run in foreground and log to console (default)
 
 
 Testing

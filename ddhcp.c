@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while (( c = getopt(argc,argv,"c:i:t:dDhl")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:dDhL")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -303,7 +303,7 @@ int main(int argc, char **argv) {
       show_usage = 1;
       break;
 
-    case 'l':
+    case 'L':
       early_housekeeping = 1;
       break;
 
@@ -315,13 +315,13 @@ int main(int argc, char **argv) {
   }
 
   if(show_usage) {
-    printf("Usage: ddhcp [-h] [-d|-D] [-l] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
     printf("\n");
     printf("-h              This usage information.\n");
     printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
     printf("-i SRV-IFACE    Interface on which different servers communicate\n");
     printf("-t TENTATIVE    Time required for a block to be claimed\n");
-    printf("-l              Deactivate learning phase\n");
+    printf("-L              Deactivate learning phase\n");
     printf("-d              Run in background and daemonize\n");
     printf("-D              Run in foreground and log to console (default)\n");
     exit (0);
