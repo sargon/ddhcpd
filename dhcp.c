@@ -18,14 +18,14 @@ uint16_t DHCP_LEASE_SERVER_DELTA = 100;
 #define DEBUG_LEASE(...)
 #endif
 
-uint8_t find_lease_from_address( uint8_t *address, ddhcp_block* blocks, ddhcp_config *config, ddhcp_block ** lease_block, uint32_t *lease_index) {
+uint8_t find_lease_from_address(struct in_addr *addr, ddhcp_block* blocks, ddhcp_config *config, ddhcp_block ** lease_block, uint32_t *lease_index) {
 #if LOG_LEVEL >= LOG_DEBUG
-  struct in_addr addr = { .s_addr = *((uint32_t*) address) };
-  DEBUG("find_lease_from_address( %s, ...)\n",inet_ntoa(addr));
+  DEBUG("find_lease_from_address( %s, ...)\n",inet_ntoa(*addr));
 #endif
+  uint32_t address = (uint32_t) addr->s_addr;
 
-  uint32_t block_number = (ntohl(*(uint32_t*) address) - ntohl((uint32_t) config->prefix.s_addr)) / config->block_size;
-  uint32_t lease_number = (ntohl(*(uint32_t*) address) - ntohl((uint32_t) config->prefix.s_addr)) % config->block_size;
+  uint32_t block_number = (ntohl(address) - ntohl((uint32_t) config->prefix.s_addr)) / config->block_size;
+  uint32_t lease_number = (ntohl(address) - ntohl((uint32_t) config->prefix.s_addr)) % config->block_size;
 
   if ( block_number < config->number_of_blocks) {
     if ( blocks[block_number].state == DDHCP_OURS ) {
@@ -147,22 +147,39 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   ddhcp_block *lease_block = NULL;
   uint32_t lease_index = 0;
 
-  uint8_t *requested_address = find_option_requested_address( request->options, request->options_len);
+  uint8_t *address = find_option_requested_address( request->options, request->options_len);
+  struct in_addr requested_address;
+  uint8_t found_address = 0;
 
-  if ( requested_address ) {
+  if ( address ) {
+    memcpy(&requested_address,address,4);
+    found_address = 1;
+  }
+
+
+  if ( !address ) {
+    if ( ((uint64_t) &request->ciaddr.s_addr) != 0 ) {
+      memcpy(&requested_address,&request->ciaddr.s_addr,4);
+      found_address = 1;
+    }
+  }
+
+  if ( found_address ) {
     // Calculate block and dhcp_lease from address
-    uint8_t found = find_lease_from_address( requested_address, blocks, config, &lease_block,&lease_index);
+    uint8_t found = find_lease_from_address( &requested_address, blocks, config, &lease_block,&lease_index);
 
     if ( found == 0 ) {
       lease = lease_block->addresses + lease_index;
 
-      if ( lease->state != OFFERED || lease->xid != request->xid ) {
-        // Check if lease is free
-        if ( lease->state != FREE ) {
-          DEBUG("dhcp_request(...): Requested lease offered to other client\n");
-          // Send DHCP_NACK
-          dhcp_nack ( socket, request );
-          return 2;
+      if ( lease->state != OFFERED || lease->xid != request->xid  ) {
+        if ( memcmp(request->chaddr, lease->chaddr,16) != 0 ) {
+          // Check if lease is free
+          if ( lease->state != FREE ) {
+            DEBUG("dhcp_request(...): Requested lease offered to other client\n");
+            // Send DHCP_NACK
+            dhcp_nack ( socket, request );
+            return 2;
+          }
         }
       }
     }
