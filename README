@@ -48,7 +48,10 @@ to the cltX interfaces. For example by
 
     # dhclient -sf /dev/null -d -v clt0
 
-for the first ddhcp instance.
+for the first ddhcp instance. You can create multiple parallel running clients
+with different mac addresses via:
+
+   # ./network-test clt-start <n>
 
 To deconfigure the setup you can call.
 
