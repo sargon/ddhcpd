@@ -26,9 +26,9 @@ will need to have priviledges to create network namespaces. Short
 use sudo and check the network-test script upfront.
 
 To start the (n-1)-th instance of ddhcp in your test environment
-use for example:
+use for example, we also reduce the tentative timeout from 12 to 3 seconds:
 
-    # ./network-test srv-start <n> ./ddhcp 
+    # ./network-test srv-start <n> ./ddhcp -t 3
 
 After starting multiple instances you can make dhcp request
 against specific instances of ddhcp by starting dhcp clients pointed
