@@ -228,12 +228,6 @@ int main(int argc, char **argv) {
   config->spare_blocks_needed = 1;
   config->block_timeout = 30;
   config->tentative_timeout = 15;
-  INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
-  INFO("CONFIG: block_size=%i\n", config->block_size);
-  INFO("CONFIG: #blocks=%i\n", config->number_of_blocks);
-  INFO("CONFIG: #spare_blocks=%i\n", config->spare_blocks_needed);
-  INFO("CONFIG: timeout=%i\n", config->block_timeout);
-  INFO("CONFIG: tentative_timeout=%i\n", config->tentative_timeout);
 
   // DHCP
   config->dhcp_port = 67;
@@ -246,7 +240,7 @@ int main(int argc, char **argv) {
 
   int c;
 
-  while (( c = getopt(argc,argv,"c:i:")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:h")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -256,12 +250,26 @@ int main(int argc, char **argv) {
       interface_client = optarg;
       break;
 
+    case 't':
+      config->tentative_timeout = atoi(optarg);
+      break;
+
+    case 'h':
+      printf("Usage: ddhcp [-c <CLT-IFACE>,-i <SRV-IFACE>,-t <TENTATIVE-TIMEOUT>]\n");
+      exit (0);
+
     default:
       printf("ARGC: %i\n",argc);
       abort ();
     }
   }
 
+  INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
+  INFO("CONFIG: block_size=%i\n", config->block_size);
+  INFO("CONFIG: #blocks=%i\n", config->number_of_blocks);
+  INFO("CONFIG: #spare_blocks=%i\n", config->spare_blocks_needed);
+  INFO("CONFIG: timeout=%i\n", config->block_timeout);
+  INFO("CONFIG: tentative_timeout=%i\n", config->tentative_timeout);
   INFO("CONFIG: client_interface=%s\n",interface_client);
   INFO("CONFIG: group_interface=%s\n",interface);
 
