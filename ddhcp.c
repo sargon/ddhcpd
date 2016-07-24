@@ -212,6 +212,10 @@ void add_fd(int efd, int fd, uint32_t events) {
   }
 }
 
+uint32_t get_loop_timeout(ddhcp_config* config) {
+  return floor( config->tentative_timeout / 2 * 1000 );
+}
+
 int main(int argc, char **argv) {
 
   srand(time(NULL));
@@ -240,8 +244,9 @@ int main(int argc, char **argv) {
 
   int c;
   int show_usage = 0;
+  int early_housekeeping = 0;
 
-  while (( c = getopt(argc,argv,"c:i:t:h")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:hl")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -259,6 +264,10 @@ int main(int argc, char **argv) {
       show_usage = 1;
       break;
 
+    case 'l':
+      early_housekeeping = 1;
+      break;
+
     default:
       printf("ARGC: %i\n",argc);
       show_usage = 1;
@@ -267,13 +276,14 @@ int main(int argc, char **argv) {
   }
 
   if(show_usage) {
-      printf("Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
-      printf("\n");
-      printf("-h              This usage information.\n");
-      printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
-      printf("-i SRV-IFACE    Interface on which different servers communicate\n");
-      printf("-t TENTATIVE    Time required for a block to be claimed\n");
-      exit (0);
+    printf("Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("\n");
+    printf("-h              This usage information.\n");
+    printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
+    printf("-i SRV-IFACE    Interface on which different servers communicate\n");
+    printf("-t TENTATIVE    Time required for a block to be claimed\n");
+    printf("-l              Deactivate learning phase\n");
+    exit (0);
   }
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
@@ -318,13 +328,26 @@ int main(int argc, char **argv) {
   events = calloc(maxevents, sizeof(struct epoll_event));
 
   uint8_t need_house_keeping;
-  uint32_t loop_timeout = floor( config->tentative_timeout / 2 * 1000 );
-  INFO("loop timeout: %i msecs\n", loop_timeout);
+  uint32_t loop_timeout = config->loop_timeout = get_loop_timeout(config);
+
+  if ( early_housekeeping ) {
+    loop_timeout = 0;
+  }
+
+  INFO("loop timeout: %i msecs\n", get_loop_timeout( config ) );
 
   // TODO wait loop_timeout before first time housekeeping
   while(1) {
     int n;
     n = epoll_wait(efd, events, maxevents, loop_timeout );
+#if LOG_LEVEL >= LOG_DEBUG
+
+    if ( loop_timeout != config->loop_timeout ) {
+      DEBUG("Increase loop timeout from %i to %i\n",loop_timeout,config->loop_timeout);
+    }
+
+#endif
+    loop_timeout = config->loop_timeout;
     need_house_keeping = 1;
 
     for( int i = 0; i < n; i++ ) {

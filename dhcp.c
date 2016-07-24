@@ -155,6 +155,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
 
     if ( found == 0 ) {
       lease = lease_block->addresses + lease_index;
+
       if ( lease->state != OFFERED || lease->xid != request->xid ) {
         // Check if lease is free
         if ( lease->state != FREE ) {
@@ -167,6 +168,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
     }
   } else {
     ddhcp_block *block = blocks;
+
     // Find lease from xid
     for ( uint32_t i = 0; i < config->number_of_blocks; i++) {
       if ( block->state == DDHCP_OURS ) {
