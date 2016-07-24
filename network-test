@@ -8,6 +8,7 @@
 
 
 NUM_OF_INTERFACE=$(cat /tmp/ddhcp-netns-count 2>/dev/null)
+NUMBER_OF_CLIENT_INTERFACES=5
 
 function isNumber(){
   local NUMBER=$1
@@ -43,12 +44,25 @@ function buildInterfacePairs() {
   for iface in "srv${IDX}" "server0" "clt${IDX}" "client0"; do
     ip link set dev "${iface}" up
   done 
+  ip link add name br-clt${IDX} type bridge
+  ip link set dev "clt${IDX}" master "br-clt${IDX}"
+  ip link set dev br-clt${IDX} up
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    ip link add name "clt${IDX}-${idc}" type veth peer name "clb${IDX}-${idc}" type veth
+    ip link set dev clt${IDX}-${idc} up 
+    ip link set dev "clb${IDX}-${idc}" master "br-clt${IDX}"
+    ip link set dev "clb${IDX}-${idc}" up
+  done
 }
 
 function destroyInterfacePairs() {
   local IDX=$1
   ip link delete dev "srv${IDX}" 
   ip link delete dev "clt${IDX}" 
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    ip link delete dev "clt${IDX}-${idc}" 
+  done
+  ip link delete dev br-clt${IDX} 
 }
 
 function startServer() {
@@ -56,6 +70,15 @@ function startServer() {
   shift
   echo ip netns exec "${NS_NAME}" $@
   ip netns exec "${NS_NAME}" $@
+}
+
+function startDHCPClients() {
+  local IDX="$1"
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    dhclient -sf /dev/null -v -d "clt${IDX}-${idc}" &
+  done
+  read
+  pkill dhclient
 }
 
 function network-init() {
@@ -120,11 +143,22 @@ case "$1" in
     fi
     startServer "$INDEX" $@
     ;;
+  clt-start)
+    shift
+    INDEX="$1"
+    shift
+    isNumber "$INDEX"
+    if [[ $? -ne 0 ]] ; then
+      echo "Error: '${NUMBER_OF_INSTANCES}' is not a index number"
+    fi
+    startDHCPClients "$INDEX"
+  ;;
   *)
     echo "Usage: $0 <command> <parameter>"
     echo "where"
     echo " <command> is one of"
     echo " net-init  <#num>            - Initialize <#num> interface pairs and netns."
+    echo " clt-start <index>           - Start $NUMBER_OF_CLIENT_INTERFACES clients for netns with <index>."
     echo " srv-start <index> <command> - Start <command> in netns with <index>."
     echo " net-stop                    - Destroy interface pairs and netns."
     ;;
