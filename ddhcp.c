@@ -239,6 +239,7 @@ int main(int argc, char **argv) {
   char* interface_client = "client0";
 
   int c;
+  int show_usage = 0;
 
   while (( c = getopt(argc,argv,"c:i:t:h")) != -1 ) {
     switch(c) {
@@ -255,13 +256,24 @@ int main(int argc, char **argv) {
       break;
 
     case 'h':
-      printf("Usage: ddhcp [-c <CLT-IFACE>,-i <SRV-IFACE>,-t <TENTATIVE-TIMEOUT>]\n");
-      exit (0);
+      show_usage = 1;
+      break;
 
     default:
       printf("ARGC: %i\n",argc);
-      abort ();
+      show_usage = 1;
+      break;
     }
+  }
+
+  if(show_usage) {
+      printf("Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+      printf("\n");
+      printf("-h              This usage information.\n");
+      printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
+      printf("-i SRV-IFACE    Interface on which different servers communicate\n");
+      printf("-t TENTATIVE    Time required for a block to be claimed\n");
+      exit (0);
   }
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
