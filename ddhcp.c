@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <signal.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "block.h"
@@ -16,6 +18,8 @@
 #include "packet.h"
 #include "tools.h"
 #include "dhcp_options.h"
+
+volatile int daemon_running = 0;
 
 const int NET = 0;
 const int NET_LEN = 10;
@@ -216,6 +220,30 @@ uint32_t get_loop_timeout(ddhcp_config* config) {
   return floor( config->tentative_timeout / 2 * 1000 );
 }
 
+typedef void (*sighandler_t)(int);
+
+static sighandler_t
+handle_signal (int sig_nr, sighandler_t signalhandler) {
+  struct sigaction new_sig, old_sig;
+  new_sig.sa_handler = signalhandler;
+  sigemptyset (&new_sig.sa_mask);
+  new_sig.sa_flags = SA_RESTART;
+
+  if (sigaction (sig_nr, &new_sig, &old_sig) < 0) {
+    return SIG_ERR;
+  }
+
+  return old_sig.sa_handler;
+}
+
+void handle_signal_terminate(int sig_nr) {
+  if (SIGINT == sig_nr) {
+    daemon_running = 0;
+  } else if (SIGTERM == sig_nr) {
+    daemon_running = 0;
+  }
+}
+
 int main(int argc, char **argv) {
 
   srand(time(NULL));
@@ -242,11 +270,13 @@ int main(int argc, char **argv) {
   char* interface = "server0";
   char* interface_client = "client0";
 
+  daemon_running = 2;
+
   int c;
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while (( c = getopt(argc,argv,"c:i:t:hl")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:dDhl")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -258,6 +288,15 @@ int main(int argc, char **argv) {
 
     case 't':
       config->tentative_timeout = atoi(optarg);
+      break;
+
+    case 'd':
+      daemon_running = 1;
+      break;
+
+    case 'D':
+      //We pretend we are normally running, just in another mode
+      daemon_running = 2;
       break;
 
     case 'h':
@@ -276,13 +315,15 @@ int main(int argc, char **argv) {
   }
 
   if(show_usage) {
-    printf("Usage: ddhcp [-h] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("Usage: ddhcp [-h] [-d|-D] [-l] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
     printf("\n");
     printf("-h              This usage information.\n");
     printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
     printf("-i SRV-IFACE    Interface on which different servers communicate\n");
     printf("-t TENTATIVE    Time required for a block to be claimed\n");
     printf("-l              Deactivate learning phase\n");
+    printf("-d              Run in background and daemonize\n");
+    printf("-D              Run in foreground and log to console (default)\n");
     exit (0);
   }
 
@@ -294,6 +335,22 @@ int main(int argc, char **argv) {
   INFO("CONFIG: tentative_timeout=%i\n", config->tentative_timeout);
   INFO("CONFIG: client_interface=%s\n",interface_client);
   INFO("CONFIG: group_interface=%s\n",interface);
+
+  //Register signal handlers
+  handle_signal(SIGHUP, SIG_IGN);
+  handle_signal(SIGINT, handle_signal_terminate);
+  handle_signal(SIGTERM, handle_signal_terminate);
+
+  //Daemonize if requested
+  if(1 == daemon_running) {
+    if(daemon(0, 0)) {
+      perror("ddhcp");
+      exit(1);
+    }
+
+    //Conflicts with existing logging
+    //openlog("ddhcp", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_DAEMON);
+  }
 
   // init block stucture
   ddhcp_block_init(&blocks,config);
@@ -337,7 +394,7 @@ int main(int argc, char **argv) {
   INFO("loop timeout: %i msecs\n", get_loop_timeout( config ) );
 
   // TODO wait loop_timeout before first time housekeeping
-  while(1) {
+  do {
     int n;
     n = epoll_wait(efd, events, maxevents, loop_timeout );
 #if LOG_LEVEL >= LOG_DEBUG
@@ -418,7 +475,7 @@ int main(int argc, char **argv) {
     if( need_house_keeping ) {
       house_keeping( blocks, config );
     }
-  }
+  } while(daemon_running);
 
   // TODO free dhcp_leases
   free(events);
