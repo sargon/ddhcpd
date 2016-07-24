@@ -8,6 +8,7 @@
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
 uint16_t DHCP_LEASE_TIME    = 3600;
+uint16_t DHCP_LEASE_SERVER_DELTA = 100;
 
 #if LOG_LEVEL >= LOG_DEBUG
 #define DEBUG_DHCP_LEASE(...) do { \
@@ -162,7 +163,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
           dhcp_nack ( socket, request );
           return 2;
         }
-      } 
+      }
     }
   } else {
     ddhcp_block *block = blocks;
@@ -212,7 +213,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   memcpy(&lease->chaddr,&request->chaddr,16);
   lease->xid = request->xid;
   lease->state = LEASED;
-  lease->lease_end = now + DHCP_LEASE_TIME;
+  lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
 
   addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
   DEBUG("dhcp_request(...) offering address %i %s\n",lease_index,inet_ntoa(lease_block->subnet));
