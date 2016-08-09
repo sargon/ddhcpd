@@ -24,6 +24,13 @@ LFLAGS+= \
     -fsanitize=address
 endif
 
+prefix?=/usr
+INSTALL = install
+INSTALL_FILE    = $(INSTALL) -D -p    -o root -g root  -m  644
+INSTALL_PROGRAM = $(INSTALL) -D -p    -o root -g root  -m  755
+INSTALL_SCRIPT  = $(INSTALL) -D -p    -o root -g root  -m  755
+INSTALL_DIR     = $(INSTALL) -D -p -d -o root -g root  -m  755
+
 all: ddhcp
 
 ddhcp: ${OBJ}
@@ -34,3 +41,6 @@ clean:
 
 style:
 	astyle --mode=c --options=none -s2 -f -j *.c *.h
+
+install:
+	$(INSTALL_PROGRAM) ddhcp $(DESTDIR)$(prefix)/sbin/ddhcp

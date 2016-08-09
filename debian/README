@@ -1,0 +1,6 @@
+The Debian Package ddhcpd
+----------------------------
+
+Provides a distributed DHCP daemon for decentralised and mesh networks.
+
+ -- Daniel Ehlers <sargon@toppoint.de>  Tue, 09 Aug 2016 01:19:48 +0200

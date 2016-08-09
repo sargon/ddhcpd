@@ -1,0 +1,15 @@
+Source: ddhcpd
+Section: net
+Priority: optional
+Maintainer: Daniel Ehlers <sargon@toppoint.de>, Benny Baumann <benbe@toppoint.de>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: https://git.toppoint.de/sargon/ddhcpd
+Vcs-Git: https://git.toppoint.de/sargon/ddhcpd
+Vcs-Browser: https://git.toppoint.de/sargon/ddhcpd
+
+Package: ddhcpd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Distributed DHCP Daemon
+ Provides a distributed DHCP daemon for decentralised and mesh networks.
