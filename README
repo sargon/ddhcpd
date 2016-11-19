@@ -65,4 +65,4 @@ Performance Factors
 ### Life cycle packets
 
 We call packets life cycle packets if they would be send during scenario where
-the amount of instances is constant and no client interaction is happening.
+the amount of instances is constant and no client interaction is happening. 
