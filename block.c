@@ -263,3 +263,14 @@ void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config ) {
     block++;
   }
 }
+
+void block_free_claims( ddhcp_config *config ) {
+  if ( ! list_empty(&config->claiming_blocks.list) ) {
+    struct list_head *pos, *q;
+    list_for_each_safe(pos,q,&(config->claiming_blocks).list) {
+      ddhcp_block_list *tmp = list_entry(pos, ddhcp_block_list, list);
+      list_del(pos);
+      free(tmp);
+    }
+  }
+}

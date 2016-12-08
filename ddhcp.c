@@ -527,6 +527,8 @@ int main(int argc, char **argv) {
     block_free(block++);
   }
 
+  block_free_claims( config );
+
   free(blocks);
   free(buffer);
   free_option_store(&config->options);

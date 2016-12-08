@@ -46,4 +46,9 @@ void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *
  * Blocks which are marked as BLOCKED are ignored in this process.
  */
 void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config );
+
+/** 
+ * Free block claim list structure.
+ */
+void block_free_claims( ddhcp_config *config );
 #endif
