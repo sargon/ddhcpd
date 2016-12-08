@@ -104,6 +104,21 @@ dhcp_option* set_option_in_store( dhcp_option_list* store, dhcp_option* option) 
   }
 }
 
+void free_option_store( dhcp_option_list* store) {
+  struct list_head *pos, *q;
+  dhcp_option_list *tmp;
+  list_for_each_safe(pos, q, &store->list) {
+    tmp = list_entry(pos, dhcp_option_list, list);
+    dhcp_option * option = tmp->option;
+    list_del(pos);
+    if ( option->len > 1 ) {
+      free(option->payload);
+    }
+    free(option);
+    free(tmp);
+  }
+}
+
 dhcp_option* remove_option_from_store( dhcp_option_list* store, uint8_t code);
 
 

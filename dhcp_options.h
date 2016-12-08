@@ -50,4 +50,5 @@ dhcp_option* find_in_option_store( dhcp_option_list* options, uint8_t code);
  * Search and replace a option in the store, otherwise append it to the store.
  */
 dhcp_option* set_option_in_store( dhcp_option_list* store, dhcp_option* option);
+void free_option_store( dhcp_option_list* store);
 #endif

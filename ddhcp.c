@@ -4,6 +4,7 @@
 #include <math.h>
 #include <netinet/in.h>
 #include <sys/epoll.h>
+#include <sys/un.h>
 #include <sys/socket.h>
 #include <signal.h>
 #include <stdio.h>
@@ -216,6 +217,22 @@ void add_fd(int efd, int fd, uint32_t events) {
   }
 }
 
+void del_fd(int efd, int fd, uint32_t events) {
+  struct epoll_event event = { 0 };
+  event.data.fd = fd;
+  event.events = events;
+
+  int s = epoll_ctl(efd, EPOLL_CTL_DEL, fd, &event);
+  perror("epoll_ctl");
+
+  if (s < 0) {
+    int errsv = errno;
+    printf("%i",errsv);
+    perror("epoll_ctl");
+    exit(1);  //("epoll_ctl");
+  }
+}
+
 uint32_t get_loop_timeout(ddhcp_config* config) {
   return floor( config->tentative_timeout / 2 * 1000 );
 }
@@ -362,6 +379,10 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if ( control_open(config) == -1) {
+    return 1;
+  } 
+
   uint8_t* buffer = (uint8_t*) malloc( sizeof(uint8_t) * 1500 );
   struct ddhcp_mcast_packet packet;
   struct dhcp_packet dhcp_packet;
@@ -380,6 +401,7 @@ int main(int argc, char **argv) {
 
   add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config->control_socket, EPOLLIN | EPOLLET);
 
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
@@ -397,6 +419,9 @@ int main(int argc, char **argv) {
   do {
     int n;
     n = epoll_wait(efd, events, maxevents, loop_timeout );
+    if ( n < 0 ) { 
+      perror("epoll error:");
+    }
 #if LOG_LEVEL >= LOG_DEBUG
 
     if ( loop_timeout != config->loop_timeout ) {
@@ -409,7 +434,7 @@ int main(int argc, char **argv) {
 
     for( int i = 0; i < n; i++ ) {
       if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
-        fprintf(stderr, "epoll error\n");
+        fprintf(stderr, "epoll error:%i \n", errno);
         close(events[i].data.fd);
       } else if (config->mcast_socket == events[i].data.fd) {
         bytes = read(config->mcast_socket, buffer, 1500);
@@ -469,6 +494,23 @@ int main(int argc, char **argv) {
             free(dhcp_packet.options);
           }
         }
+      } else if ( config->control_socket == events[i].data.fd) {
+        struct sockaddr_un client_fd;
+        unsigned int len = sizeof(client_fd);
+        config->client_control_socket = accept(config->control_socket,(struct sockaddr*) &client_fd,&len);
+        //set_nonblocking(config->client_control_socket); 
+        add_fd(efd, config->client_control_socket, EPOLLIN | EPOLLET);
+        printf("new connections\n");
+      } else if ( events[i].events & EPOLLIN) {
+        bytes = read(events[i].data.fd,buffer, 1500);
+        printf("read data: %i %i\n",bytes,config->client_control_socket);
+        for (int i = 0; i < bytes; i++) {
+          printf("%c",(char) *buffer+i);
+        }
+        printf("end read\n");
+      } else if ( events[i].events & EPOLLHUP ) {
+         del_fd(efd,events[i].data.fd, EPOLLIN);
+         close(events[i].data.fd);
       }
     }
 
@@ -487,6 +529,7 @@ int main(int argc, char **argv) {
 
   free(blocks);
   free(buffer);
+  free_option_store(&config->options);
   free(config);
   return 0;
 }
