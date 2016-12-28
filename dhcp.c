@@ -158,7 +158,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
 
 
   if ( !address ) {
-    if ( ((uint64_t) &request->ciaddr.s_addr) != 0 ) {
+    if ( request->ciaddr.s_addr != INADDR_ANY ) {
       memcpy(&requested_address,&request->ciaddr.s_addr,4);
       found_address = 1;
     }
