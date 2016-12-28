@@ -10,6 +10,7 @@ CFLAGS+= \
     -flto \
     -fno-strict-aliasing \
     -std=gnu11 \
+		-D_GNU_SOURCE \
     -MD -MP
 LFLAGS+= \
     -flto \
