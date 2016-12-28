@@ -1,6 +1,7 @@
 *.o
 *.d
-\.*.sw[pno]
-ddhcp
+\.*.sw[onpmwl]
+ddhcpd
+ddhcpdctl
 *.orig
 
