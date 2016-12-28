@@ -27,10 +27,10 @@ endif
 
 prefix?=/usr
 INSTALL = install
-INSTALL_FILE    = $(INSTALL) -D -p    -o root -g root  -m  644
-INSTALL_PROGRAM = $(INSTALL) -D -p    -o root -g root  -m  755
-INSTALL_SCRIPT  = $(INSTALL) -D -p    -o root -g root  -m  755
-INSTALL_DIR     = $(INSTALL) -D -p -d -o root -g root  -m  755
+INSTALL_FILE    = $(INSTALL) -D -p    -m  644
+INSTALL_PROGRAM = $(INSTALL) -D -p    -m  755
+INSTALL_SCRIPT  = $(INSTALL) -D -p    -m  755
+INSTALL_DIR     = $(INSTALL) -D -p -d -m  755
 
 all: ddhcpd ddhcpdctl
 
