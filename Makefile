@@ -6,7 +6,6 @@ CFLAGS+= \
     -Wall \
     -Wextra \
     -pedantic \
-    -Wcast-align \
     -Werror \
     -flto \
     -fno-strict-aliasing \
