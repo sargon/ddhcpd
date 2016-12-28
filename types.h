@@ -48,7 +48,7 @@ struct dhcp_lease {
   uint8_t chaddr[16];
   enum dhcp_lease_state state;
   uint32_t xid;
-  uint32_t lease_end;
+  time_t lease_end;
 };
 typedef struct dhcp_lease dhcp_lease;
 
