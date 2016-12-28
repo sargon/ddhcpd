@@ -148,3 +148,17 @@ int fill_options( dhcp_option *options, uint8_t len, dhcp_option_list *option_st
 
   return num_found_options + additional;
 }
+
+void dhcp_options_show(int fd, dhcp_option_list *store) {
+  struct list_head *pos, *q;
+  dhcp_option_list *tmp;
+  list_for_each_safe(pos, q, &store->list) {
+    tmp = list_entry(pos, dhcp_option_list, list);
+    dhcp_option * option = tmp->option;
+    dprintf(fd, "%i,%i:",option->code,option->len);
+    for( int i = 0; i < option->len; i++) {
+      dprintf(fd," %u",option->payload[i]);
+    }
+    dprintf(fd,"\n");
+  }
+}

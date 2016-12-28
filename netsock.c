@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/un.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -71,6 +72,41 @@ int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)
   return 0;
 }
 
+int control_open(ddhcp_config *state) {
+  int ctl_sock;
+  struct sockaddr_un s_un;
+  int ret;
+
+  ctl_sock = socket( AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+
+  memset(&s_un, 0, sizeof(s_un));
+  s_un.sun_family = AF_UNIX;
+  
+  strncpy(s_un.sun_path, state->control_path, sizeof(s_un.sun_path));
+  if(bind(ctl_sock, (struct sockaddr*)&s_un,sizeof(s_un)) < 0) {
+    perror("can't bind control socket");
+    goto err;
+  }
+  ret = fcntl(ctl_sock, F_GETFL, 0);
+  ret = fcntl(ctl_sock, F_SETFL, ret | O_NONBLOCK);
+
+  if (ret < 0) {
+    perror("failed to set file status flags");
+    goto err;
+  }
+
+  if ( listen(ctl_sock,2) < 0 ){
+    perror("failed ot listen");
+    goto err;
+  }
+
+  state->control_socket = ctl_sock;
+ 
+  return 0;
+err:
+  close(ctl_sock);
+  return -1;
+}
 
 int netsock_open(char* interface,char* interface_client, ddhcp_config *state)
 {

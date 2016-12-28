@@ -109,6 +109,11 @@ struct ddhcp_config {
   uint32_t mcast_scope_id;
   uint32_t client_scope_id;
 
+  // Control
+  int control_socket;
+  char *control_path;
+  int client_control_socket;
+
   // DHCP
   uint16_t dhcp_port;
 };

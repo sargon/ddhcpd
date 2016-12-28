@@ -1,4 +1,5 @@
 OBJ=ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o
+OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o
 
 CC=gcc
 CFLAGS+= \
@@ -31,16 +32,19 @@ INSTALL_PROGRAM = $(INSTALL) -D -p    -o root -g root  -m  755
 INSTALL_SCRIPT  = $(INSTALL) -D -p    -o root -g root  -m  755
 INSTALL_DIR     = $(INSTALL) -D -p -d -o root -g root  -m  755
 
-all: ddhcp
+all: ddhcpd ddhcpdctl
 
-ddhcp: ${OBJ}
-	${CC} ${OBJ} ${CFLAGS} -o ddhcp ${LFLAGS}
+ddhcpd: ${OBJ}
+	${CC} ${OBJ} ${CFLAGS} -o ddhcpd ${LFLAGS}
+
+ddhcpdctl: ${OBJCTL}
+	${CC} ${OBJCTL} ${CFLAGS} -o ddhcpdctl ${LFLAGS}
 
 clean:
-	-rm -f ddhcp ${OBJ} *.d *.orig
+	-rm -f ddhcpd ddhcpdctl ${OBJ} *.d *.orig
 
 style:
 	astyle --mode=c --options=none -s2 -f -j *.c *.h
 
 install:
-	$(INSTALL_PROGRAM) ddhcp $(DESTDIR)$(prefix)/sbin/ddhcp
+	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd

@@ -261,6 +261,45 @@ void handle_signal_terminate(int sig_nr) {
   }
 }
 
+
+int handle_command(int socket, uint8_t *buffer, int msglen, ddhcp_block *blocks, ddhcp_config *config ) {
+  // TODO Rethink command handling and command design
+  config->block_size = config->block_size;
+  DEBUG("handle_command(socket,%u,%i, blocks, config)\n",buffer[0],msglen);
+  if ( msglen == 0 ) {
+    WARNING("handle_command(...) -> zero length command received\n");
+  }
+  switch (buffer[0]) {
+    case 1:
+      DEBUG("handle_command(...) -> show block status\n");
+      block_show_status(socket,blocks,config);
+      return 0;
+    case 2:
+      DEBUG("handle_command(...) -> show dhcp options\n");
+      dhcp_options_show(socket,&config->options);
+      return 0;
+    case 3:
+      DEBUG("handle_command(...) -> set dhcp option\n");
+      if (msglen > 3) {
+        dhcp_option* option = (dhcp_option*) calloc(sizeof(dhcp_option),1);
+        option->code = buffer[1];
+        option->len = buffer[2];
+        printf("%i:%i\n",buffer[1],buffer[2]);
+        option->payload = (uint8_t*)  calloc(sizeof(uint8_t),option->len );
+        memcpy(option->payload,buffer + 3,option->len);
+
+        set_option_in_store( &config->options, option );
+        return 0;
+      } else {
+        DEBUG("handle_command(...) -> message not long enought\n");
+        return -2;
+      }
+    default:
+      WARNING("handle_command(...) -> unknown command\n");
+  }
+  return -1;
+}
+
 int main(int argc, char **argv) {
 
   srand(time(NULL));
@@ -277,6 +316,7 @@ int main(int argc, char **argv) {
   config->spare_blocks_needed = 1;
   config->block_timeout = 30;
   config->tentative_timeout = 15;
+  config->control_path = "/tmp/ddhcpd_ctl";
 
   // DHCP
   config->dhcp_port = 67;
@@ -423,7 +463,6 @@ int main(int argc, char **argv) {
       perror("epoll error:");
     }
 #if LOG_LEVEL >= LOG_DEBUG
-
     if ( loop_timeout != config->loop_timeout ) {
       DEBUG("Increase loop timeout from %i to %i\n",loop_timeout,config->loop_timeout);
     }
@@ -432,7 +471,7 @@ int main(int argc, char **argv) {
     loop_timeout = config->loop_timeout;
     need_house_keeping = 1;
 
-    for( int i = 0; i < n; i++ ) {
+    for ( int i = 0; i < n; i++ ) {
       if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
         fprintf(stderr, "epoll error:%i \n", errno);
         close(events[i].data.fd);
@@ -503,11 +542,10 @@ int main(int argc, char **argv) {
         printf("new connections\n");
       } else if ( events[i].events & EPOLLIN) {
         bytes = read(events[i].data.fd,buffer, 1500);
-        printf("read data: %i %i\n",bytes,config->client_control_socket);
-        for (int i = 0; i < bytes; i++) {
-          printf("%c",(char) *buffer+i);
+        if ( handle_command(events[i].data.fd, buffer,bytes,blocks,config) < 0 ) {
+          ERROR("Malformed command\n");
         }
-        printf("end read\n");
+         close(events[i].data.fd);
       } else if ( events[i].events & EPOLLHUP ) {
          del_fd(efd,events[i].data.fd, EPOLLIN);
          close(events[i].data.fd);
@@ -532,6 +570,9 @@ int main(int argc, char **argv) {
   free(blocks);
   free(buffer);
   free_option_store(&config->options);
+  close(config->mcast_socket);
+  close(config->client_socket);
+  close(config->control_socket);
   free(config);
   return 0;
 }

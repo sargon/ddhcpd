@@ -51,4 +51,9 @@ void block_check_timeouts( ddhcp_block *blocks, ddhcp_config *config );
  * Free block claim list structure.
  */
 void block_free_claims( ddhcp_config *config );
+
+/**
+ * Show Block Status
+ */
+void block_show_status( int fd, ddhcp_block *blocks,  ddhcp_config *config );
 #endif

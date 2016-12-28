@@ -274,3 +274,12 @@ void block_free_claims( ddhcp_config *config ) {
     }
   }
 }
+
+void block_show_status( int fd, ddhcp_block *blocks,  ddhcp_config *config ) {
+  ddhcp_block *block = blocks;
+  dprintf(fd, "index,state,owner,claim_count,timeout\n");
+  for ( uint32_t i = 0 ; i < config->number_of_blocks ; i++ ) {
+    dprintf(fd, "%i,%i,,%u,%lu\n",block->index,block->state,block->claiming_counts,block->timeout);
+    block++;
+  }
+}

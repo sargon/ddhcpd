@@ -51,4 +51,5 @@ dhcp_option* find_in_option_store( dhcp_option_list* options, uint8_t code);
  */
 dhcp_option* set_option_in_store( dhcp_option_list* store, dhcp_option* option);
 void free_option_store( dhcp_option_list* store);
+void dhcp_options_show(int fd, dhcp_option_list *store);
 #endif
