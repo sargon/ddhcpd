@@ -235,7 +235,7 @@ int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block* blocks, 
   lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
 
   addr_add(&lease_block->subnet,&packet->yiaddr,lease_index);
-  DEBUG("dhcp_request(...) offering address %i %s\n",lease_index,inet_ntoa(lease_block->subnet));
+  DEBUG("dhcp_request(...) offering address %i %s\n",lease_index,inet_ntoa(packet->yiaddr));
 
   // TODO We need a more extendable way to build up options
   packet->options_len = fill_options( request->options, request->options_len, &(config->options) , 2, &packet->options) ;
