@@ -144,16 +144,17 @@ void house_keeping( ddhcp_block *blocks, ddhcp_config *config ) {
  */
 void init_dhcp_options( ddhcp_config *config ) {
   dhcp_option* option;
+  uint8_t pl = config->prefix_len;
+
   // subnet mask
   option = (dhcp_option*) calloc(sizeof(dhcp_option),1);
   option->code = DHCP_CODE_SUBNET_MASK;
   option->len = 4;
   option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  // TODO Check interface for address
-  option->payload[0] = 255;
-  option->payload[1] = 255;
-  option->payload[2] = 255;
-  option->payload[3] = 0;
+  option->payload[0] = 256 - (256 >> min(max(pl -  0,0),8));
+  option->payload[1] = 256 - (256 >> min(max(pl -  8,0),8));
+  option->payload[2] = 256 - (256 >> min(max(pl - 16,0),8));
+  option->payload[3] = 256 - (256 >> min(max(pl - 24,0),8));
 
   set_option_in_store( &config->options, option );
 
