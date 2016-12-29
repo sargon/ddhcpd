@@ -169,6 +169,7 @@ void init_dhcp_options( ddhcp_config *config ) {
 
   set_option_in_store( &config->options, option );
 
+  /** Deactivate uneducated default router value
   option = (dhcp_option*) malloc(sizeof(dhcp_option));
   option->code = DHCP_CODE_ROUTER;
   option->len = 4;
@@ -180,6 +181,7 @@ void init_dhcp_options( ddhcp_config *config ) {
   option->payload[3] = 1;
 
   set_option_in_store( &config->options, option );
+  */
 
   option = (dhcp_option*) malloc(sizeof(dhcp_option));
   option->code = DHCP_CODE_BROADCAST_ADDRESS;
