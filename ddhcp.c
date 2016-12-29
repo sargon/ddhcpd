@@ -199,9 +199,10 @@ void init_dhcp_options( ddhcp_config *config ) {
   option->len = 4;
   option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
   // TODO Check interface for address
-  option->payload[0] = 10;
-  option->payload[1] = 0;
-  option->payload[2] = 0;
+  memcpy(option->payload,&config->prefix.s_addr,4);
+  //option->payload[0] = 10;
+  //option->payload[1] = 0;
+  //option->payload[2] = 0;
   option->payload[3] = 1;
 
   set_option_in_store( &config->options, option );
