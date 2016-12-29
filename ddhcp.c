@@ -310,12 +310,10 @@ int main(int argc, char **argv) {
   ddhcp_config *config = (ddhcp_config*) malloc( sizeof(ddhcp_config) );
   config->node_id = 0xffffffffffffffff;
   config->block_size = 32;
-  config->spare_blocks_needed = 1;
   config->claiming_blocks_amount = 0;
 
-  inet_aton("10.116.128.0",&config->prefix);
-  config->prefix_len = 18;
-  config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
+  inet_aton("10.0.0.0",&config->prefix);
+  config->prefix_len = 24;
   config->spare_blocks_needed = 1;
   config->block_timeout = 30;
   config->tentative_timeout = 15;
@@ -336,7 +334,7 @@ int main(int argc, char **argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while (( c = getopt(argc,argv,"c:i:t:dDhL")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:dDhLb:N:s:")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -344,6 +342,10 @@ int main(int argc, char **argv) {
 
     case 'c':
       interface_client = optarg;
+      break;
+
+    case 'b':
+      config->block_size = 1 << atoi(optarg);
       break;
 
     case 't':
@@ -367,6 +369,34 @@ int main(int argc, char **argv) {
       early_housekeeping = 1;
       break;
 
+    case 'N':
+      do {
+      // TODO Split prefix and cidr
+      size_t optlen = strlen(optarg);
+      char *cidr = strchr(optarg,'/');
+      if( cidr == NULL) {
+        ERROR("Malformed network '%s'\n",optarg);
+        exit(1);
+      } 
+      if ( cidr == optarg + optlen - 1 ) {
+        ERROR("Malformed network '%s'\n",optarg);
+        exit(1);
+      }
+      cidr[0] = '\0';
+      cidr++;
+      inet_aton(optarg,&config->prefix);
+      config->prefix_len = atoi(cidr);
+      if ( config->prefix_len < 8 ) {
+        ERROR("Are you the internet, cidr less than 8?!\n");
+        exit(1);
+      }
+      } while(0);
+      break;
+
+    case 's':
+      config->spare_blocks_needed = atoi(optarg);
+      break;
+
     default:
       printf("ARGC: %i\n",argc);
       show_usage = 1;
@@ -381,11 +411,16 @@ int main(int argc, char **argv) {
     printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
     printf("-i SRV-IFACE    Interface on which different servers communicate\n");
     printf("-t TENTATIVE    Time required for a block to be claimed\n");
+    printf("-N NETWORK/CIDR Network to announce blocks from\n");
+    printf("-b BLKSIZEPOW   Power over two of block size\n");
+    printf("-s SPAREBLKS    Amount of spare blocks\n");
     printf("-L              Deactivate learning phase\n");
     printf("-d              Run in background and daemonize\n");
     printf("-D              Run in foreground and log to console (default)\n");
     exit (0);
   }
+
+  config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix),config->prefix_len);
   INFO("CONFIG: block_size=%i\n", config->block_size);
