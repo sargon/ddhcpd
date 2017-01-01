@@ -17,6 +17,8 @@
 #define LOG_LEVEL LOG_WARNING
 #endif
 
+#define HEX_NODE_ID(x) ((uint8_t*) x)[0],((uint8_t*) x)[1],((uint8_t*) x)[2],((uint8_t*) x)[3],((uint8_t*) x)[4],((uint8_t*) x)[5],((uint8_t*) x)[6],((uint8_t*) x)[7]
+
 #if LOG_LEVEL >= LOG_FATAL
 #define FATAL(...) do { \
     fprintf(stderr,"FATAL: "); \
