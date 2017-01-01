@@ -84,7 +84,7 @@ enum dhcp_option_code {
 
 // TODO Rename to state
 struct ddhcp_config {
-  uint64_t node_id;
+  uint8_t node_id[8];
   uint32_t number_of_blocks;
   uint16_t block_timeout;
   uint16_t tentative_timeout;

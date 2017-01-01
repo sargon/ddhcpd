@@ -28,8 +28,7 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
 
   // Header
   uint64_t node;
-  memcpy (&node,buffer,8);
-  packet->node_id = be64toh(node);
+  memcpy (&node,packet->node_id,8);
 
 
   // The Python implementation prefixes with a node number?
@@ -102,7 +101,9 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
     }
 
     break;
-
+  // ReNEWLease 
+  case 16:
+    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
   default:
     return 2;
     break;

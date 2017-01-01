@@ -307,8 +307,7 @@ int main(int argc, char **argv) {
 
   srand(time(NULL));
 
-  ddhcp_config *config = (ddhcp_config*) malloc( sizeof(ddhcp_config) );
-  config->node_id = 0xffffffffffffffff;
+  ddhcp_config *config = (ddhcp_config*) calloc( sizeof(ddhcp_config), 1);
   config->block_size = 32;
   config->claiming_blocks_amount = 0;
 

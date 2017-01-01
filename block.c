@@ -135,7 +135,7 @@ int block_claim( ddhcp_block *blocks, int num_blocks , ddhcp_config *config ) {
 
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet packet;
-  packet.node_id = config->node_id;
+  memcpy(packet.node_id,config->node_id,8);
   memcpy(&(packet.prefix),&config->prefix,sizeof(struct in_addr));
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
@@ -207,7 +207,7 @@ void block_update_claims( ddhcp_block *blocks, int blocks_needed, ddhcp_config *
 
   struct ddhcp_mcast_packet packet;
 
-  packet.node_id = config->node_id;
+  memcpy(packet.node_id,config->node_id,8);
 
   memcpy(&packet.prefix,&config->prefix,sizeof(struct in_addr));
 
