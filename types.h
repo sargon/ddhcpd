@@ -6,6 +6,7 @@
 
 #include "list.h"
 
+#define NODE_ID_CMP(id1,id2) strncmp((char*) id1,(char*) id2,8)
 // block structures
 
 enum ddhcp_block_state {
@@ -81,6 +82,7 @@ enum dhcp_option_code {
 };
 
 // state
+
 
 // TODO Rename to state
 struct ddhcp_config {
