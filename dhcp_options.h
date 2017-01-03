@@ -9,6 +9,7 @@
  */
 dhcp_option* find_option( dhcp_option* options, uint8_t len, uint8_t code);
 
+
 /**
  * Search for the option with searched code and replace payload or search an empty
  * option, a padding, and replaces it with the new option. The option payload
@@ -45,6 +46,8 @@ int fill_options( dhcp_option *options, uint8_t len, dhcp_option_list *option_st
  * Search and Retrun a option in an option store. Return null otherwise.
  */
 dhcp_option* find_in_option_store( dhcp_option_list* options, uint8_t code);
+
+#define has_in_option_store(options, code) (find_in_option_store(options, code) != NULL)
 
 /**
  * Search and replace a option in the store, otherwise append it to the store.
