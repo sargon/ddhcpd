@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while (( c = getopt(argc,argv,"c:i:t:dDhLb:N:s:")) != -1 ) {
+  while (( c = getopt(argc,argv,"c:i:t:dDhLb:N:o:s:")) != -1 ) {
     switch(c) {
     case 'i':
       interface = optarg;
@@ -392,6 +392,46 @@ int main(int argc, char **argv) {
       } while(0);
       break;
 
+    case 'o':
+      do {
+        //size_t optlen = strlen(optarg);
+        char *len_s = strchr(optarg,';');
+        if ( len_s == NULL ) {
+          ERROR("Malformed dhcp option '%s'\n",optarg);
+          exit(1);
+        } 
+        len_s++[0] = '\0';
+        char *payload_s = strchr(len_s,';');
+        if ( payload_s == NULL ) {
+          ERROR("Malformed dhcp option '%s'\n",optarg);
+          exit(1);
+        }
+        payload_s++[0] = '\0';
+        uint8_t len = atoi(len_s);
+        uint8_t code = atoi(optarg);
+        
+        dhcp_option *option = (dhcp_option*) malloc(sizeof(dhcp_option));
+        option->code = code;
+        option->len = len;
+        option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * len );
+
+        for ( int i = 0 ; i < len; i++ ) {
+          char* next_payload_s = strchr(payload_s,',');
+          if ( next_payload_s == NULL && i < len - 1) {
+            ERROR("Malformed dhcp option '%s' to few payload\n",optarg);
+            exit(1);
+          }
+          if ( i < len - 1 ) {
+            next_payload_s++[0] = '\0';
+          } 
+          uint8_t payload = atoi(payload_s);
+          option->payload[i] = payload;
+          payload_s = next_payload_s;
+        }
+        set_option_in_store( &config->options, option );
+      } while (0);
+      break;
+
     case 's':
       config->spare_blocks_needed = atoi(optarg);
       break;
@@ -406,16 +446,17 @@ int main(int argc, char **argv) {
   if(show_usage) {
     printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
     printf("\n");
-    printf("-h              This usage information.\n");
-    printf("-c CLT-IFACE    Interface on which requests from clients are handled\n");
-    printf("-i SRV-IFACE    Interface on which different servers communicate\n");
-    printf("-t TENTATIVE    Time required for a block to be claimed\n");
-    printf("-N NETWORK/CIDR Network to announce blocks from\n");
-    printf("-b BLKSIZEPOW   Power over two of block size\n");
-    printf("-s SPAREBLKS    Amount of spare blocks\n");
-    printf("-L              Deactivate learning phase\n");
-    printf("-d              Run in background and daemonize\n");
-    printf("-D              Run in foreground and log to console (default)\n");
+    printf("-h                   This usage information.\n");
+    printf("-c CLT-IFACE         Interface on which requests from clients are handled\n");
+    printf("-i SRV-IFACE         Interface on which different servers communicate\n");
+    printf("-t TENTATIVE         Time required for a block to be claimed\n");
+    printf("-N NETWORK/CIDR      Network to announce and manage blocks in\n");
+    printf("-o CODE;LEN;P1,..,Pn DHCP Option with code,len and #len chars in decimal\n");
+    printf("-b BLKSIZEPOW        Power over two of block size\n");
+    printf("-s SPAREBLKS         Amount of spare blocks\n");
+    printf("-L                   Deactivate learning phase\n");
+    printf("-d                   Run in background and daemonize\n");
+    printf("-D                   Run in foreground and log to console (default)\n");
     exit (0);
   }
 
