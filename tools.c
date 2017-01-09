@@ -1,5 +1,6 @@
-#include <string.h>
 #include "tools.h"
+
+#include <string.h>
 
 void addr_add(struct in_addr* subnet, struct in_addr* result, int add) {
   uint32_t addr;

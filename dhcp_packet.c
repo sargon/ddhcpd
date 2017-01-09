@@ -1,9 +1,9 @@
+#include "dhcp_packet.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <arpa/inet.h>
 #include <errno.h>
-
-#include "dhcp_packet.h"
 
 struct sockaddr_in broadcast = {
   .sin_family = AF_INET,

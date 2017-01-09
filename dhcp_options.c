@@ -1,8 +1,8 @@
+#include "dhcp_options.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "dhcp_options.h"
 #include "list.h"
 #include "logger.h"
 

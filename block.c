@@ -1,7 +1,8 @@
+#include "block.h"
+
 #include <math.h>
 
 #include "dhcp.h"
-#include "block.h"
 #include "logger.h"
 
 int block_own(ddhcp_block* block) {

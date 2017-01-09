@@ -1,4 +1,5 @@
 #include "packet.h"
+
 #include <endian.h>
 #include <assert.h>
 #include <errno.h>
