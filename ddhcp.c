@@ -73,13 +73,13 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
     }
 
     if (blocks[block_index].state == DDHCP_OURS) {
-      INFO("ddhcp_block_process_claims(...): node 0x%x%x%x%x%x%x%x%x claims our block %i\n", HEX_NODE_ID(packet->node_id), block_index);
+      INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims our block %i\n", HEX_NODE_ID(packet->node_id), block_index);
       // TODO Decide when and if we reclaim this block
       //      Which node has more leases in this block, ..., how has the better node_id.
     } else {
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
-      INFO("ddhcp_block_process_claims(...): node 0x%x%x%x%x%x%x%x%x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
+      INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
 }
@@ -97,7 +97,7 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
       continue;
     }
 
-    INFO("ddhcp_block_process_inquire(...): node 0x%x%x%x%x%x%x%x%x inquires block %i\n", HEX_NODE_ID(packet->node_id), tmp->block_index);
+    INFO("ddhcp_block_process_inquire(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x inquires block %i\n", HEX_NODE_ID(packet->node_id), tmp->block_index);
 
     if (blocks[tmp->block_index].state == DDHCP_OURS) {
       // Update Claims
