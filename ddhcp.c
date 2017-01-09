@@ -42,7 +42,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
 
   // TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
   //      and assign one here instead of NULL. Performance boost, Memory defrag?
-  struct ddhcp_block* block = (*blocks);
+  struct ddhcp_block* block = *blocks;
 
   for (uint32_t index = 0; index < config->number_of_blocks; index++) {
     block->index = index;
@@ -571,8 +571,7 @@ int main(int argc, char** argv) {
 
   // TODO wait loop_timeout before first time housekeeping
   do {
-    int n;
-    n = epoll_wait(efd, events, maxevents, loop_timeout);
+    int n = epoll_wait(efd, events, maxevents, loop_timeout);
 
     if (n < 0) {
       perror("epoll error:");
