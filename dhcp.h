@@ -15,37 +15,37 @@
  *
  * In a second step a dhcp_packet is created an send back.
  */
-int dhcp_discover(int socket, dhcp_packet *discover, ddhcp_block *blocks, ddhcp_config *config );
+int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config);
 
 /**
  * DHCP Request
  * Performs on base of de
  */
-int dhcp_request( int socket, struct dhcp_packet *request, ddhcp_block *blocks, ddhcp_config *config );
+int dhcp_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
 
-int dhcp_nack( int socket, dhcp_packet *from_client );
+int dhcp_nack(int socket, dhcp_packet* from_client);
 
 /**
  * DHCP Lease Available
  * Determan iff there is a free lease in block.
  */
-int dhcp_has_free(struct ddhcp_block *block);
+int dhcp_has_free(struct ddhcp_block* block);
 
 /**
  * DHCP num Leases Available
  * Enumerate the free leases in a block
  */
-int dhcp_num_free(struct ddhcp_block *block);
+int dhcp_num_free(struct ddhcp_block* block);
 
 /**
  * Find first free lease in lease block and return its index.
  * This function asserts that there is a free lease, otherwise
  * it returns the value of block_subnet_len.
  */
-uint32_t dhcp_get_free_lease( ddhcp_block *block );
+uint32_t dhcp_get_free_lease(ddhcp_block* block);
 
 /**
  * HouseKeeping: Check for timed out leases.
  */
-void dhcp_check_timeouts( ddhcp_block *block );
+void dhcp_check_timeouts(ddhcp_block* block);
 #endif

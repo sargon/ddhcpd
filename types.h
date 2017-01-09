@@ -56,12 +56,12 @@ typedef struct dhcp_lease dhcp_lease;
 struct dhcp_option {
   uint8_t code;
   uint8_t len;
-  uint8_t *payload;
+  uint8_t* payload;
 };
 typedef struct dhcp_option dhcp_option;
 
 struct dhcp_option_list {
-  struct dhcp_option *option;
+  struct dhcp_option* option;
   struct list_head list;
 };
 typedef struct dhcp_option_list dhcp_option_list;
@@ -113,7 +113,7 @@ struct ddhcp_config {
 
   // Control
   int control_socket;
-  char *control_path;
+  char* control_path;
   int client_control_socket;
 
   // DHCP

@@ -23,7 +23,7 @@ struct dhcp_packet {
   char sname[64];
   char file[128];
   uint8_t options_len;
-  dhcp_option *options;
+  dhcp_option* options;
 };
 typedef struct dhcp_packet dhcp_packet;
 
@@ -42,7 +42,7 @@ enum dhcp_message_type {
 /**
  * Print an representation of a dhcp_packet to stdout.
  */
-void printf_dhcp(dhcp_packet *packet);
+void printf_dhcp(dhcp_packet* packet);
 
 /**
  * Reads and checks a dhcp_packet from buffer. Will return zero on success.
@@ -50,8 +50,8 @@ void printf_dhcp(dhcp_packet *packet);
  * make pointer to the buffer inside of the dhcp_packet structure. Do not free
  * the buffer before the last operation on that struture!
  */
-int ntoh_dhcp_packet(dhcp_packet *packet,uint8_t* buffer,int len);
-int send_dhcp_packet(int socket,dhcp_packet *packet);
+int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len);
+int send_dhcp_packet(int socket, dhcp_packet* packet);
 
-uint8_t dhcp_packet_message_type(dhcp_packet *packet);
+uint8_t dhcp_packet_message_type(dhcp_packet* packet);
 #endif

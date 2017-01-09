@@ -3,10 +3,10 @@
 #include <assert.h>
 #include <errno.h>
 
-int _packet_size(int command,int payload_count) {
+int _packet_size(int command, int payload_count) {
   int len = 0;
 
-  switch(command) {
+  switch (command) {
   case 1:
     len = 16 + payload_count * 7;
     break;
@@ -16,7 +16,7 @@ int _packet_size(int command,int payload_count) {
     break;
 
   default:
-    printf("Error: unknown command: %i/%i \n",command,payload_count);
+    printf("Error: unknown command: %i/%i \n", command, payload_count);
     return -1;
     break;
   }
@@ -24,16 +24,16 @@ int _packet_size(int command,int payload_count) {
   return len;
 }
 
-int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet) {
+int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet) {
 
   // Header
   uint64_t node;
-  memcpy (&node,packet->node_id,8);
+  memcpy(&node, packet->node_id, 8);
 
 
   // The Python implementation prefixes with a node number?
   // prefix address
-  memcpy(&(packet->prefix),buffer+8,sizeof(struct in_addr));
+  memcpy(&(packet->prefix), buffer + 8, sizeof(struct in_addr));
   // prefix length
   packet->prefix_len  = buffer[12];
   // size of a block
@@ -43,10 +43,10 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
   // count of payload entries
   packet->count       = buffer[15];
 
-  int should_len = _packet_size(packet->command,packet->count);
+  int should_len = _packet_size(packet->command, packet->count);
 
-  if ( should_len != len ) {
-    printf("Wrong length: %i/%i",len,should_len);
+  if (should_len != len) {
+    printf("Wrong length: %i/%i", len, should_len);
     return 1;
   }
 
@@ -69,18 +69,18 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
   uint32_t tmp32;
   struct ddhcp_payload* payload;
 
-  switch(packet->command) {
+  switch (packet->command) {
   // UpdateClaim
   case 1:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
+    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
     payload = packet->payload;
 
-    for ( int i = 0 ; i < packet->count ; i++ ) {
-      memcpy(&tmp32, buffer   ,4 );
+    for (int i = 0 ; i < packet->count ; i++) {
+      memcpy(&tmp32, buffer, 4);
       payload->block_index = ntohl(tmp32);
-      memcpy(&tmp16, buffer+4 ,2 );
-      payload->timeout =ntohs(tmp16);
-      memcpy(&tmp8, buffer+6 ,1 );
+      memcpy(&tmp16, buffer + 4, 2);
+      payload->timeout = ntohs(tmp16);
+      memcpy(&tmp8, buffer + 6, 1);
       payload->reserved = tmp8;
       payload++;
       buffer = buffer + 7;
@@ -90,20 +90,22 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
 
   // InquireBlock
   case 2:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
+    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
     payload = packet->payload;
 
-    for ( int i = 0 ; i < packet->count ; i++ ) {
-      memcpy(&tmp32, buffer   ,4 );
+    for (int i = 0 ; i < packet->count ; i++) {
+      memcpy(&tmp32, buffer, 4);
       payload->block_index = ntohl(tmp32);
       payload++;
       buffer = buffer + 8;
     }
 
     break;
-  // ReNEWLease 
+
+  // ReNEWLease
   case 16:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload)*packet->count);
+    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
+
   default:
     return 2;
     break;
@@ -114,13 +116,13 @@ int ntoh_mcast_packet(uint8_t* buffer,int len, struct ddhcp_mcast_packet* packet
   return 0;
 }
 
-int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id ) {
-  int len = _packet_size(packet->command,packet->count);
+int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
+  int len = _packet_size(packet->command, packet->count);
   char* buffer = (char*) calloc(1, len);
   errno = 0;
 
-  memcpy(buffer,&(packet->node_id),8);
-  memcpy(buffer+8,&(packet->prefix),sizeof(struct in_addr));
+  memcpy(buffer, &(packet->node_id), 8);
+  memcpy(buffer + 8, &(packet->prefix), sizeof(struct in_addr));
 
   // prefix length
   buffer[12] = packet->prefix_len;
@@ -135,18 +137,18 @@ int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, 
   uint32_t tmp32;
   struct ddhcp_payload* payload;
 
-  char *pbuf = buffer + 16;
+  char* pbuf = buffer + 16;
 
-  switch(packet->command) {
+  switch (packet->command) {
   case 1:
     payload = packet->payload;
 
-    for ( unsigned int index = 0 ; index < packet->count ; index++ ) {
+    for (unsigned int index = 0 ; index < packet->count ; index++) {
       tmp32 = htonl(payload->block_index);
-      memcpy(pbuf,&tmp32,4 );
+      memcpy(pbuf, &tmp32, 4);
       tmp16 = htons(payload->timeout);
-      memcpy(pbuf+4,&tmp16,2);
-      memcpy(pbuf+6,&payload->reserved,1);
+      memcpy(pbuf + 4, &tmp16, 2);
+      memcpy(pbuf + 6, &payload->reserved, 1);
       payload++;
       pbuf += 7;
     }
@@ -156,9 +158,9 @@ int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, 
   case 2:
     payload = packet->payload;
 
-    for ( unsigned int index = 0 ; index < packet->count ; index++ ) {
+    for (unsigned int index = 0 ; index < packet->count ; index++) {
       tmp32 = htonl(payload->block_index);
-      memcpy(pbuf,&tmp32,4);
+      memcpy(pbuf, &tmp32, 4);
       payload++;
       pbuf += 4;
     }
@@ -186,7 +188,7 @@ int send_packet_mcast( struct ddhcp_mcast_packet* packet, int mulitcast_socket, 
 
   memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
-  sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr* ) &dest_addr,sizeof(dest_addr));
+  sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
   free(buffer);
 

@@ -52,7 +52,7 @@ const struct in6_addr in6addr_localmcast =
   }
 };
 
-int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)
+int mac_to_ipv6(const struct ether_addr* mac, struct in6_addr* addr)
 {
   memset(addr, 0, sizeof(*addr));
   addr->s6_addr[0] = 0xfe;
@@ -72,21 +72,23 @@ int mac_to_ipv6(const struct ether_addr *mac, struct in6_addr *addr)
   return 0;
 }
 
-int control_open(ddhcp_config *state) {
+int control_open(ddhcp_config* state) {
   int ctl_sock;
   struct sockaddr_un s_un;
   int ret;
 
-  ctl_sock = socket( AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 
   memset(&s_un, 0, sizeof(s_un));
   s_un.sun_family = AF_UNIX;
-  
+
   strncpy(s_un.sun_path, state->control_path, sizeof(s_un.sun_path));
-  if(bind(ctl_sock, (struct sockaddr*)&s_un,sizeof(s_un)) < 0) {
+
+  if (bind(ctl_sock, (struct sockaddr*)&s_un, sizeof(s_un)) < 0) {
     perror("can't bind control socket");
     goto err;
   }
+
   ret = fcntl(ctl_sock, F_GETFL, 0);
   ret = fcntl(ctl_sock, F_SETFL, ret | O_NONBLOCK);
 
@@ -95,20 +97,20 @@ int control_open(ddhcp_config *state) {
     goto err;
   }
 
-  if ( listen(ctl_sock,2) < 0 ){
+  if (listen(ctl_sock, 2) < 0) {
     perror("failed ot listen");
     goto err;
   }
 
   state->control_socket = ctl_sock;
- 
+
   return 0;
 err:
   close(ctl_sock);
   return -1;
 }
 
-int netsock_open(char* interface,char* interface_client, ddhcp_config *state)
+int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 {
   int sock;
   int sock_mc;
@@ -162,7 +164,7 @@ int netsock_open(char* interface,char* interface_client, ddhcp_config *state)
 
   mac_to_ipv6(&hwaddr, &address);
 
-  inet_aton("0.0.0.0",&address_client);
+  inet_aton("0.0.0.0", &address_client);
 
   memset(&sin, 0, sizeof(sin));
 
@@ -198,12 +200,12 @@ int netsock_open(char* interface,char* interface_client, ddhcp_config *state)
     goto err;
   }
 
-  if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+  if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
     perror("can't bind dhcp socket");
     goto err;
   }
 
-  if (bind(sock_mc, (struct sockaddr *)&sin6_mc, sizeof(sin6_mc)) < 0) {
+  if (bind(sock_mc, (struct sockaddr*)&sin6_mc, sizeof(sin6_mc)) < 0) {
     perror("can't bind");
     goto err;
   }
