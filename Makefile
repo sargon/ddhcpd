@@ -44,7 +44,7 @@ clean:
 	-rm -f ddhcpd ddhcpdctl ${OBJ} *.d *.orig
 
 style:
-	astyle --mode=c --options=none -s2 -f -j *.c *.h
+	astyle --mode=c --options=none -s2 -f -j -k1 -W3 -p -U -H *.c *.h
 
 install:
 	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd
