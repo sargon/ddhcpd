@@ -38,7 +38,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
     return 1;
   }
 
-  int now = time(NULL);
+  time_t now = time(NULL);
 
   // TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
   //      and assign one here instead of NULL. Performance boost, Memory defrag?
