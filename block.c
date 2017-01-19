@@ -144,10 +144,16 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
   // TODO If we have more blocks in claiming process than we need, drop the tail
   //      of blocks for which we had less claim announcements.
 
+  if (config->claiming_blocks_amount < 1) {
+    DEBUG("block_claim(...)-> No blocks need claiming.\n");
+    return 0;
+  }
+
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet packet;
   memcpy(packet.node_id, config->node_id, 8); // TODO Avoid magic number for number of bytes to copy
   memcpy(&(packet.prefix), &config->prefix, sizeof(struct in_addr));
+
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
   packet.command = 2; // TODO Avoid magic number for command ID
@@ -167,9 +173,7 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
     index++;
   }
 
-  if (packet.count > 0) {
-    send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
-  }
+  send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
 
   free(packet.payload);
   return 0;
@@ -247,9 +251,7 @@ void block_update_claims(ddhcp_block* blocks, int blocks_needed, ddhcp_config* c
     block++;
   }
 
-  if (packet.count > 0) {
-    send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
-  }
+  send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
 
   free(packet.payload);
 }
