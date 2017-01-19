@@ -94,6 +94,8 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
     if (block->claiming_counts == 3) {
       block_own(block);
 
+      // TODO Error Handling
+
       //Reduce number of blocks we need to claim
       num_blocks--;
 
@@ -119,6 +121,9 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
 
       if (block != NULL) {
         ddhcp_block_list* list = (ddhcp_block_list*) malloc(sizeof(ddhcp_block_list));
+
+        // TODO Error Handling
+
         block->state = DDHCP_CLAIMING;
         block->claiming_counts = 0;
         block->timeout = now + config->tentative_timeout;
@@ -128,7 +133,7 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
       } else {
         // We are short on free blocks in the network.
         WARNING("Warning: Network has no free blocks left!\n");
-        // TODO In a feature version we could start to forward DHCP requests
+        // TODO In a future version we could start to forward DHCP requests
         //      to other servers.
       }
     }
@@ -141,13 +146,16 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
 
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet packet;
-  memcpy(packet.node_id, config->node_id, 8);
+  memcpy(packet.node_id, config->node_id, 8); // TODO Avoid magic number for number of bytes to copy
   memcpy(&(packet.prefix), &config->prefix, sizeof(struct in_addr));
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
-  packet.command = 2;
+  packet.command = 2; // TODO Avoid magic number for command ID
   packet.count = config->claiming_blocks_amount;
-  packet.payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * config->claiming_blocks_amount);
+
+  packet.payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), config->claiming_blocks_amount);
+  // TODO Check we actually got the memory
+
   int index = 0;
   list_for_each(pos, &(config->claiming_blocks).list) {
     ddhcp_block_list*  tmp = list_entry(pos, ddhcp_block_list, list);
@@ -212,17 +220,16 @@ void block_update_claims(ddhcp_block* blocks, int blocks_needed, ddhcp_config* c
   }
 
   struct ddhcp_mcast_packet packet;
-
-  memcpy(packet.node_id, config->node_id, 8);
-
+  memcpy(packet.node_id, config->node_id, 8); // TODO Avoid magic number for number of bytes to copy
   memcpy(&packet.prefix, &config->prefix, sizeof(struct in_addr));
 
   packet.prefix_len = config->prefix_len;
   packet.blocksize = config->block_size;
-  packet.command = 1;
+  packet.command = 1; // TODO Avoid magic number for command ID
   packet.count = our_blocks;
 
-  packet.payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * our_blocks);
+  packet.payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
+  // TODO Check we actually got the memory
 
   int index = 0;
   block = blocks;
