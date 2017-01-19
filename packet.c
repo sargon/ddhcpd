@@ -76,7 +76,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
     packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
     payload = packet->payload;
 
-    for (int i = 0 ; i < packet->count ; i++) {
+    for (int i = 0; i < packet->count; i++) {
       memcpy(&tmp32, buffer, 4);
       payload->block_index = ntohl(tmp32);
       memcpy(&tmp16, buffer + 4, 2);
