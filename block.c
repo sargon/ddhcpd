@@ -10,7 +10,7 @@ int block_own(ddhcp_block* block) {
   // TODO Have a preallocated list of dhcp_lease_blocks?
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
 
-  if (block->addresses != NULL) {
+  if (block->addresses == NULL) {
     return 1;
   }
 
