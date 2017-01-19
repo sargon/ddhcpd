@@ -73,7 +73,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
   switch (packet->command) {
   // UpdateClaim
   case 1:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
+    packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
 
     for (int i = 0; i < packet->count; i++) {
@@ -91,7 +91,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
 
   // InquireBlock
   case 2:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
+    packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
 
     for (int i = 0 ; i < packet->count ; i++) {
@@ -105,7 +105,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
 
   // ReNEWLease
   case 16:
-    packet->payload = (struct ddhcp_payload*) malloc(sizeof(struct ddhcp_payload) * packet->count);
+    packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
 
   default:
     return 2;
