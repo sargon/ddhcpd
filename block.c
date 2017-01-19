@@ -27,8 +27,9 @@ void block_free(ddhcp_block* block) {
   block->state = DDHCP_FREE;
 
   if (block->addresses) {
-    DEBUG("Free DHCP leases for Block%i\n", block->index);
+    DEBUG("Free DHCP leases for Block %i\n", block->index);
     free(block->addresses);
+    block->addresses = NULL;
   }
 }
 
