@@ -92,8 +92,11 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
 
     if (block->claiming_counts == 3) {
       block_own(block);
-      INFO("Block %i claimed after 3 claims.\n", block->index);
+
+      //Reduce number of blocks we need to claim
       num_blocks--;
+
+      INFO("Block %i claimed after 3 claims.\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
       free(tmp);
@@ -267,13 +270,15 @@ void block_check_timeouts(ddhcp_block* blocks, ddhcp_config* config) {
 }
 
 void block_free_claims(ddhcp_config* config) {
-  if (! list_empty(&config->claiming_blocks.list)) {
-    struct list_head* pos, *q;
-    list_for_each_safe(pos, q, &(config->claiming_blocks).list) {
-      ddhcp_block_list* tmp = list_entry(pos, ddhcp_block_list, list);
-      list_del(pos);
-      free(tmp);
-    }
+  if (list_empty(&config->claiming_blocks.list)) {
+    return;
+  }
+
+  struct list_head* pos, *q;
+  list_for_each_safe(pos, q, &(config->claiming_blocks).list) {
+    ddhcp_block_list* tmp = list_entry(pos, ddhcp_block_list, list);
+    list_del(pos);
+    free(tmp);
   }
 }
 
