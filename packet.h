@@ -1,5 +1,6 @@
 #ifndef _PACKET_H
 #define _PACKET_H
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -19,8 +20,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "types.h"
+
 struct ddhcp_mcast_packet {
-  uint8_t node_id[8];
+  ddhcp_node_id node_id;
   struct in_addr prefix;
   uint8_t prefix_len;
   uint8_t blocksize;
@@ -29,12 +32,14 @@ struct ddhcp_mcast_packet {
 
   struct ddhcp_payload* payload;
 };
+typedef struct ddhcp_mcast_packet ddhcp_mcast_packet;
 
 struct ddhcp_payload {
   uint32_t block_index;
   uint16_t timeout;
   uint16_t reserved;
 };
+typedef struct ddhcp_payload ddhcp_payload;
 
 int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet);
 

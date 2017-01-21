@@ -7,6 +7,7 @@
 #include "list.h"
 
 #define NODE_ID_CMP(id1,id2) strncmp((char*) (id1), (char*) (id2), 8)
+
 // block structures
 
 enum ddhcp_block_state {
@@ -81,12 +82,13 @@ enum dhcp_option_code {
   DHCP_CODE_END = 255,
 };
 
-// state
+typedef uint8_t ddhcp_node_id[8];
 
+// state
 
 // TODO Rename to state
 struct ddhcp_config {
-  uint8_t node_id[8];
+  ddhcp_node_id node_id;
   uint32_t number_of_blocks;
   uint16_t block_timeout;
   uint16_t tentative_timeout;
@@ -100,7 +102,6 @@ struct ddhcp_config {
   uint32_t loop_timeout;
   unsigned int claiming_blocks_amount;
   ddhcp_block_list claiming_blocks;
-
 
   // DHCP Options
   dhcp_option_list options;
