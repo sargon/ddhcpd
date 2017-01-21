@@ -6,7 +6,7 @@
 
 #include "list.h"
 
-#define NODE_ID_CMP(id1,id2) strncmp((char*) id1,(char*) id2,8)
+#define NODE_ID_CMP(id1,id2) strncmp((char*) (id1), (char*) (id2), 8)
 // block structures
 
 enum ddhcp_block_state {
