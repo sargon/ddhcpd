@@ -54,6 +54,7 @@ int main(int argc, char** argv) {
       if (dhcp_option_code > 0) {
         dhcp_option_len = atoi(optarg);
         printf("DHCP_OPTION_LEN: %i\n", dhcp_option_len);
+
         dhcp_option_payload = (uint8_t*) calloc(dhcp_option_len, sizeof(uint8_t));
       } else {
         printf("No DHCP Code given");
