@@ -50,9 +50,19 @@ int main(int argc, char** argv) {
 
     case 'l':
 
-      // dhpc option len
+      // dhcp option len
       if (dhcp_option_code > 0) {
-        dhcp_option_len = atoi(optarg);
+        int tmp_dhcp_optlen = atoi(optarg);
+
+        if(tmp_dhcp_optlen > 255) {
+          printf("Option Payload too long");
+          dhcp_option_len = 0;
+          show_usage = 1;
+          break;
+        }
+
+        dhcp_option_len = tmp_dhcp_optlen;
+
         printf("DHCP_OPTION_LEN: %i\n", dhcp_option_len);
 
         dhcp_option_payload = (uint8_t*) calloc(dhcp_option_len, sizeof(uint8_t));
