@@ -159,7 +159,7 @@ void init_dhcp_options(ddhcp_config* config) {
     option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
     option->code = DHCP_CODE_SUBNET_MASK;
     option->len = 4;
-    option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4);
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
     option->payload[0] = 256 - (256 >> min(max(pl -  0, 0), 8));
     option->payload[1] = 256 - (256 >> min(max(pl -  8, 0), 8));
     option->payload[2] = 256 - (256 >> min(max(pl - 16, 0), 8));
@@ -172,7 +172,7 @@ void init_dhcp_options(ddhcp_config* config) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
     option->code = DHCP_CODE_TIME_OFFSET;
     option->len = 4;
-    option->payload = (uint8_t*) malloc(sizeof(uint8_t) * 4);
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
     option->payload[0] = 0;
     option->payload[1] = 0;
     option->payload[2] = 0;
@@ -199,7 +199,7 @@ void init_dhcp_options(ddhcp_config* config) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
     option->code = DHCP_CODE_BROADCAST_ADDRESS;
     option->len = 4;
-    option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4);
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
     option->payload[0] = (uint8_t) config->prefix.s_addr | ((1 << min(max(8 - pl, 0), 8)) - 1);
     option->payload[1] = (((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1);
     option->payload[2] = (((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1);
@@ -212,7 +212,7 @@ void init_dhcp_options(ddhcp_config* config) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
     option->code = DHCP_CODE_SERVER_IDENTIFIER;
     option->len = 4;
-    option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4);
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
     // TODO Check interface for address
     memcpy(option->payload, &config->prefix.s_addr, 4);
     //option->payload[0] = 10;
