@@ -295,6 +295,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
     WARNING("handle_command(...) -> zero length command received\n");
   }
 
+  // TODO Avoid magic numbers for commands
   switch (buffer[0]) {
   case 1:
     DEBUG("handle_command(...) -> show block status\n");

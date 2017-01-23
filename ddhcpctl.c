@@ -12,7 +12,6 @@ int main(int argc, char** argv) {
   int c;
   int ctl_sock;
   int show_usage = 0;
-  uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), 1500);
   unsigned int msglen = 0;
   uint8_t dhcp_option_code = 0;
   uint8_t dhcp_option_len = 0;
@@ -22,6 +21,9 @@ int main(int argc, char** argv) {
   if (argc == 1) {
     show_usage = 1;
   }
+
+#define BUFSIZE_MAX 1500
+  uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
   while ((c = getopt(argc, argv, "t:bdhc:l:p:")) != -1) {
     switch (c) {
