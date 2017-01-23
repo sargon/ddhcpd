@@ -30,6 +30,11 @@ struct ddhcp_block* blocks;
 int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   assert(blocks);
 
+  if (config->number_of_blocks < 1) {
+    FATAL("ddhcp_block_init(...)-> Need at least 1 blocks to be configured\n");
+    return 1;
+  }
+
   DEBUG("ddhcp_block_init( blocks, config)\n");
   *blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
 
