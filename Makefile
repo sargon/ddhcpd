@@ -41,7 +41,7 @@ ddhcpdctl: ${OBJCTL}
 	${CC} ${OBJCTL} ${CFLAGS} -o ddhcpdctl ${LFLAGS}
 
 clean:
-	-rm -f ddhcpd ddhcpdctl ${OBJ} *.d *.orig
+	-rm -f ddhcpd ddhcpdctl ${OBJ} ${OBJCTL} *.d *.orig
 
 style:
 	astyle --mode=c --options=none -s2 -f -j -k1 -W3 -p -U -H *.c *.h
