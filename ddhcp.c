@@ -75,6 +75,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
 
     if (block_index >= config->number_of_blocks) {
       WARNING("ddhcp_block_process_claims(...): Malformed block number\n");
+      continue;
     }
 
     if (blocks[block_index].state == DDHCP_OURS) {
