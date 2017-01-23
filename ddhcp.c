@@ -70,7 +70,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
   time_t now = time(NULL);
 
   for (unsigned int i = 0 ; i < packet->count ; i++) {
-    struct ddhcp_payload* claim = ((struct ddhcp_payload*) packet->payload) + i;
+    struct ddhcp_payload* claim = &packet->payload[i];
     uint32_t block_index = claim->block_index;
 
     if (block_index >= config->number_of_blocks) {
@@ -96,7 +96,7 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
   time_t now = time(NULL);
 
   for (unsigned int i = 0 ; i < packet->count ; i++) {
-    struct ddhcp_payload* tmp = ((struct ddhcp_payload*) packet->payload) + i;
+    struct ddhcp_payload* tmp = &packet->payload[i];
 
     if (tmp->block_index >= config->number_of_blocks) {
       WARNING("ddhcp_block_process_inquire(...): Malformed block number\n");
