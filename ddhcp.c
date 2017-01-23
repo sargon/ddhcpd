@@ -81,7 +81,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
     if (blocks[block_index].state == DDHCP_OURS) {
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims our block %i\n", HEX_NODE_ID(packet->node_id), block_index);
       // TODO Decide when and if we reclaim this block
-      //      Which node has more leases in this block, ..., how has the better node_id.
+      //      Which node has more leases in this block, ..., who has the better node_id.
     } else {
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;

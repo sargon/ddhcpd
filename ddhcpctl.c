@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     printf("-b              Show current block usage.\n");
     printf("-d              Show the current dhcp options store.\n");
     printf("-c <num>        Set a dhcp option code.\n");
-    printf("-l <num>        Set the dhco option len.\n");
+    printf("-l <num>        Set the dhcp option len.\n");
     printf("-p <num>        Set the payload of a dhcp option decoded as integer.\n");
     exit(0);
   }
