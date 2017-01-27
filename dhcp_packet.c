@@ -38,6 +38,7 @@ void printf_dhcp(dhcp_packet* packet) {
          , packet->sname
          , packet->file
         );
+
   free(ciaddr_str);
   free(yiaddr_str);
   free(giaddr_str);
@@ -45,13 +46,13 @@ void printf_dhcp(dhcp_packet* packet) {
 
   dhcp_option* option = packet->options;
 
-  for (int i = 0; i < packet->options_len; i ++) {
+  for (int i = 0; i < packet->options_len; i++) {
     if (option->len == 1) {
       printf("DHCP OPTION [ code %i, length %i, value %i ]\n", option->code, option->len, option->payload[0]);
     } else if (option->code == DHCP_CODE_PARAMETER_REQUEST_LIST) {
       printf("DHCP OPTION [ code %i, length %i, value ", option->code, option->len);
 
-      for (int k  = 0; k < option->len; k++) {
+      for (int k = 0; k < option->len; k++) {
         printf("%i ", option->payload[k]);
       }
 
@@ -68,7 +69,7 @@ int _dhcp_packet_len(dhcp_packet* packet) {
   int len = 240 + 1;
   dhcp_option* option = packet->options;
 
-  for (int i = 0 ; i < packet->options_len; i++) {
+  for (int i = 0; i < packet->options_len; i++) {
     switch (option->code) {
     case DHCP_CODE_PAD:
     case DHCP_CODE_END:
@@ -96,6 +97,8 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
   }
 
   printf("LEN:%i\n", len);
+
+  // TODO Use macros to read from the buffer
 
   packet->op    = buffer[0];
   packet->htype = buffer[1];
@@ -181,7 +184,9 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
 
   packet->options_len = options;
   packet->options = (dhcp_option*) malloc(sizeof(dhcp_option) * options);
+
   option = buffer + 236 + 4;
+
   exit = 0;
   int i = 0;
 
@@ -195,6 +200,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
       packet->options[i].code = option[0];
       packet->options[i].len  = 0;
       packet->options[i].payload = NULL;
+
       option += 1;
       i++;
       break;
@@ -203,6 +209,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
       packet->options[i].code = option[0];
       packet->options[i].len  = option[1];
       packet->options[i].payload = option + 2;
+
       option += (uint8_t) option[1] + 2;
       i++;
       break;
@@ -291,7 +298,7 @@ int send_dhcp_packet(int socket, dhcp_packet* packet) {
 uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
   dhcp_option* option = packet->options;
 
-  for (int i = 0; i < packet->options_len; i ++) {
+  for (int i = 0; i < packet->options_len; i++) {
     if (option->code == DHCP_CODE_MESSAGE_TYPE) {
       return (uint8_t) option->payload[0];
     }

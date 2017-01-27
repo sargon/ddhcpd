@@ -48,4 +48,5 @@ uint32_t dhcp_get_free_lease(ddhcp_block* block);
  * HouseKeeping: Check for timed out leases.
  */
 void dhcp_check_timeouts(ddhcp_block* block);
+
 #endif

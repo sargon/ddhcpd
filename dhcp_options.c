@@ -9,7 +9,7 @@
 dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code) {
   dhcp_option* option = options;
 
-  for (; option < options + len ; option++) {
+  for (; option < options + len; option++) {
     if (option->code == code) {
       return option;
     }
@@ -29,7 +29,9 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
       option->code = code;
       option->len = payload_len;
       option->payload = payload;
+
       DEBUG("set_option(...) -> set option at %i \n", i);
+
       return 0;
     }
   }
@@ -62,9 +64,11 @@ uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len) {
 
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
   DEBUG("find_in_option_store( store, code: %i)\n", code);
+
   dhcp_option* option = NULL;
   struct list_head* pos, *q;
   dhcp_option_list* tmp;
+
   list_for_each_safe(pos, q, &options->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     option = tmp->option;
@@ -80,6 +84,7 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
 
 dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
   DEBUG("set_in_option_store( store, code/len: %i/%i)\n", option->code, option->len);
+
   dhcp_option* current = find_in_option_store(store, option->code);
 
   if (current != NULL) {
@@ -93,6 +98,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
 
     current->len = option->len;
     current->payload = option->payload;
+
     return current;
   } else {
     DEBUG("set_in_option_store(...) -> append option\n");
@@ -100,6 +106,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
     dhcp_option_list* tmp;
     tmp = (dhcp_option_list*) malloc(sizeof(dhcp_option_list));
     tmp->option = option;
+
     list_add_tail((&tmp->list), &(store->list));
 
     return option;
@@ -109,6 +116,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
 void free_option_store(dhcp_option_list* store) {
   struct list_head* pos, *q;
   dhcp_option_list* tmp;
+
   list_for_each_safe(pos, q, &store->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     dhcp_option* option = tmp->option;
@@ -125,7 +133,6 @@ void free_option_store(dhcp_option_list* store) {
 
 dhcp_option* remove_option_from_store(dhcp_option_list* store, uint8_t code);
 
-
 int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
   int num_found_options = 0;
 
@@ -137,7 +144,7 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
     return 0;
   }
 
-  *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option) , max_options + additional);
+  *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option), max_options + additional);
 
   for (uint8_t i = additional; i < max_options; i++) {
     uint8_t code = requested[i];
@@ -156,6 +163,7 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
 void dhcp_options_show(int fd, dhcp_option_list* store) {
   struct list_head* pos, *q;
   dhcp_option_list* tmp;
+
   list_for_each_safe(pos, q, &store->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     dhcp_option* option = tmp->option;
