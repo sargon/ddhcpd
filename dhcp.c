@@ -97,9 +97,10 @@ int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_
           DEBUG("dhcp_discover(...) -> block %i has best lease ratio until now\n", block->index);
           uint32_t index = dhcp_get_free_lease(block);
           lease_block = block;
-          lease = block->addresses + index;
           lease_index = index;
           lease_ratio = free_leases;
+
+          lease = block->addresses + index;
         }
       }
     }
@@ -107,7 +108,7 @@ int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_
     block++;
   }
 
-  if (lease == NULL) {
+  if (! lease) {
     DEBUG("dhcp_discover(...) -> no free leases found");
     return 2;
   }

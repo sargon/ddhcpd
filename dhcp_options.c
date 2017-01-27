@@ -87,22 +87,25 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
   dhcp_option* current = find_in_option_store(store, option->code);
 
   if (current != NULL) {
+    DEBUG("set_in_option_store(...) -> replace option\n");
+
     // Replacing current with new option
-    current->len = option->len;
 
     if (current->payload) {
       free(current->payload);
     }
 
-    DEBUG("set_in_option_store(...) -> replace option\n");
+    current->len = option->len;
     current->payload = option->payload;
     return current;
   } else {
+    DEBUG("set_in_option_store(...) -> append option\n");
+
     dhcp_option_list* tmp;
     tmp = (dhcp_option_list*) malloc(sizeof(dhcp_option_list));
     tmp->option = option;
     list_add_tail((&tmp->list), &(store->list));
-    DEBUG("set_in_option_store(...) -> append option\n");
+
     return option;
   }
 }
