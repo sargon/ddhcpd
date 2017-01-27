@@ -43,7 +43,8 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
     }
   }
 
-  DEBUG("find_lease_from_address(...) -> %i address out of network\n", block_number);
+  DEBUG("find_lease_from_address(...) -> block index %i outside of configured of network structure\n", block_number);
+
   return 1;
 }
 
@@ -331,8 +332,10 @@ void dhcp_check_timeouts(ddhcp_block* block) {
 
   for (unsigned int i = 0 ; i < block->subnet_len ; i++) {
     if (lease->state != FREE && lease->lease_end < now) {
-      printf("Free Lease\n");
+      INFO("Releasing Lease %i in block %i\n", i, block->index);
+
       memset(lease->chaddr, 0, 16);
+
       lease->xid   = 0;
       lease->state = FREE;
     }
