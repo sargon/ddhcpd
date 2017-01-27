@@ -158,16 +158,11 @@ int dhcp_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, d
   uint8_t found_address = 0;
 
   if (address) {
-    memcpy(&requested_address, address, 4);
+    memcpy(&requested_address, address, sizeof(struct in_addr));
     found_address = 1;
-  }
-
-
-  if (!address) {
-    if (request->ciaddr.s_addr != INADDR_ANY) {
-      memcpy(&requested_address, &request->ciaddr.s_addr, 4);
-      found_address = 1;
-    }
+  } else if (request->ciaddr.s_addr != INADDR_ANY) {
+    memcpy(&requested_address, &request->ciaddr.s_addr, sizeof(struct in_addr));
+    found_address = 1;
   }
 
   if (found_address) {
