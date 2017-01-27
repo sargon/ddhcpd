@@ -30,8 +30,12 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
   if (block_number < config->number_of_blocks) {
     if (blocks[block_number].state == DDHCP_OURS) {
       DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n", block_number, lease_number);
-      *lease_block = blocks + block_number;
-      *lease_index = lease_number;
+      if(lease_block) {
+        *lease_block = blocks + block_number;
+      }
+      if(lease_index) {
+        *lease_index = lease_number;
+      }
       return 0;
     } else {
       // TODO Try to aquire address for client
