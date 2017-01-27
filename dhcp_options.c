@@ -114,7 +114,7 @@ void free_option_store(dhcp_option_list* store) {
     dhcp_option* option = tmp->option;
     list_del(pos);
 
-    if (option->len > 1) {
+    if (option->payload) {
       free(option->payload);
     }
 
