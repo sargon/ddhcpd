@@ -153,6 +153,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
 
     case DHCP_CODE_PARAMETER_REQUEST_LIST:
       dhcp_request_list = 1;
+      break;
 
     default:
       break;
