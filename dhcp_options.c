@@ -41,27 +41,23 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
 int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_t** requested) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_PARAMETER_REQUEST_LIST);
 
-  if (option) {
-    *requested = (uint8_t*) option->payload;
-    DEBUG("find_option_parameter_request_list(...) -> %i\n", option->len);
-    return option->len;
-  } else {
-    *requested = NULL;
-    DEBUG("find_option_parameter_request_list(...) -> %i\n", 0);
-    return 0;
+  if(requested) {
+    *requested = option ? (uint8_t*) option->payload : NULL;
   }
+
+  int optlen = option ? option->len : 0;
+
+  DEBUG("find_option_parameter_request_list(...) -> %i\n", optlen);
+
+  return optlen;
 }
 
 uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_REQUESTED_ADDRESS);
 
-  if (option) {
-    DEBUG("find_option_requested_address(...) -> found\n");
-    return option->payload;
-  } else {
-    DEBUG("find_option_parameter_request_list(...) -> not found\n");
-    return NULL;
-  }
+  DEBUG("find_option_requested_address(...) -> address %s\n", option ? "found" : "not found");
+
+  return option ? option->payload : NULL;
 }
 
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
