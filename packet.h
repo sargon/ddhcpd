@@ -22,6 +22,9 @@
 
 #include "types.h"
 
+#define DDHCP_MSG_UPDATECLAIM 1
+#define DDHCP_MSG_INQUIRE 2
+
 struct ddhcp_mcast_packet {
   ddhcp_node_id node_id;
   struct in_addr prefix;

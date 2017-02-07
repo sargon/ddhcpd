@@ -22,11 +22,11 @@ int _packet_size(int command, int payload_count) {
   int len = 0;
 
   switch (command) {
-  case 1:
+  case DDHCP_MSG_UPDATECLAIM: 
     len = 16 + payload_count * 7;
     break;
 
-  case 2:
+  case DDHCP_MSG_INQUIRE:  
     len = 16 + payload_count * 4;
     break;
 
@@ -83,7 +83,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
 
   switch (packet->command) {
   // UpdateClaim
-  case 1:
+  case DDHCP_MSG_UPDATECLAIM:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
 
@@ -103,7 +103,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
     break;
 
   // InquireBlock
-  case 2:
+  case DDHCP_MSG_INQUIRE:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
 
