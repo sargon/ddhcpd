@@ -627,11 +627,11 @@ int main(int argc, char** argv) {
 
         if (ret == 0) {
           switch (packet.command) {
-          case DHCPDISCOVER:
+          case DDHCP_MSG_UPDATECLAIM:
             ddhcp_block_process_claims(blocks, &packet, config);
             break;
 
-          case 2:
+          case DDHCP_MSG_INQUIRE:
             ddhcp_block_process_inquire(blocks, &packet, config);
 
           default:
