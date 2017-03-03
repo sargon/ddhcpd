@@ -43,7 +43,7 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
 int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_t** requested) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_PARAMETER_REQUEST_LIST);
 
-  if(requested) {
+  if (requested) {
     *requested = option ? (uint8_t*) option->payload : NULL;
   }
 

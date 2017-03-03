@@ -114,7 +114,7 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
       INFO("ddhcp_block_process_inquire(...): we are interested in block %i also\n", tmp->block_index);
 
       // QUESTION Why do we need multiple states for the same process?
-      if (NODE_ID_CMP(packet->node_id, config->node_id)>0) {
+      if (NODE_ID_CMP(packet->node_id, config->node_id) > 0) {
         INFO("ddhcp_block_process_inquire(...): .. but other node wins.\n");
         blocks[tmp->block_index].state = DDHCP_TENTATIVE;
         blocks[tmp->block_index].timeout = now + config->tentative_timeout;
@@ -327,7 +327,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
       return -2;
     }
 
-    if(buffer[2] > msglen - 3) {
+    if (buffer[2] > msglen - 3) {
       DEBUG("handle_command(...) -> message not long enought\n");
       return -2;
     }
