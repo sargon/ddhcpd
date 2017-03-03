@@ -7,16 +7,15 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "tools.h"
+
 int main(int argc, char** argv) {
 
   int c;
   int ctl_sock;
   int show_usage = 0;
   unsigned int msglen = 0;
-  uint8_t dhcp_option_code = 0;
-  uint8_t dhcp_option_len = 0;
-  uint8_t* dhcp_option_payload = NULL;
-  uint8_t dhcp_option_payload_counter = 0;
+  dhcp_option* option = NULL;
 
   if (argc == 1) {
     show_usage = 1;
@@ -25,7 +24,7 @@ int main(int argc, char** argv) {
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
-  while ((c = getopt(argc, argv, "t:bdhc:l:p:")) != -1) {
+  while ((c = getopt(argc, argv, "t:bdho:")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -43,47 +42,8 @@ int main(int argc, char** argv) {
       buffer[0] = (char) 2;
       break;
 
-    case 'c':
-      // dhcp option code
-      dhcp_option_code = atoi(optarg);
-      break;
-
-    case 'l':
-
-      // dhcp option len
-      if (dhcp_option_code > 0) {
-        int tmp_dhcp_optlen = atoi(optarg);
-
-        if(tmp_dhcp_optlen > 255) {
-          printf("Option Payload too long");
-          dhcp_option_len = 0;
-          show_usage = 1;
-          break;
-        }
-
-        dhcp_option_len = tmp_dhcp_optlen;
-
-        printf("DHCP_OPTION_LEN: %i\n", dhcp_option_len);
-
-        dhcp_option_payload = (uint8_t*) calloc(dhcp_option_len, sizeof(uint8_t));
-      } else {
-        printf("No DHCP Code given");
-        show_usage = 1;
-      }
-
-      break;
-
-    case 'p':
-
-      // dhcp option payload
-      if (dhcp_option_len > dhcp_option_payload_counter) {
-        printf("DHCP_OPTION_PAYLOAD[%i]: %i\n", dhcp_option_payload_counter, atoi(optarg));
-        dhcp_option_payload[dhcp_option_payload_counter++] = atoi(optarg);
-      } else {
-        printf("Payload len exceeded or no dhcp option len set.\n");
-        show_usage = 1;
-      }
-
+    case 'o':
+      option = parse_option();
       break;
 
     default:
@@ -95,38 +55,22 @@ int main(int argc, char** argv) {
 
   // Check if a dhcp option code should be set and if all parameters
   // for that are given.
-  if (dhcp_option_code > 0) {
-    if (dhcp_option_len > 0) {
-      if (dhcp_option_payload_counter == dhcp_option_len) {
-        msglen = 3 + dhcp_option_len;
-        buffer[0] = (char) 3;
-        buffer[1] = (char) dhcp_option_code;
-        buffer[2] = (char) dhcp_option_len;
-
-        for (uint8_t i = 0; i < dhcp_option_len; i++) {
-          buffer[3 + i] = dhcp_option_payload[i];
-        }
-      } else {
-        printf("Not enough DHCP payload given.\n");
-        free(dhcp_option_payload);
-        show_usage = 1;
-      }
-    } else {
-      printf("No DHCP option len given.\n");
-      show_usage = 1;
-    }
+  if (option != NULL) {
+    msglen = 3 + option->len;
+    buffer[0] = (char) 3;
+    buffer[1] = (char) option->code;
+    buffer[2] = (char) option->len;
+    memcpy(buffer + 3, option->payload, sizeof(option));
+    free(option);
   }
 
-
   if (show_usage) {
-    printf("Usage: ddhcpctl [-h|-b|-d|-c <num> -l <num> (-p <num>)+]\n");
+    printf("Usage: ddhcpctl [-h|-b|-d|-o <option>]\n");
     printf("\n");
-    printf("-h              This usage information.\n");
-    printf("-b              Show current block usage.\n");
-    printf("-d              Show the current dhcp options store.\n");
-    printf("-c <num>        Set a dhcp option code.\n");
-    printf("-l <num>        Set the dhcp option len.\n");
-    printf("-p <num>        Set the payload of a dhcp option decoded as integer.\n");
+    printf("-h                   This usage information.\n");
+    printf("-b                   Show current block usage.\n");
+    printf("-d                   Show the current dhcp options store.\n");
+    printf("-o CODE;LEN;P1,..,Pn Set DHCP Option with code,len and #len chars in decimal\n");
     exit(0);
   }
 
@@ -175,8 +119,4 @@ int main(int argc, char** argv) {
 
   close(ctl_sock);
   free(buffer);
-
-  if (dhcp_option_payload != NULL) {
-    free(dhcp_option_payload);
-  }
 }
