@@ -625,6 +625,10 @@ int main(int argc, char** argv) {
             dhcp_hdl_request(config->client_socket, &dhcp_packet, blocks, config);
             break;
 
+          case DHCPRELEASE:
+            dhcp_hdl_release(&dhcp_packet, blocks, config);
+            break;
+
           default:
             WARNING("Unknown DHCP message of type: %i\n", message_type);
             break;

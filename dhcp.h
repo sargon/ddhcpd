@@ -23,6 +23,11 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
  */
 int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
 
+/**
+ * DHCP Release
+ */
+void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* block, ddhcp_config* config);
+
 int dhcp_nack(int socket, dhcp_packet* from_client);
 
 /**
@@ -43,6 +48,14 @@ int dhcp_num_free(struct ddhcp_block* block);
  * it returns the value of block_subnet_len.
  */
 uint32_t dhcp_get_free_lease(ddhcp_block* block);
+
+/**
+ * Find lease for given address and mark it as free.
+ * When no address is found no return value is given,
+ * since there is no reply to a dhcp release packet
+ * no further internal handling is needed.
+ */
+void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* config);
 
 /**
  * HouseKeeping: Check for timed out leases.

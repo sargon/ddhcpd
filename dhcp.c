@@ -265,6 +265,13 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
   return 0;
 }
 
+void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* config) {
+  uint32_t address = 0;
+  memcpy(&address, &packet->ciaddr, 4);
+// TODO Don't ignore clients hardware address.
+  dhcp_release_lease(address, blocks, config);
+}
+
 int dhcp_nack(int socket, dhcp_packet* from_client) {
   dhcp_packet* packet = build_initial_packet(from_client);
 
@@ -330,6 +337,28 @@ uint32_t dhcp_get_free_lease(ddhcp_block* block) {
   ERROR("dhcp_get_free_lease(...): no free lease found");
 
   return block->subnet_len;
+}
+
+void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* config) {
+
+  dhcp_lease* lease = NULL;
+  ddhcp_block* lease_block = NULL;
+  uint32_t lease_index = 0;
+  struct in_addr addr;
+  memcpy(&addr, &address, sizeof(struct in_addr));
+  uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
+
+  if (found == 0) {
+    INFO("Releasing Lease %i in block %i\n", lease_index, lease_block->index);
+    lease = lease_block->addresses + lease_index;
+
+    memset(lease->chaddr, 0, 16);
+
+    lease->xid   = 0;
+    lease->state = FREE;
+  } else {
+    DEBUG("No lease for Address %s found.\n", inet_ntoa(addr));
+  }
 }
 
 void dhcp_check_timeouts(ddhcp_block* block) {
