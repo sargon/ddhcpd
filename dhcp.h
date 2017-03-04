@@ -15,13 +15,13 @@
  *
  * In a second step a dhcp_packet is created an send back.
  */
-int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config);
 
 /**
  * DHCP Request
  * Performs on base of de
  */
-int dhcp_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
 
 int dhcp_nack(int socket, dhcp_packet* from_client);
 

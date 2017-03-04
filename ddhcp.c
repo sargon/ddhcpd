@@ -612,7 +612,7 @@ int main(int argc, char** argv) {
 
           switch (message_type) {
           case DHCPDISCOVER:
-            ret = dhcp_discover(config->client_socket, &dhcp_packet, blocks, config);
+            ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, blocks, config);
 
             if (ret == 1) {
               INFO("we need to inquire new blocks\n");
@@ -622,7 +622,7 @@ int main(int argc, char** argv) {
             break;
 
           case DHCPREQUEST:
-            dhcp_request(config->client_socket, &dhcp_packet, blocks, config);
+            dhcp_hdl_request(config->client_socket, &dhcp_packet, blocks, config);
             break;
 
           default:

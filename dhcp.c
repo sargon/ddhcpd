@@ -77,7 +77,7 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
   return packet;
 }
 
-int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config) {
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n", socket);
 
   time_t now = time(NULL);
@@ -151,7 +151,7 @@ int dhcp_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_
   return 0;
 }
 
-int dhcp_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
   DEBUG("dhcp_request( %i, dhcp_packet, blocks, config)\n", socket);
 
   // search the lease we may have offered
