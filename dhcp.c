@@ -58,6 +58,18 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
   return 2;
 }
 
+void _dhcp_release_lease(ddhcp_block* block , uint32_t lease_index) {
+  INFO("Releasing Lease %i in block %i\n", lease_index, block->index);
+  dhcp_lease *lease = block->addresses + lease_index;
+
+  // TODO Should we really reset the chaddr or xid, RFC says we
+  // ''SHOULD retain a record of the client's initialization parameters for possible reuse''
+  memset(lease->chaddr, 0, 16);
+
+  lease->xid   = 0;
+  lease->state = FREE;
+}
+
 dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
   DEBUG("build_initial_packet( from_client, packet )\n");
 
@@ -351,7 +363,6 @@ uint32_t dhcp_get_free_lease(ddhcp_block* block) {
 
 void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* config) {
 
-  dhcp_lease* lease = NULL;
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
   struct in_addr addr;
@@ -359,13 +370,7 @@ void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* con
   uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
 
   if (found == 0) {
-    INFO("Releasing Lease %i in block %i\n", lease_index, lease_block->index);
-    lease = lease_block->addresses + lease_index;
-
-    memset(lease->chaddr, 0, 16);
-
-    lease->xid   = 0;
-    lease->state = FREE;
+    _dhcp_release_lease(lease_block, lease_index);
   } else {
     DEBUG("No lease for Address %s found.\n", inet_ntoa(addr));
   }
@@ -377,12 +382,7 @@ void dhcp_check_timeouts(ddhcp_block* block) {
 
   for (unsigned int i = 0 ; i < block->subnet_len ; i++) {
     if (lease->state != FREE && lease->lease_end < now) {
-      INFO("Releasing Lease %i in block %i\n", i, block->index);
-
-      memset(lease->chaddr, 0, 16);
-
-      lease->xid   = 0;
-      lease->state = FREE;
+      _dhcp_release_lease(block, i);
     }
 
     lease++;
