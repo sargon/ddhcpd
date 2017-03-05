@@ -288,10 +288,24 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
 }
 
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* config) {
-  uint32_t address = 0;
-  memcpy(&address, &packet->ciaddr, 4);
-// TODO Don't ignore clients hardware address.
-  dhcp_release_lease(address, blocks, config);
+  ddhcp_block* lease_block = NULL;
+  uint32_t lease_index = 0;
+  struct in_addr addr;
+  memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
+  uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
+
+  switch (found) {
+  case 0:
+    _dhcp_release_lease(lease_block, lease_index);
+
+  case 1:
+    // TODO Handle remote block
+    break;
+
+  default:
+    // Since there is no reply to this message, we could `silently` drop this case.
+    break;
+  }
 }
 
 int dhcp_nack(int socket, dhcp_packet* from_client) {
