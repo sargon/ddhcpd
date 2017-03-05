@@ -18,6 +18,13 @@ uint16_t DHCP_LEASE_SERVER_DELTA = 100;
 #define DEBUG_LEASE(...)
 #endif
 
+/**
+ * Search for block and lease for given address, returns a status code and found
+ * results.
+ * A status code of 0 is returned, iff the result is in one of our blocks.
+ * Of 1, iff result is non in our blocks.
+ * And 2 on failure.
+ */
 uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp_config* config, ddhcp_block** lease_block, uint32_t* lease_index) {
 #if LOG_LEVEL >= LOG_DEBUG
   DEBUG("find_lease_from_address( %s, ...)\n", inet_ntoa(*addr));
@@ -28,14 +35,17 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
   uint32_t lease_number = (ntohl(address) - ntohl((uint32_t) config->prefix.s_addr)) % config->block_size;
 
   if (block_number < config->number_of_blocks) {
+    DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n", block_number, lease_number);
+
+    if (lease_block) {
+      *lease_block = blocks + block_number;
+    }
+
+    if (lease_index) {
+      *lease_index = lease_number;
+    }
+
     if (blocks[block_number].state == DDHCP_OURS) {
-      DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n", block_number, lease_number);
-      if(lease_block) {
-        *lease_block = blocks + block_number;
-      }
-      if(lease_index) {
-        *lease_index = lease_number;
-      }
       return 0;
     } else {
       // TODO Try to aquire address for client
@@ -45,7 +55,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
 
   DEBUG("find_lease_from_address(...) -> block index %i outside of configured of network structure\n", block_number);
 
-  return 1;
+  return 2;
 }
 
 dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
