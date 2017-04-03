@@ -380,7 +380,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "c:i:t:dDhLb:N:o:s:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:t:dDhLb:N:o:s:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -454,6 +454,10 @@ int main(int argc, char** argv) {
 
     case 's':
       config->spare_blocks_needed = atoi(optarg);
+      break;
+
+    case 'C':
+      config->control_path = optarg;
       break;
 
     default:

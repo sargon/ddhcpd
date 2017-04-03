@@ -20,11 +20,12 @@ int main(int argc, char** argv) {
   if (argc == 1) {
     show_usage = 1;
   }
+  char* path = "/tmp/ddhcpd_ctl";
 
-#define BUFSIZE_MAX 1500
+  #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
-  while ((c = getopt(argc, argv, "t:bdho:")) != -1) {
+  while ((c = getopt(argc, argv, "C:t:bdho:")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -44,6 +45,10 @@ int main(int argc, char** argv) {
 
     case 'o':
       option = parse_option();
+      break;
+
+    case 'C':
+      path = optarg; 
       break;
 
     default:
@@ -84,7 +89,6 @@ int main(int argc, char** argv) {
   memset(&s_un, 0, sizeof(struct sockaddr_un));
   s_un.sun_family = AF_UNIX;
 
-  char* path = "/tmp/ddhcpd_ctl";
 
   strncpy(s_un.sun_path, path, sizeof(s_un.sun_path));
 
