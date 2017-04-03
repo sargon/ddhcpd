@@ -134,6 +134,7 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
   int len = _packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);
+  char* buffer_orig = buffer;
 
   errno = 0;
 
@@ -210,9 +211,9 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 
   memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
-  sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+  sendto(mulitcast_socket, buffer_orig, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
-  free(buffer);
+  free(buffer_orig);
 
   return 0;
 }
