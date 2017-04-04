@@ -54,7 +54,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
     block->state = DDHCP_FREE;
     addr_add(&config->prefix, &block->subnet, index * config->block_size);
     block->subnet_len = config->block_size;
-    block->address = 0;
+    memset(&block->owner_address,0,sizeof(struct in6_addr));
     block->timeout = now + config->block_timeout;
     block->claiming_counts = 0;
     block->addresses = NULL;
@@ -85,6 +85,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
     } else {
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
+      memcpy(&blocks[block_index].owner_address,&packet->sender->sin6_addr,sizeof(struct in6_addr));
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
@@ -581,9 +582,12 @@ int main(int argc, char** argv) {
         fprintf(stderr, "epoll error:%i \n", errno);
         close(events[i].data.fd);
       } else if (config->mcast_socket == events[i].data.fd) {
-        bytes = read(config->mcast_socket, buffer, 1500);
+        struct sockaddr_in6 sender;
+        socklen_t sender_len = sizeof sender;
+        bytes = recvfrom(config->mcast_socket, buffer, 1500, 0,(struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
         ret = ntoh_mcast_packet(buffer, bytes, &packet);
+        packet.sender = &sender;
 
         if (ret == 0) {
           switch (packet.command) {
