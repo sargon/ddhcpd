@@ -294,10 +294,18 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* co
   memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
   uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
 
+    
+
+  dhcp_lease* lease;
   switch (found) {
   case 0:
-    _dhcp_release_lease(lease_block, lease_index);
-
+      lease = lease_block->addresses + lease_index;
+    // Check Hardware Address of client
+    if ( memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
+      _dhcp_release_lease(lease_block, lease_index);
+    } else {
+      ERROR("Hardware Adress transmitted by client and our record did not match, do nothing.\n");
+    }
   case 1:
     // TODO Handle remote block
     break;
