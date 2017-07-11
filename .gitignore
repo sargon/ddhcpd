@@ -1,7 +1,8 @@
 *.o
 *.d
+*.c.bal
 \.*.sw[onpmwl]
 ddhcpd
 ddhcpdctl
 *.orig
-
+/\
