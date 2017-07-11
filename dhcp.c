@@ -203,7 +203,10 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     if (found == 0) {
       lease = lease_block->addresses + lease_index;
 
-      if (lease->state != OFFERED || lease->xid != request->xid) {
+      if ( lease_block->state == DDHCP_CLAIMED ) {
+        // This lease block is not ours so we have to forward the request
+        // TODO Build packet and send it
+      } else if (lease->state != OFFERED || lease->xid != request->xid) {
         if (memcmp(request->chaddr, lease->chaddr, 16) != 0) {
           // Check if lease is free
           if (lease->state != FREE) {
@@ -308,8 +311,8 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* co
     }
   case 1:
     // TODO Handle remote block
+    // Send Message to neighbor
     break;
-
   default:
     // Since there is no reply to this message, we could `silently` drop this case.
     break;
