@@ -47,12 +47,23 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
  */
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code);
 
+/**
+ * Is a option defined in a dhcp_option_list
+ */
 #define has_in_option_store(options, code) (find_in_option_store(options, code) != NULL)
 
 /**
  * Search and replace a option in the store, otherwise append it to the store.
  */
-dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option);
-void free_option_store(dhcp_option_list* store);
-void dhcp_options_show(int fd, dhcp_option_list* store);
+dhcp_option* set_option_in_store( dhcp_option_list* store, dhcp_option* option);
+
+/**
+ * Free option store and all contained dhcp_options.
+ */
+void free_option_store( dhcp_option_list* store);
+
+/**
+ * Print the inventory of a dhcp_option_list into given file descriptor.
+ */
+void dhcp_options_show(int fd, dhcp_option_list *store);
 #endif
