@@ -1,4 +1,5 @@
 #include "packet.h"
+#include "logger.h"
 
 #include <endian.h>
 #include <assert.h>
@@ -22,18 +23,25 @@ int _packet_size(int command, int payload_count) {
   int len = 0;
 
   switch (command) {
-  case DDHCP_MSG_UPDATECLAIM: 
+  case DDHCP_MSG_UPDATECLAIM:
     len = 16 + payload_count * 7;
     break;
 
-  case DDHCP_MSG_INQUIRE:  
+  case DDHCP_MSG_INQUIRE:
     len = 16 + payload_count * 4;
     break;
+
+  case DDHCP_MSG_RENEWLEASE:
+    len = 16 + sizeof(struct in_addr);
 
   default:
     printf("Error: unknown command: %i/%i \n", command, payload_count);
     return -1;
     break;
+  }
+
+  if ( len == 0 ) {
+    ERROR("_packet_size(%i,%i) - The calculated length is only zero bytes!",command,payload_count);
   }
 
   return len;
@@ -117,8 +125,13 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
     break;
 
   // ReNEWLease
-  case 16:
-    packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
+  case DDHCP_MSG_RENEWLEASE:
+  case DDHCP_MSG_LEASEACK:
+  case DDHCP_MSG_LEASENAK:
+  case DDHCP_MSG_RELEASE:
+    copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+    packet->address = ntohl(tmp32);
+    break;
 
   default:
     return 2;
@@ -212,6 +225,21 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
   memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
   sendto(mulitcast_socket, buffer_orig, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+  free(buffer_orig);
+
+  return 0;
+}
+
+int send_packet_direct(struct ddhcp_mcast_packet* packet, int multicast_socket) {
+  int len = 10;
+  char* buffer = (char*) calloc(1, 10);
+  char* buffer_orig = buffer;
+
+  // TODO Write hton for packet
+
+  // TODO Error handling
+  sendto(multicast_socket, buffer_orig, len, 0,(struct sockaddr*) packet->sender, sizeof(struct sockaddr_in6));
 
   free(buffer_orig);
 

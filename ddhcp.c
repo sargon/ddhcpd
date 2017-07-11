@@ -5,10 +5,12 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/un.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "block.h"
 #include "ddhcp.h"
@@ -26,6 +28,13 @@ const int NET = 0;
 const int NET_LEN = 10;
 
 struct ddhcp_block* blocks;
+
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET)
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   assert(blocks);
@@ -83,6 +92,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
       // TODO Decide when and if we reclaim this block
       //      Which node has more leases in this block, ..., who has the better node_id.
     } else {
+      // TODO Save the connection details for the claiming node, so we can contact him, for dhcp actions.
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
       memcpy(&blocks[block_index].owner_address,&packet->sender->sin6_addr,sizeof(struct in6_addr));
@@ -130,6 +140,25 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
   }
 }
 
+void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+  // Stub functions
+  DEBUG("ddhcp_dhcp_renewlease(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+}
+
+void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+  // Stub functions
+  DEBUG("ddhcp_dhcp_leaseack(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+}
+
+void ddhcp_dhcp_leasenak(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+  // Stub functions
+  DEBUG("ddhcp_dhcp_leasenak(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+}
+
+void ddhcp_dhcp_release(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+  DEBUG("ddhcp_dhcp_release(blocks,packet,config)\n");
+  dhcp_release_lease(packet->address, blocks, config);
+}
 /**
  * House Keeping
  *
@@ -587,6 +616,9 @@ int main(int argc, char** argv) {
         socklen_t sender_len = sizeof sender;
         bytes = recvfrom(config->mcast_socket, buffer, 1500, 0,(struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
+        char ipv6_sender[INET6_ADDRSTRLEN];
+        DEBUG("Receive message from %s\n",
+                inet_ntop(AF_INET6,get_in_addr((struct sockaddr*)&sender),ipv6_sender,INET6_ADDRSTRLEN));
         ret = ntoh_mcast_packet(buffer, bytes, &packet);
         packet.sender = &sender;
 
@@ -599,13 +631,29 @@ int main(int argc, char** argv) {
           case DDHCP_MSG_INQUIRE:
             ddhcp_block_process_inquire(blocks, &packet, config);
 
+          case DDHCP_MSG_RENEWLEASE:
+            ddhcp_dhcp_renewlease(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_LEASEACK:
+            ddhcp_dhcp_leaseack(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_LEASENAK:
+            ddhcp_dhcp_leasenak(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_RELEASE:
+            ddhcp_dhcp_release(blocks, &packet, config);
+            break;
+
           default:
             break;
           }
 
           free(packet.payload);
         } else {
-          printf("%i\n", ret);
+          DEBUG("epoll_ret: %i\n", ret);
         }
 
         house_keeping(blocks, config);
@@ -653,7 +701,7 @@ int main(int argc, char** argv) {
         config->client_control_socket = accept(config->control_socket, (struct sockaddr*) &client_fd, &len);
         //set_nonblocking(config->client_control_socket);
         add_fd(efd, config->client_control_socket, EPOLLIN | EPOLLET);
-        printf("new connections\n");
+        DEBUG("ControlSocket: new connections\n");
       } else if (events[i].events & EPOLLIN) {
         bytes = read(events[i].data.fd, buffer, 1500);
 
