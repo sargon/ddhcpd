@@ -21,6 +21,10 @@ consens about lease state.
     -D                   Run in foreground and log to console (default)
     -C CTRL_PATH         Path to control socket
 
+Build
+-----
+
+    DEBUG=1 CFLAGS="-D LOG_LEVEL=20" make clean all
 
 Running
 -------
