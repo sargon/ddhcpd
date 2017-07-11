@@ -482,6 +482,7 @@ int main(int argc, char** argv) {
     printf("-L                   Deactivate learning phase\n");
     printf("-d                   Run in background and daemonize\n");
     printf("-D                   Run in foreground and log to console (default)\n");
+    printf("-C CTRL_PATH         Path to control socket\n");
     exit(0);
   }
 
