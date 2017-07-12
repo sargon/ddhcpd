@@ -47,6 +47,19 @@ int _packet_size(int command, int payload_count) {
   return len;
 }
 
+struct ddhcp_mcast_packet* new_ddhcp_packet(int command, ddhcp_config* config) {
+  struct ddhcp_mcast_packet* packet = (struct ddhcp_mcast_packet*) calloc(sizeof(struct ddhcp_mcast_packet), 1);
+  // TODO Check we actually got the memory
+  memcpy(&packet->node_id, config->node_id, 8);
+  memcpy(&(packet->prefix), &config->prefix, sizeof(struct in_addr));
+
+  packet->prefix_len = config->prefix_len;
+  packet->blocksize = config->block_size;
+  packet->command = command;
+
+  return packet;
+}
+
 int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet) {
 
   // Header

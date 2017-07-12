@@ -150,16 +150,10 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
   }
 
   // Send claim message for all blocks in claiming process.
-  struct ddhcp_mcast_packet packet;
-  memcpy(packet.node_id, config->node_id, 8); // TODO Avoid magic number for number of bytes to copy
-  memcpy(&(packet.prefix), &config->prefix, sizeof(struct in_addr));
+  struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_INQUIRE, config);
+  packet->count = config->claiming_blocks_amount;
 
-  packet.prefix_len = config->prefix_len;
-  packet.blocksize = config->block_size;
-  packet.command = 2; // TODO Avoid magic number for command ID
-  packet.count = config->claiming_blocks_amount;
-
-  packet.payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), config->claiming_blocks_amount);
+  packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), config->claiming_blocks_amount);
   // TODO Check we actually got the memory
 
   int index = 0;
@@ -167,15 +161,16 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
     ddhcp_block_list*  tmp = list_entry(pos, ddhcp_block_list, list);
     ddhcp_block* block = tmp->block;
     block->claiming_counts++;
-    packet.payload[index].block_index = block->index;
-    packet.payload[index].timeout = 0;
-    packet.payload[index].reserved = 0;
+    packet->payload[index].block_index = block->index;
+    packet->payload[index].timeout = 0;
+    packet->payload[index].reserved = 0;
     index++;
   }
 
-  send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
+  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
 
-  free(packet.payload);
+  free(packet->payload);
+  free(packet);
   return 0;
 }
 
@@ -223,26 +218,23 @@ void block_update_claims(ddhcp_block* blocks, int blocks_needed, ddhcp_config* c
     return;
   }
 
-  struct ddhcp_mcast_packet packet;
-  memcpy(packet.node_id, config->node_id, 8); // TODO Avoid magic number for number of bytes to copy
-  memcpy(&packet.prefix, &config->prefix, sizeof(struct in_addr));
+  struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
 
-  packet.prefix_len = config->prefix_len;
-  packet.blocksize = config->block_size;
-  packet.command = 1; // TODO Avoid magic number for command ID
-  packet.count = our_blocks;
+  packet->count = our_blocks;
 
-  packet.payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
+  packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
+
   // TODO Check we actually got the memory
 
   int index = 0;
+
   block = blocks;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
-      packet.payload[index].block_index = block->index;
-      packet.payload[index].timeout     = config->block_timeout;
-      packet.payload[index].reserved    = 0;
+      packet->payload[index].block_index = block->index;
+      packet->payload[index].timeout     = config->block_timeout;
+      packet->payload[index].reserved    = 0;
       index++;
       block->timeout = now + config->block_timeout;
       DEBUG("block_update_claims(...): update claim for block %i\n", block->index);
@@ -251,9 +243,10 @@ void block_update_claims(ddhcp_block* blocks, int blocks_needed, ddhcp_config* c
     block++;
   }
 
-  send_packet_mcast(&packet, config->mcast_socket, config->mcast_scope_id);
+  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
 
-  free(packet.payload);
+  free(packet->payload);
+  free(packet);
 }
 
 void block_check_timeouts(ddhcp_block* blocks, ddhcp_config* config) {
@@ -281,6 +274,7 @@ void block_free_claims(ddhcp_config* config) {
   }
 
   struct list_head* pos, *q;
+
   list_for_each_safe(pos, q, &(config->claiming_blocks).list) {
     ddhcp_block_list* tmp = list_entry(pos, ddhcp_block_list, list);
     list_del(pos);

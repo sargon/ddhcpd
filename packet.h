@@ -54,6 +54,7 @@ struct ddhcp_payload {
 };
 typedef struct ddhcp_payload ddhcp_payload;
 
+struct ddhcp_mcast_packet* new_ddhcp_packet(int command, ddhcp_config* config);
 int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet);
 
 int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id);
