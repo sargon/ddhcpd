@@ -186,7 +186,7 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
   struct ddhcp_payload* payload;
 
   switch (packet->command) {
-  case 1:
+  case DDHCP_MSG_UPDATECLAIM:
     payload = packet->payload;
 
     for (unsigned int index = 0; index < packet->count; index++) {
@@ -204,7 +204,7 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 
     break;
 
-  case 2:
+  case DDHCP_MSG_INQUIRE:
     payload = packet->payload;
 
     for (unsigned int index = 0; index < packet->count; index++) {
