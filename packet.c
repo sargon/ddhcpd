@@ -156,13 +156,9 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
   return 0;
 }
 
-int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
-  int len = _packet_size(packet->command, packet->count);
+int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 
-  char* buffer = (char*) calloc(1, len);
   char* buffer_orig = buffer;
-
-  errno = 0;
 
   // Header
   copy_var_to_buf_inc(buffer, ddhcp_node_id, packet->node_id);
@@ -217,6 +213,23 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
     break;
   }
 
+  buffer = buffer_orig;
+
+  return 0;
+}
+
+int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
+  int len = _packet_size(packet->command, packet->count);
+
+  char* buffer = (char*) calloc(1,len);
+  if ( !buffer ) {
+    return 1;
+  }
+
+  errno = 0;
+
+  hton_packet(packet, buffer);
+
   struct sockaddr_in6 dest_addr = {
     .sin6_family = AF_INET6,
     .sin6_port = htons(1234),
@@ -237,9 +250,9 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 
   memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
-  sendto(mulitcast_socket, buffer_orig, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+  sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
-  free(buffer_orig);
+  free(buffer);
 
   return 0;
 }
