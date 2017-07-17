@@ -24,6 +24,11 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
 int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
 
 /**
+ * DDHCP Remote Request (Renew)
+ */
+int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* config);
+
+/**
  * DHCP Release
  */
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* block, ddhcp_config* config);
