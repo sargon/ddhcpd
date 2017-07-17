@@ -141,8 +141,17 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
 }
 
 void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  // Stub functions
   DEBUG("ddhcp_dhcp_renewlease(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+  int ret = dhcp_rhdl_request(&(packet->address), blocks, config);
+
+  // We are reusing the packet here
+  if (! ret) {
+    packet->command = DDHCP_MSG_LEASEACK;
+  } else {
+    packet->command = DDHCP_MSG_LEASENAK;
+  }
+
+  send_packet_direct(packet, config->mcast_socket);
 }
 
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {

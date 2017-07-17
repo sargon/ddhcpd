@@ -31,8 +31,12 @@ int _packet_size(int command, int payload_count) {
     len = 16 + payload_count * 4;
     break;
 
+  case DDHCP_MSG_LEASEACK:
+  case DDHCP_MSG_LEASENAK:
   case DDHCP_MSG_RENEWLEASE:
     len = 16 + sizeof(struct in_addr);
+
+    break;
 
   default:
     printf("Error: unknown command: %i/%i \n", command, payload_count);
@@ -211,6 +215,9 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
     }
 
     break;
+  default:
+
+    break;
   }
 
   buffer = buffer_orig;
@@ -258,16 +265,19 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 }
 
 int send_packet_direct(struct ddhcp_mcast_packet* packet, int multicast_socket) {
-  int len = 10;
-  char* buffer = (char*) calloc(1, 10);
-  char* buffer_orig = buffer;
+  int len = _packet_size(packet->command, packet->count);
 
-  // TODO Write hton for packet
+  char* buffer = (char*) calloc(1,len);
+  if ( !buffer ) {
+    return 1;
+  }
+
+  hton_packet(packet,buffer);
 
   // TODO Error handling
-  sendto(multicast_socket, buffer_orig, len, 0,(struct sockaddr*) packet->sender, sizeof(struct sockaddr_in6));
+  sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) packet->sender, sizeof(struct sockaddr_in6));
 
-  free(buffer_orig);
+  free(buffer);
 
   return 0;
 }
