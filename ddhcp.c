@@ -753,6 +753,8 @@ int main(int argc, char** argv) {
   close(config->client_socket);
   close(config->control_socket);
 
+  remove(config->control_path);
+
   free(config);
   return 0;
 }
