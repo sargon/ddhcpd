@@ -20,9 +20,10 @@ int main(int argc, char** argv) {
   if (argc == 1) {
     show_usage = 1;
   }
+
   char* path = "/tmp/ddhcpd_ctl";
 
-  #define BUFSIZE_MAX 1500
+#define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
   while ((c = getopt(argc, argv, "C:t:bdho:")) != -1) {
@@ -48,7 +49,7 @@ int main(int argc, char** argv) {
       break;
 
     case 'C':
-      path = optarg; 
+      path = optarg;
       break;
 
     default:

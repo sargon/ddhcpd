@@ -60,7 +60,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
 
 void _dhcp_release_lease(ddhcp_block* block , uint32_t lease_index) {
   INFO("Releasing Lease %i in block %i\n", lease_index, block->index);
-  dhcp_lease *lease = block->addresses + lease_index;
+  dhcp_lease* lease = block->addresses + lease_index;
 
   // TODO Should we really reset the chaddr or xid, RFC says we
   // ''SHOULD retain a record of the client's initialization parameters for possible reuse''
@@ -230,7 +230,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     if (found == 0) {
       lease = lease_block->addresses + lease_index;
 
-      if ( lease_block->state == DDHCP_CLAIMED ) {
+      if (lease_block->state == DDHCP_CLAIMED) {
         // This lease block is not ours so we have to forward the request
         // TODO Build packet and send it
       } else if (lease->state != OFFERED || lease->xid != request->xid) {
@@ -324,22 +324,25 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* co
   memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
   uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
 
-    
 
   dhcp_lease* lease;
+
   switch (found) {
   case 0:
-      lease = lease_block->addresses + lease_index;
+    lease = lease_block->addresses + lease_index;
+
     // Check Hardware Address of client
-    if ( memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
+    if (memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
       _dhcp_release_lease(lease_block, lease_index);
     } else {
       ERROR("Hardware Adress transmitted by client and our record did not match, do nothing.\n");
     }
+
   case 1:
     // TODO Handle remote block
     // Send Message to neighbor
     break;
+
   default:
     // Since there is no reply to this message, we could `silently` drop this case.
     break;

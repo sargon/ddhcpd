@@ -29,11 +29,13 @@ const int NET_LEN = 10;
 
 struct ddhcp_block* blocks;
 
-void *get_in_addr(struct sockaddr *sa)
+void* get_in_addr(struct sockaddr* sa)
 {
-    if (sa->sa_family == AF_INET)
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+  if (sa->sa_family == AF_INET) {
+    return &(((struct sockaddr_in*)sa)->sin_addr);
+  }
+
+  return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
@@ -63,7 +65,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
     block->state = DDHCP_FREE;
     addr_add(&config->prefix, &block->subnet, index * config->block_size);
     block->subnet_len = config->block_size;
-    memset(&block->owner_address,0,sizeof(struct in6_addr));
+    memset(&block->owner_address, 0, sizeof(struct in6_addr));
     block->timeout = now + config->block_timeout;
     block->claiming_counts = 0;
     block->addresses = NULL;
@@ -95,7 +97,7 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
       // TODO Save the connection details for the claiming node, so we can contact him, for dhcp actions.
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
-      memcpy(&blocks[block_index].owner_address,&packet->sender->sin6_addr,sizeof(struct in6_addr));
+      memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
@@ -623,11 +625,11 @@ int main(int argc, char** argv) {
       } else if (config->mcast_socket == events[i].data.fd) {
         struct sockaddr_in6 sender;
         socklen_t sender_len = sizeof sender;
-        bytes = recvfrom(config->mcast_socket, buffer, 1500, 0,(struct sockaddr*) &sender, &sender_len);
+        bytes = recvfrom(config->mcast_socket, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
         char ipv6_sender[INET6_ADDRSTRLEN];
         DEBUG("Receive message from %s\n",
-                inet_ntop(AF_INET6,get_in_addr((struct sockaddr*)&sender),ipv6_sender,INET6_ADDRSTRLEN));
+              inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
         ret = ntoh_mcast_packet(buffer, bytes, &packet);
         packet.sender = &sender;
 
@@ -639,7 +641,7 @@ int main(int argc, char** argv) {
 
           case DDHCP_MSG_INQUIRE:
             ddhcp_block_process_inquire(blocks, &packet, config);
-	    break;
+            break;
 
           case DDHCP_MSG_RENEWLEASE:
             ddhcp_dhcp_renewlease(blocks, &packet, config);

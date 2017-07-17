@@ -44,8 +44,8 @@ int _packet_size(int command, int payload_count) {
     break;
   }
 
-  if ( len == 0 ) {
-    ERROR("_packet_size(%i,%i) - The calculated length is only zero bytes!",command,payload_count);
+  if (len == 0) {
+    ERROR("_packet_size(%i,%i) - The calculated length is only zero bytes!", command, payload_count);
   }
 
   return len;
@@ -215,6 +215,7 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
     }
 
     break;
+
   default:
 
     break;
@@ -228,8 +229,9 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
   int len = _packet_size(packet->command, packet->count);
 
-  char* buffer = (char*) calloc(1,len);
-  if ( !buffer ) {
+  char* buffer = (char*) calloc(1, len);
+
+  if (!buffer) {
     return 1;
   }
 
@@ -267,12 +269,13 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 int send_packet_direct(struct ddhcp_mcast_packet* packet, int multicast_socket) {
   int len = _packet_size(packet->command, packet->count);
 
-  char* buffer = (char*) calloc(1,len);
-  if ( !buffer ) {
+  char* buffer = (char*) calloc(1, len);
+
+  if (!buffer) {
     return 1;
   }
 
-  hton_packet(packet,buffer);
+  hton_packet(packet, buffer);
 
   // TODO Error handling
   sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) packet->sender, sizeof(struct sockaddr_in6));

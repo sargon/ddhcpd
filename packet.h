@@ -38,7 +38,7 @@ struct ddhcp_mcast_packet {
   uint8_t command;
   uint8_t count;
 
-  struct sockaddr_in6* sender; 
+  struct sockaddr_in6* sender;
 
   union {
     struct ddhcp_payload* payload;
