@@ -639,6 +639,7 @@ int main(int argc, char** argv) {
 
           case DDHCP_MSG_INQUIRE:
             ddhcp_block_process_inquire(blocks, &packet, config);
+	    break;
 
           case DDHCP_MSG_RENEWLEASE:
             ddhcp_dhcp_renewlease(blocks, &packet, config);
