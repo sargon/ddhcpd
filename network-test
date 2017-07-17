@@ -153,6 +153,18 @@ case "$1" in
     fi
     startDHCPClients "$INDEX"
   ;;
+  test)
+    # A test routine
+    $0 net-init 2
+    trap "pkill dhclient ; $0 net-stop" EXIT
+    # Start two daemons
+    ( $0 srv-start 0 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl0 > ddhcpd-0.log 2>&1 ) &
+    ( $0 srv-start 1 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl1 > ddhcpd-1.log 2>&1 ) &
+    sleep 2
+    $0 clt-start 0
+
+    wait 
+    ;;
   *)
     echo "Usage: $0 <command> <parameter>"
     echo "where"
