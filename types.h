@@ -108,8 +108,10 @@ struct ddhcp_config {
 
   // Network
   int mcast_socket;
+  int server_socket;
   int client_socket;
   uint32_t mcast_scope_id;
+  uint32_t server_scope_id;
   uint32_t client_scope_id;
 
   // Control

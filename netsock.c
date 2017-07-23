@@ -114,8 +114,10 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 {
   int sock;
   int sock_mc;
-  struct sockaddr_in6 sin6_mc;
+  int sock_srv;
   struct sockaddr_in sin;
+  struct sockaddr_in6 sin6_mc;
+  struct sockaddr_in6 sin6_srv;
   struct ipv6_mreq mreq;
   unsigned int mloop = 0;
   unsigned int broadcast = 1;
@@ -125,7 +127,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sock  < 0) {
-    perror("can't open socket");
+    perror("can't open broadcast socket");
     return -1;
   }
 
@@ -133,7 +135,15 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   if (sock_mc  < 0) {
     close(sock);
-    perror("can't open socket");
+    perror("can't open multicast socket");
+    return -1;
+  }
+
+  sock_srv = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+
+  if (sock_srv  < 0) {
+    close(sock);
+    perror("can't open server socket");
     return -1;
   }
 
@@ -160,6 +170,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   struct in_addr address_client;
 
+  // DHCP server port (IPv4) 
+
   memcpy(&hwaddr, &ifr.ifr_hwaddr.sa_data, 6);
 
   mac_to_ipv6(&hwaddr, &address);
@@ -176,6 +188,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   // sin.sin_scope_id = scope_id;
 
+  // DDHCPD Multicast Port
+
   memset(&sin6_mc, 0, sizeof(sin6_mc));
 
   sin6_mc.sin6_port = htons(DDHCP_MULTICAST_PORT);
@@ -187,29 +201,60 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   sin6_mc.sin6_scope_id = scope_id;
 
+  // DDHCPD Unicast Port
+
+  memset(&sin6_srv, 0, sizeof(sin6_srv));
+
+  sin6_srv.sin6_port = htons(DDHCP_UNICAST_PORT);
+
+  sin6_srv.sin6_family = AF_INET6;
+
+  memcpy(&sin6_srv.sin6_addr, &address,
+         sizeof(sin6_srv.sin6_addr));
+
+  sin6_srv.sin6_scope_id = scope_id;
+
+  // Socket Options
+
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
                  strlen(interface_client) + 1)) {
-    perror("can't bind to device");
+    perror("can't bind to boardcast device");
     goto err;
   }
 
   if (setsockopt(sock_mc, SOL_SOCKET, SO_BINDTODEVICE,
                  interface,
                  strlen(interface) + 1)) {
-    perror("can't bind to device");
+    perror("can't bind to multicast device");
     goto err;
   }
 
+  if (setsockopt(sock_srv, SOL_SOCKET, SO_BINDTODEVICE,
+                 interface,
+                 strlen(interface) + 1)) {
+    perror("can't bind to server device");
+    goto err;
+  }
+
+  // Bind
+
   if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
-    perror("can't bind dhcp socket");
+    perror("can't bind broadcast socket");
     goto err;
   }
 
   if (bind(sock_mc, (struct sockaddr*)&sin6_mc, sizeof(sin6_mc)) < 0) {
-    perror("can't bind");
+    perror("can't bind multicast");
     goto err;
   }
 
+  if (bind(sock_srv, (struct sockaddr*)&sin6_srv, sizeof(sin6_srv)) < 0) {
+    perror("can't bind server");
+    goto err;
+  }
+
+  // Multicast Group Registration
+  
   memcpy(&mreq.ipv6mr_multiaddr, &in6addr_localmcast,
          sizeof(mreq.ipv6mr_multiaddr));
   mreq.ipv6mr_interface = scope_id;
@@ -225,6 +270,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
     perror("can't unset multicast loop");
     goto err;
   }
+
+  // Broadcast Options for DHCP 
 
   if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(unsigned int))) {
     perror("can't set boardcast on client socket");
@@ -259,13 +306,29 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
     goto err;
   }
 
+  ret = fcntl(sock_srv, F_GETFL, 0);
+
+  if (ret < 0) {
+    perror("failed to get file status flags");
+    goto err;
+  }
+
+  ret = fcntl(sock_srv, F_SETFL, ret | O_NONBLOCK);
+
+  if (ret < 0) {
+    perror("failed to set file status flags");
+    goto err;
+  }
+
   //interface->netsock = sock;
   state->mcast_socket = sock_mc;
+  state->server_socket = sock_srv;
   state->client_socket = sock;
 
   return 0;
 err:
   close(sock);
+  close(sock_srv);
   close(sock_mc);
   return -1;
 }
