@@ -8,7 +8,7 @@
 
 
 NUM_OF_INTERFACE=$(cat /tmp/ddhcp-netns-count 2>/dev/null)
-NUMBER_OF_CLIENT_INTERFACES=5
+NUMBER_OF_CLIENT_INTERFACES=2
 
 function isNumber(){
   local NUMBER=$1
@@ -74,11 +74,23 @@ function startServer() {
 
 function startDHCPClients() {
   local IDX="$1"
+  shift
+  local args="$@"
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    dhclient -sf /dev/null -v -d "clt${IDX}-${idc}" &
+    ( dhclient -4 -nw -d -pf "/tmp/clt${IDX}-${idc}.pid" -lf "/tmp/clt${IDX}-${idc}.lease" $args "clt${IDX}-${idc}" > "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
+      [ $? -ne 0 ] || echo "${IDX}-${idc} failed $?"
+    ) &
   done
-  read
-  pkill dhclient
+}
+
+function stopDHCPClients() {
+  local IDX="$1"
+  shift
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    ( dhclient -r -pf "/tmp/clt${IDX}-${idc}.pid" -lf "/tmp/clt${IDX}-${idc}.lease" >> "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
+      [ $? -ne 0 ] || echo "${IDX}-${idc} failed $?"
+    ) &
+  done
 }
 
 function network-init() {
@@ -151,7 +163,17 @@ case "$1" in
     if [[ $? -ne 0 ]] ; then
       echo "Error: '${NUMBER_OF_INSTANCES}' is not a index number"
     fi
-    startDHCPClients "$INDEX"
+    startDHCPClients "$INDEX" $@
+  ;;
+  clt-stop)
+    shift
+    INDEX="$1"
+    shift
+    isNumber "$INDEX"
+    if [[ $? -ne 0 ]] ; then
+      echo "Error: '${NUMBER_OF_INSTANCES}' is not a index number"
+    fi
+    stopDHCPClients "$INDEX" $@
   ;;
   test)
     # A test routine
@@ -161,8 +183,10 @@ case "$1" in
     ( $0 srv-start 0 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl0 > ddhcpd-0.log 2>&1 ) &
     ( $0 srv-start 1 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl1 > ddhcpd-1.log 2>&1 ) &
     sleep 2
-    $0 clt-start 0
-
+    echo "Starting clients on realm 0"
+    $0 clt-start 0 -v
+    echo "Press ENTER to stop DHCP Clients" read
+    $0 clt-stop 0
     wait 
     ;;
   *)
