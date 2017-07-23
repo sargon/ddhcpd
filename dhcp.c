@@ -318,6 +318,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
 }
 
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* config) {
+  DEBUG("dhcp_hdl_release(dhcp_packet, blocks, config)\n");
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
   struct in_addr addr;
