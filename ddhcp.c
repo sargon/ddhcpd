@@ -153,7 +153,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
     packet->command = DDHCP_MSG_LEASENAK;
   }
 
-  send_packet_direct(packet, config->mcast_socket);
+  send_packet_direct(packet, config->server_socket);
 }
 
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
@@ -584,6 +584,7 @@ int main(int argc, char** argv) {
   }
 
   add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config->server_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->control_socket, EPOLLIN | EPOLLET);
 
@@ -622,10 +623,45 @@ int main(int argc, char** argv) {
       if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
         fprintf(stderr, "epoll error:%i \n", errno);
         close(events[i].data.fd);
+      } else if (config->server_socket == events[i].data.fd) {
+        struct sockaddr_in6 sender;
+        socklen_t sender_len = sizeof sender;
+        bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
+        // TODO Error Handling
+        char ipv6_sender[INET6_ADDRSTRLEN];
+        DEBUG("Receive message from %s\n",
+              inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+        ret = ntoh_mcast_packet(buffer, bytes, &packet);
+        packet.sender = &sender;
+
+        if (ret == 0) {
+          switch (packet.command) {
+          case DDHCP_MSG_RENEWLEASE:
+            ddhcp_dhcp_renewlease(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_LEASEACK:
+            ddhcp_dhcp_leaseack(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_LEASENAK:
+            ddhcp_dhcp_leasenak(blocks, &packet, config);
+            break;
+
+          case DDHCP_MSG_RELEASE:
+            ddhcp_dhcp_release(blocks, &packet, config);
+            break;
+
+          default:
+            break;
+          }
+        } else {
+          DEBUG("epoll_ret: %i\n", ret);
+        }
       } else if (config->mcast_socket == events[i].data.fd) {
         struct sockaddr_in6 sender;
         socklen_t sender_len = sizeof sender;
-        bytes = recvfrom(config->mcast_socket, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
+        bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
         char ipv6_sender[INET6_ADDRSTRLEN];
         DEBUG("Receive message from %s\n",
@@ -641,22 +677,6 @@ int main(int argc, char** argv) {
 
           case DDHCP_MSG_INQUIRE:
             ddhcp_block_process_inquire(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_RENEWLEASE:
-            ddhcp_dhcp_renewlease(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_LEASEACK:
-            ddhcp_dhcp_leaseack(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_LEASENAK:
-            ddhcp_dhcp_leasenak(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_RELEASE:
-            ddhcp_dhcp_release(blocks, &packet, config);
             break;
 
           default:
