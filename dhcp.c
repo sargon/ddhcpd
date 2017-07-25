@@ -168,6 +168,8 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   });
 
   send_dhcp_packet(socket, packet);
+
+  free(packet->options);
   free(packet);
 
   return 0;
@@ -312,6 +314,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
   });
 
   send_dhcp_packet(socket, packet);
+  free(packet->options);
   free(packet);
 
   return 0;
