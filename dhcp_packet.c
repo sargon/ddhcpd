@@ -292,6 +292,8 @@ int send_dhcp_packet(int socket, dhcp_packet* packet) {
     printf("Err: %i\n", errno);
   }
 
+  free(buffer);
+
   return 0;
 }
 
