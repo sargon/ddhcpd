@@ -1,5 +1,6 @@
 #include "packet.h"
 #include "logger.h"
+#include "netsock.h"
 
 #include <endian.h>
 #include <assert.h>
@@ -241,7 +242,7 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 
   struct sockaddr_in6 dest_addr = {
     .sin6_family = AF_INET6,
-    .sin6_port = htons(1234),
+    .sin6_port = htons(DDHCP_MULTICAST_PORT),
     .sin6_scope_id = scope_id
   };
 
@@ -274,6 +275,8 @@ int send_packet_direct(struct ddhcp_mcast_packet* packet, int multicast_socket) 
   if (!buffer) {
     return 1;
   }
+
+  packet->sender->sin6_port = htons(DDHCP_UNICAST_PORT);
 
   hton_packet(packet, buffer);
 
