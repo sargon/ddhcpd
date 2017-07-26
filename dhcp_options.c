@@ -1,10 +1,10 @@
-#include "dhcp_options.h"
-
 #include <stdlib.h>
 #include <string.h>
 
+#include "dhcp_options.h"
 #include "list.h"
 #include "logger.h"
+#include "tools.h"
 
 dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code) {
   dhcp_option* option = options;
@@ -175,4 +175,79 @@ void dhcp_options_show(int fd, dhcp_option_list* store) {
 
     dprintf(fd, "\n");
   }
+}
+
+void dhcp_options_init(ddhcp_config* config) {
+  dhcp_option* option;
+  uint8_t pl = config->prefix_len;
+
+  if (! has_in_option_store(&config->options, DHCP_CODE_SUBNET_MASK)) {
+    // subnet mask
+    option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+    option->code = DHCP_CODE_SUBNET_MASK;
+    option->len = 4;
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    option->payload[0] = 256 - (256 >> min(max(pl -  0, 0), 8));
+    option->payload[1] = 256 - (256 >> min(max(pl -  8, 0), 8));
+    option->payload[2] = 256 - (256 >> min(max(pl - 16, 0), 8));
+    option->payload[3] = 256 - (256 >> min(max(pl - 24, 0), 8));
+
+    set_option_in_store(&config->options, option);
+  }
+
+  if (! has_in_option_store(&config->options, DHCP_CODE_TIME_OFFSET)) {
+    option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    option->code = DHCP_CODE_TIME_OFFSET;
+    option->len = 4;
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    option->payload[0] = 0;
+    option->payload[1] = 0;
+    option->payload[2] = 0;
+    option->payload[3] = 0;
+
+    set_option_in_store(&config->options, option);
+  }
+
+  /** Deactivate uneducated default router value
+  option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  option->code = DHCP_CODE_ROUTER;
+  option->len = 4;
+  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
+  // TODO Configure this throught socket
+  option->payload[0] = 10;
+  option->payload[1] = 0;
+  option->payload[2] = 0;
+  option->payload[3] = 1;
+
+  set_option_in_store( &config->options, option );
+  */
+
+  if (! has_in_option_store(&config->options, DHCP_CODE_BROADCAST_ADDRESS)) {
+    option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    option->code = DHCP_CODE_BROADCAST_ADDRESS;
+    option->len = 4;
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    option->payload[0] = (uint8_t) config->prefix.s_addr | ((1 << min(max(8 - pl, 0), 8)) - 1);
+    option->payload[1] = (((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1);
+    option->payload[2] = (((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1);
+    option->payload[3] = (((uint8_t*) &config->prefix.s_addr)[3]) | ((1 << min(max(32 - pl, 0), 8)) - 1);
+
+    set_option_in_store(&config->options, option);
+  }
+
+  if (! has_in_option_store(&config->options, DHCP_CODE_SERVER_IDENTIFIER)) {
+    option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    option->code = DHCP_CODE_SERVER_IDENTIFIER;
+    option->len = 4;
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    // TODO Check interface for address
+    memcpy(option->payload, &config->prefix.s_addr, 4);
+    //option->payload[0] = 10;
+    //option->payload[1] = 0;
+    //option->payload[2] = 0;
+    option->payload[3] = 1;
+
+    set_option_in_store(&config->options, option);
+  }
+
 }

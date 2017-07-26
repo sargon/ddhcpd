@@ -9,7 +9,6 @@
  */
 dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code);
 
-
 /**
  * Search for the option with searched code and replace payload or search an empty
  * option, a padding, and replaces it with the new option. The option payload
@@ -66,4 +65,9 @@ void free_option_store(dhcp_option_list* store);
  * Print the inventory of a dhcp_option_list into given file descriptor.
  */
 void dhcp_options_show(int fd, dhcp_option_list* store);
+
+/**
+ * Initialize dhcp_options store in the configuration.
+ */
+void dhcp_options_init(ddhcp_config* config);
 #endif
