@@ -167,7 +167,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
     DHCP_LEASE_TIME
   });
 
-  send_dhcp_packet(socket, packet);
+  dhcp_packet_send(socket, packet);
 
   free(packet->options);
   free(packet);
@@ -313,7 +313,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     0, 0, 0, DHCP_LEASE_TIME
   });
 
-  send_dhcp_packet(socket, packet);
+  dhcp_packet_send(socket, packet);
   free(packet->options);
   free(packet);
 
@@ -369,7 +369,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
     DHCPNAK
   });
 
-  send_dhcp_packet(socket, packet);
+  dhcp_packet_send(socket, packet);
   free(packet);
 
   return 0;

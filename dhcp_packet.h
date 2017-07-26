@@ -51,7 +51,7 @@ void printf_dhcp(dhcp_packet* packet);
  * the buffer before the last operation on that struture!
  */
 int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len);
-int send_dhcp_packet(int socket, dhcp_packet* packet);
+int dhcp_packet_send(int socket, dhcp_packet* packet);
 
 uint8_t dhcp_packet_message_type(dhcp_packet* packet);
 #endif

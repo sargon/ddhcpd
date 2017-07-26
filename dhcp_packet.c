@@ -1,9 +1,10 @@
-#include "dhcp_packet.h"
-
-#include <stdio.h>
-#include <assert.h>
 #include <arpa/inet.h>
+#include <assert.h>
 #include <errno.h>
+#include <stdio.h>
+
+#include "dhcp_packet.h"
+#include "logger.h"
 
 struct sockaddr_in broadcast = {
   .sin_family = AF_INET,
@@ -223,8 +224,8 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
   return 0;
 }
 
-int send_dhcp_packet(int socket, dhcp_packet* packet) {
-
+int dhcp_packet_send(int socket, dhcp_packet* packet) {
+  DEBUG("dhcp_packet_send(%i, dhcp_packet)\n",socket);
   uint16_t tmp16;
   uint32_t tmp32;
 
