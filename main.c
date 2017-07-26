@@ -57,6 +57,7 @@ void house_keeping(ddhcp_block* blocks, ddhcp_config* config) {
 
   block_claim(blocks, blocks_needed, config);
   block_update_claims(blocks, blocks_needed, config);
+  DEBUG("house_keeping( ... ) finish\n");
 }
 
 void add_fd(int efd, int fd, uint32_t events) {
