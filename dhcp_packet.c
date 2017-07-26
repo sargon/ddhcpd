@@ -286,9 +286,9 @@ int dhcp_packet_send(int socket, dhcp_packet* packet) {
 
   broadcast.sin_port = htons(68);
 
-  int err = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
+  int ret = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
 
-  if (err) {
+  if (ret < 0) {
     perror("sendto");
     printf("Err: %i\n", errno);
   }
