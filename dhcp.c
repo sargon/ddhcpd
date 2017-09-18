@@ -1,9 +1,10 @@
 #include <string.h>
 
 #include "dhcp.h"
-#include "tools.h"
-#include "logger.h"
 #include "dhcp_options.h"
+#include "logger.h"
+#include "packet.h"
+#include "tools.h"
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
@@ -229,12 +230,27 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     // Calculate block and dhcp_lease from address
     uint8_t found = find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index);
 
-    if (found == 0) {
+    if (found != 2) {
       lease = lease_block->addresses + lease_index;
+      DEBUG("dhcp_request(...): Lease found.\n");
 
       if (lease_block->state == DDHCP_CLAIMED) {
         // This lease block is not ours so we have to forward the request
-        // TODO Build packet and send it
+        DEBUG("dhcp_request(...): Requested lease is owned by another node. Send Request.\n");
+        // Register client information in lease
+        // TODO This isn't a good idea, because of multi request on the same address from various clients, register it elsewhere and append xid.
+        lease->xid = request->xid;
+        lease->state = OFFERED;
+        lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
+        memcpy(&lease->chaddr, &request->chaddr, 16);
+
+        // Build packet and send it
+        ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE,config);
+        memcpy(&packet->sender,&lease_block->owner_address,sizeof(struct in6_addr));
+        memcpy(&packet->address,&requested_address,sizeof(struct in_addr));
+        send_packet_direct(packet,config->server_socket);
+        return 2;
+
       } else if (lease->state != OFFERED || lease->xid != request->xid) {
         if (memcmp(request->chaddr, lease->chaddr, 16) != 0) {
           // Check if lease is free
