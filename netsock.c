@@ -325,6 +325,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   state->server_socket = sock_srv;
   state->client_socket = sock;
 
+  memcpy(&state->node_id,&hwaddr,sizeof(hwaddr));
+
   return 0;
 err:
   close(sock);
