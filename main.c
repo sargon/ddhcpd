@@ -469,7 +469,7 @@ int main(int argc, char** argv) {
         if (handle_command(events[i].data.fd, buffer, bytes, blocks, config) < 0) {
           ERROR("Malformed command\n");
         }
-
+        del_fd(efd, events[i].data.fd, 0);
         close(events[i].data.fd);
       } else if (events[i].events & EPOLLHUP) {
         del_fd(efd, events[i].data.fd, EPOLLIN);
