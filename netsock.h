@@ -4,7 +4,7 @@
 #include "types.h"
 
 #define DDHCP_MULTICAST_PORT 1234
-#define DDHCP_UNICAST_PORT 1234
+#define DDHCP_UNICAST_PORT 1235
 
 int control_open(ddhcp_config* state);
 int control_connect(ddhcp_config* state);

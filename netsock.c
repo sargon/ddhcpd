@@ -209,7 +209,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   sin6_srv.sin6_family = AF_INET6;
 
-  memcpy(&sin6_srv.sin6_addr, &address,
+  memcpy(&sin6_srv.sin6_addr, &in6addr_any,
          sizeof(sin6_srv.sin6_addr));
 
   sin6_srv.sin6_scope_id = scope_id;
