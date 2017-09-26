@@ -23,6 +23,9 @@ CFLAGS+= \
 LFLAGS+= \
     -g \
     -fsanitize=address
+else
+	CFLAGS+= \
+		-DNDEBUG
 endif
 
 prefix?=/usr
