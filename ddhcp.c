@@ -64,7 +64,10 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
       // TODO Save the connection details for the claiming node, so we can contact him, for dhcp actions.
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
+      char ipv6_sender[INET6_ADDRSTRLEN];
       memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
+      DEBUG("Register block to %s\n",
+            inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
@@ -115,9 +118,13 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
 
   // We are reusing the packet here
   if (! ret) {
+    DEBUG("ddhcp_dhcp_renewlease( ... ): %i ACK\n", ret);
     packet->command = DDHCP_MSG_LEASEACK;
   } else {
+    DEBUG("ddhcp_dhcp_renewlease( ... ): %i NAK\n", ret);
     packet->command = DDHCP_MSG_LEASENAK;
+
+    // TODO Can we hand over the block?
   }
 
   send_packet_direct(packet, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
