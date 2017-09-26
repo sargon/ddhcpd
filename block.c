@@ -5,9 +5,8 @@
 #include "dhcp.h"
 #include "logger.h"
 
-int block_own(ddhcp_block* block) {
-  block->state = DDHCP_OURS;
-  // TODO Have a preallocated list of dhcp_lease_blocks?
+int block_alloc(ddhcp_block* block) {
+  DEBUG("block_alloc(block)\n");
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
 
   if (block->addresses == NULL) {
@@ -22,9 +21,21 @@ int block_own(ddhcp_block* block) {
   return 0;
 }
 
+int block_own(ddhcp_block* block) {
+  if (block_alloc(block)) {
+    return 1;
+  } else {
+    block->state = DDHCP_OURS;
+    return 0;
+  }
+}
+
 void block_free(ddhcp_block* block) {
   DEBUG("block_free(%i)\n", block->index);
-  block->state = DDHCP_FREE;
+
+  if (block->state == DDHCP_OURS) {
+    block->state = DDHCP_FREE;
+  }
 
   if (block->addresses) {
     DEBUG("Free DHCP leases for Block %i\n", block->index);
@@ -262,6 +273,12 @@ void block_check_timeouts(ddhcp_block* blocks, ddhcp_config* config) {
 
     if (block->state == DDHCP_OURS) {
       dhcp_check_timeouts(block);
+    } else if (block->addresses != NULL) {
+      int free_leases = dhcp_check_timeouts(block);
+
+      if (free_leases == block->subnet_len) {
+        block_free(block);
+      }
     }
 
     block++;
