@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "block.h"
 #include "dhcp.h"
 #include "dhcp_options.h"
 #include "logger.h"
@@ -36,7 +37,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
   uint32_t lease_number = (ntohl(address) - ntohl((uint32_t) config->prefix.s_addr)) % config->block_size;
 
   if (block_number < config->number_of_blocks) {
-    DEBUG("find_lease_from_address(...) -> found block %i and lease %i\n", block_number, lease_number);
+    DEBUG("find_lease_from_address(...) -> found block %i and lease %i with state %i \n", block_number, lease_number, blocks[block_number].state);
 
     if (lease_block) {
       *lease_block = blocks + block_number;
@@ -45,6 +46,8 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp
     if (lease_index) {
       *lease_index = lease_number;
     }
+
+    DEBUG("find_lease_from_address( ... ): state: %i\n", DDHCP_OURS);
 
     if (blocks[block_number].state == DDHCP_OURS) {
       return 0;
@@ -235,6 +238,14 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
       DEBUG("dhcp_request(...): Lease found.\n");
 
       if (lease_block->state == DDHCP_CLAIMED) {
+        if (lease_block->addresses == NULL) {
+          if (block_alloc(lease_block)) {
+            ERROR("dhcp_request(...): can't allocate requested block");
+            dhcp_nack(socket, request);
+          }
+        }
+
+        lease = lease_block->addresses + lease_index;
         // This lease block is not ours so we have to forward the request
         DEBUG("dhcp_request(...): Requested lease is owned by another node. Send Request.\n");
         // Register client information in lease
@@ -251,16 +262,22 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
         free(packet->sender);
         return 2;
 
-      } else if (lease->state != OFFERED || lease->xid != request->xid) {
-        if (memcmp(request->chaddr, lease->chaddr, 16) != 0) {
-          // Check if lease is free
-          if (lease->state != FREE) {
-            DEBUG("dhcp_request(...): Requested lease offered to other client\n");
-            // Send DHCP_NACK
-            dhcp_nack(socket, request);
-            return 2;
+      } else if (lease_block->state == DDHCP_OURS) {
+        if (lease->state != OFFERED || lease->xid != request->xid) {
+          if (memcmp(request->chaddr, lease->chaddr, 16) != 0) {
+            // Check if lease is free
+            if (lease->state != FREE) {
+              DEBUG("dhcp_request(...): Requested lease offered to other client\n");
+              // Send DHCP_NACK
+              dhcp_nack(socket, request);
+              return 2;
+            }
           }
         }
+      } else {
+        // Block is neither blocked nor ours, so probably say nak here
+        // TODO but first we should check if we are still in warmup.
+        return 2;
       }
     }
   } else {
