@@ -218,6 +218,10 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 
     break;
 
+  case DDHCP_MSG_RENEWLEASE:
+    tmp32 = htonl(packet->address);
+    copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+
   default:
 
     break;
