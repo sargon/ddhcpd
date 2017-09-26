@@ -177,7 +177,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
 }
 
 int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* config) {
-  DEBUG("dhcp_remote_request( address, blocks, config)\n");
+  DEBUG("dhcp_rhdl_request(address, blocks, config)\n");
 
   time_t now = time(NULL);
   ddhcp_block* lease_block = NULL;
@@ -189,15 +189,15 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
   uint8_t found = find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index);
 
   if (found == 0) {
-    // We got a request for a block we don't own (anymore?)
-    // Reply with a nack
-    return 1;
-  } else if (found == 1) {
     // Update lease information
     dhcp_lease* lease = lease_block->addresses + lease_index;
     lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
     // Report ack
     return 0;
+  } else if (found == 1) {
+    // We got a request for a block we don't own (anymore?)
+    // Reply with a nack
+    return 1;
   } else {
     return 2;
   }
