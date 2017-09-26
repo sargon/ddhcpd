@@ -245,10 +245,10 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
         memcpy(&lease->chaddr, &request->chaddr, 16);
 
         // Build packet and send it
-        ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE,config);
-        memcpy(&packet->sender,&lease_block->owner_address,sizeof(struct in6_addr));
-        memcpy(&packet->address,&requested_address,sizeof(struct in_addr));
-        send_packet_direct(packet,config->server_socket);
+        ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);
+        memcpy(&packet->address, &requested_address, sizeof(struct in_addr));
+        send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
+        free(packet->sender);
         return 2;
 
       } else if (lease->state != OFFERED || lease->xid != request->xid) {

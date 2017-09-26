@@ -268,21 +268,36 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
   return 0;
 }
 
-int send_packet_direct(struct ddhcp_mcast_packet* packet, int multicast_socket) {
+int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
+  DEBUG("send_packet_direct(packet,%i)\n", multicast_socket);
   int len = _packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);
 
   if (!buffer) {
+    ERROR("send_packet_direct( ... ) -> Failure\n");
     return 1;
   }
 
-  packet->sender->sin6_port = htons(DDHCP_UNICAST_PORT);
+  struct sockaddr_in6 dest_addr = {
+    .sin6_family = AF_INET6,
+    .sin6_port = htons(DDHCP_UNICAST_PORT),
+    .sin6_scope_id = scope_id
+  };
+
+  memcpy(&dest_addr.sin6_addr, dest, sizeof(struct in6_addr));
+
+  char ipv6_sender[INET6_ADDRSTRLEN];
+
+  DEBUG("Send message to %s\n",
+        inet_ntop(AF_INET6, dest, ipv6_sender, INET6_ADDRSTRLEN));
 
   hton_packet(packet, buffer);
 
   // TODO Error handling
-  sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) packet->sender, sizeof(struct sockaddr_in6));
+  int ret = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
+
+  printf("%i\n", ret);
 
   free(buffer);
 

@@ -120,7 +120,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
     packet->command = DDHCP_MSG_LEASENAK;
   }
 
-  send_packet_direct(packet, config->server_socket);
+  send_packet_direct(packet, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
 }
 
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
