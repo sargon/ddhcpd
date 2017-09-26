@@ -451,15 +451,23 @@ void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* con
   }
 }
 
-void dhcp_check_timeouts(ddhcp_block* block) {
+int dhcp_check_timeouts(ddhcp_block* block) {
   dhcp_lease* lease = block->addresses;
   time_t now = time(NULL);
+
+  int free_leases = 0;
 
   for (unsigned int i = 0 ; i < block->subnet_len ; i++) {
     if (lease->state != FREE && lease->lease_end < now) {
       _dhcp_release_lease(block, i);
     }
 
+    if (lease->state == FREE) {
+      free_leases++;
+    }
+
     lease++;
   }
+
+  return free_leases;
 }

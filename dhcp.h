@@ -64,7 +64,8 @@ void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* con
 
 /**
  * HouseKeeping: Check for timed out leases.
+ * Return the number of free leases in the block.
  */
-void dhcp_check_timeouts(ddhcp_block* block);
+int dhcp_check_timeouts(ddhcp_block* block);
 
 #endif
