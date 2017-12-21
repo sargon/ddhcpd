@@ -301,10 +301,14 @@ void block_free_claims(ddhcp_config* config) {
 
 void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
   ddhcp_block* block = blocks;
-  dprintf(fd, "index,state,owner,claim_count,timeout\n");
+  dprintf(fd, "index,state,owner,claim_count,leases,timeout\n");
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    dprintf(fd, "%i,%i,,%u,%lu\n", block->index, block->state, block->claiming_counts, block->timeout);
+    uint32_t free_leases = 0;
+    if (block->addresses != NULL) {
+      free_leases = dhcp_num_free(block);
+    }
+    dprintf(fd, "%i,%i,%s,%u,%u,%lu\n", block->index, block->state, "<id>" ,block->claiming_counts,free_leases, block->timeout);
     block++;
   }
 }
