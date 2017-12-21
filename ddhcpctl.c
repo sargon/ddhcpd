@@ -71,12 +71,13 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcpctl [-h|-b|-d|-o <option>]\n");
+    printf("Usage: ddhcpctl [-h|-b|-d|-o <option>|-C PATH]\n");
     printf("\n");
     printf("-h                   This usage information.\n");
     printf("-b                   Show current block usage.\n");
     printf("-d                   Show the current dhcp options store.\n");
     printf("-o CODE;LEN;P1,..,Pn Set DHCP Option with code,len and #len chars in decimal\n");
+    printf("-C PATH              Path to control socket\n");
     exit(0);
   }
 
