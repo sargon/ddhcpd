@@ -191,16 +191,22 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
 int block_num_free_leases(ddhcp_block* block, ddhcp_config* config) {
   DEBUG("block_num_free_leases(blocks, config)\n");
   int free_leases = 0;
+#if LOG_LEVEL >= LOG_DEBUG
+  int num_blocks = 0;
+#endif
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
       free_leases += dhcp_num_free(block);
+#if LOG_LEVEL >= LOG_DEBUG
+      num_blocks++;
+#endif
     }
 
     block++;
   }
 
-  DEBUG("block_num_free_leases(...)-> Found %i free dhcp leases in OUR blocks\n", free_leases);
+  DEBUG("block_num_free_leases(...)-> Found %i free dhcp leases in OUR (%i) blocks\n", free_leases, num_blocks);
   return free_leases;
 }
 
@@ -308,10 +314,12 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     uint32_t free_leases = 0;
+
     if (block->addresses != NULL) {
       free_leases = dhcp_num_free(block);
     }
-    dprintf(fd, "%i,%i,%s,%u,%u,%lu\n", block->index, block->state, "<id>" ,block->claiming_counts,free_leases, block->timeout);
+
+    dprintf(fd, "%i,%i,%s,%u,%u,%lu\n", block->index, block->state, "<id>" , block->claiming_counts, free_leases, block->timeout);
     block++;
   }
 }
