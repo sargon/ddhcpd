@@ -207,7 +207,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
 }
 
 int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
-  DEBUG("dhcp_request( %i, dhcp_packet, blocks, config)\n", socket);
+  DEBUG("dhcp_hdl_request( %i, dhcp_packet, blocks, config)\n", socket);
 
   // search the lease we may have offered
 
@@ -235,19 +235,19 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
 
     if (found != 2) {
       lease = lease_block->addresses + lease_index;
-      DEBUG("dhcp_request(...): Lease found.\n");
+      DEBUG("dhcp_hdl_request(...): Lease found.\n");
 
       if (lease_block->state == DDHCP_CLAIMED) {
         if (lease_block->addresses == NULL) {
           if (block_alloc(lease_block)) {
-            ERROR("dhcp_request(...): can't allocate requested block");
+            ERROR("dhcp_hdl_request(...): can't allocate requested block");
             dhcp_nack(socket, request);
           }
         }
 
         lease = lease_block->addresses + lease_index;
         // This lease block is not ours so we have to forward the request
-        DEBUG("dhcp_request(...): Requested lease is owned by another node. Send Request.\n");
+        DEBUG("dhcp_hdl_request(...): Requested lease is owned by another node. Send Request.\n");
         // Register client information in lease
         // TODO This isn't a good idea, because of multi request on the same address from various clients, register it elsewhere and append xid.
         lease->xid = request->xid;
