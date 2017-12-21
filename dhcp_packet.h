@@ -27,6 +27,12 @@ struct dhcp_packet {
 };
 typedef struct dhcp_packet dhcp_packet;
 
+struct dhcp_packet_list {
+  struct dhcp_packet packet;
+  struct list_head list;
+};
+typedef struct dhcp_packet_list dhcp_packet_list;
+
 enum dhcp_message_type {
   DHCPDISCOVER  = 1,
   DHCPOFFER     = 2,
@@ -38,11 +44,43 @@ enum dhcp_message_type {
   DHCPINFORM    = 8,
 };
 
+/**
+ * Store a packet in the packet_list, create a copy of the packet.
+ */
+int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
+
+/**
+ * Search for a packet in the dhcp_packet_list checking chaddr and xid.
+ */
+dhcp_packet_list* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr);
+
+/**
+ * Cleanup the packet list.
+ */
+void dhcp_packet_list_timeout(dhcp_packet_list* list);
 
 /**
  * Print an representation of a dhcp_packet to stdout.
  */
 void printf_dhcp(dhcp_packet* packet);
+
+/**
+ * Memcpy a packet into another packet.
+ */
+int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
+
+/**
+ * Free a packet.
+ */
+#define dhcp_packet_free(packet,free_payload) do {\
+    if ( free_payload > 0 ) {\
+      dhcp_option* _option = packet->options;\
+      for (; _option < packet->options + packet->options_len; _option++) {\
+        free(_option->payload);\
+      }\
+    }\
+    free(packet->options);\
+  } while(0)
 
 /**
  * Reads and checks a dhcp_packet from buffer. Will return zero on success.
