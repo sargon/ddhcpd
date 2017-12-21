@@ -143,6 +143,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
   answer->renew_payload = packet->renew_payload;
 
   send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  free(answer->renew_payload);
   free(answer);
 }
 
@@ -159,20 +160,22 @@ void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* 
   if (pkt_list == NULL) {
     // Ignore packet
     DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
-    return;
   } else {
     dhcp_packet* packet = &pkt_list->packet;
     // Process packet
     dhcp_rhdl_ack(config->client_socket, packet, blocks, config);
   }
+  free(request->renew_payload);
 }
 
 void ddhcp_dhcp_leasenak(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leasenak(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+  free(packet->renew_payload);
 }
 
 void ddhcp_dhcp_release(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_release(blocks,packet,config)\n");
   dhcp_release_lease(packet->renew_payload->address, blocks, config);
+  free(packet->renew_payload);
 }

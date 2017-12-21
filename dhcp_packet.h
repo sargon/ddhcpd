@@ -60,6 +60,11 @@ dhcp_packet_list* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, ui
 void dhcp_packet_list_timeout(dhcp_packet_list* list);
 
 /**
+ * Free DHCP packet list
+ */
+void dhcp_packet_list_free(dhcp_packet_list* list);
+
+/**
  * Print an representation of a dhcp_packet to stdout.
  */
 void printf_dhcp(dhcp_packet* packet);
@@ -68,6 +73,7 @@ void printf_dhcp(dhcp_packet* packet);
  * Memcpy a packet into another packet.
  */
 int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
+
 
 /**
  * Free a packet.

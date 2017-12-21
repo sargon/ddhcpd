@@ -511,6 +511,7 @@ int main(int argc, char** argv) {
   free(buffer);
 
   free_option_store(&config->options);
+  dhcp_packet_list_free(&config->dhcp_packet_cache);
 
   close(config->mcast_socket);
   close(config->client_socket);

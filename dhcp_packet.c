@@ -368,6 +368,20 @@ dhcp_packet_list* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, ui
   return NULL;
 }
 
+void dhcp_packet_list_free(dhcp_packet_list* list) {
+  DEBUG("dhcp_packet_list_free(list)\n");
+  struct list_head* pos, *q;
+  dhcp_packet_list* tmp;
+
+  list_for_each_safe(pos, q, &list->list) {
+    tmp = list_entry(pos, dhcp_packet_list, list);
+    dhcp_packet* packet = &tmp->packet;
+    list_del(pos);
+    dhcp_packet_free(packet, 1);
+    free(tmp);
+  }
+}
+
 uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
   dhcp_option* option = packet->options;
 
