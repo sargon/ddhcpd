@@ -55,6 +55,14 @@ function buildInterfacePairs() {
   done
 }
 
+function roamClientInterfaces() {
+  local IDX=$1
+  local IDT=$2
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    ip link set dev "clb${IDX}-${idc}" master "br-clt${IDT}"
+  done
+}
+
 function destroyInterfacePairs() {
   local IDX=$1
   ip link delete dev "srv${IDX}" 
@@ -77,8 +85,11 @@ function startDHCPClients() {
   shift
   local args="$@"
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ( dhclient -4 -nw -d -pf "/tmp/clt${IDX}-${idc}.pid" -lf "/tmp/clt${IDX}-${idc}.lease" $args "clt${IDX}-${idc}" > "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
-      [ $? -ne 0 ] || echo "${IDX}-${idc} failed $?"
+    ( dhclient -4 -nw -d \
+        -pf "/tmp/clt${IDX}-${idc}.pid" \
+        -lf "/tmp/clt${IDX}-${idc}.lease" \
+        $args \
+        "clt${IDX}-${idc}" > "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
     ) &
   done
 }
@@ -87,8 +98,10 @@ function stopDHCPClients() {
   local IDX="$1"
   shift
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ( dhclient -r -pf "/tmp/clt${IDX}-${idc}.pid" -lf "/tmp/clt${IDX}-${idc}.lease" >> "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
-      [ $? -ne 0 ] || echo "${IDX}-${idc} failed $?"
+    ( dhclient -r \
+        -pf "/tmp/clt${IDX}-${idc}.pid" \
+        -lf "/tmp/clt${IDX}-${idc}.lease" >> "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
+      mv "/tmp/clt${IDX}-${idc}.lease" "/tmp/clt${IDX}-${idc}.lease.old"
     ) &
   done
 }
@@ -177,17 +190,28 @@ case "$1" in
   ;;
   test)
     # A test routine
-    $0 net-init 2
-    trap "pkill dhclient ; $0 net-stop" EXIT
+    $0 net-init 1
+    trap "pkill dhclient ; pkill ddhcpd ; rm /tmp/ddhcpd-ctl* ; $0 net-stop" EXIT
     # Start two daemons
-    ( $0 srv-start 0 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl0 > /tmp/ddhcpd-0.log 2>&1 ) &
-    ( $0 srv-start 1 ./ddhcpd -t 3 -C /tmp/ddhcpd-ctl1 > /tmp/ddhcpd-1.log 2>&1 ) &
-    sleep 2
+    ( $0 srv-start 0 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl0 > /tmp/ddhcpd-0.log 2>&1 ) &
+    ( $0 srv-start 1 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl1 > /tmp/ddhcpd-1.log 2>&1 ) &
+    # Wait some seconds
+    sleep 20
+    # Start some clients 
     echo "Starting clients on realm 0"
     $0 clt-start 0 -v
-    echo "Press ENTER to stop DHCP Clients" read
-    $0 clt-stop 0
-    wait 
+    while :; do
+      # Let Clients get a first lease in realm 0
+      sleep 60 
+      # Move Client Between Realms
+      echo "Move Clients from Realm 0 to 1"
+      roamClientInterfaces 0 1
+      # Wait longer so clients refresh their lease in the other realm
+      sleep 600
+      # And Move them Back
+      echo "Move Clients from Realm 1 back to 0"
+      roamClientInterfaces 0 0
+    done
     ;;
   *)
     echo "Usage: $0 <command> <parameter>"
@@ -197,6 +221,7 @@ case "$1" in
     echo " clt-start <index>           - Start $NUMBER_OF_CLIENT_INTERFACES clients for netns with <index>."
     echo " srv-start <index> <command> - Start <command> in netns with <index>."
     echo " net-stop                    - Destroy interface pairs and netns."
+    echo " test                        - Run predefined test case. "
     ;;
 esac
 
