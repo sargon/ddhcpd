@@ -42,7 +42,7 @@ struct ddhcp_mcast_packet {
 
   union {
     struct ddhcp_payload* payload;
-    uint32_t address;
+    struct ddhcp_renew_payload* renew_payload;
   };
 };
 typedef struct ddhcp_mcast_packet ddhcp_mcast_packet;
@@ -53,6 +53,15 @@ struct ddhcp_payload {
   uint16_t reserved;
 };
 typedef struct ddhcp_payload ddhcp_payload;
+
+struct ddhcp_renew_payload {
+  uint8_t chaddr[16];
+  uint32_t address;
+  uint32_t xid;
+  uint32_t lease_seconds;
+};
+typedef struct ddhcp_renew_payload ddhcp_renew_payload;
+
 
 struct ddhcp_mcast_packet* new_ddhcp_packet(int command, ddhcp_config* config);
 int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet);

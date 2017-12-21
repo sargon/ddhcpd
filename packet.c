@@ -35,7 +35,7 @@ int _packet_size(int command, int payload_count) {
   case DDHCP_MSG_LEASEACK:
   case DDHCP_MSG_LEASENAK:
   case DDHCP_MSG_RENEWLEASE:
-    len = 16 + sizeof(struct in_addr);
+    len = 16 + sizeof(struct ddhcp_renew_payload);
 
     break;
 
@@ -93,14 +93,14 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
 
   char str[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &(packet->prefix), str, INET_ADDRSTRLEN);
-  printf("NODE: %lu PREFIX: %s/%i BLOCKSIZE: %i COMMAND: %i ALLOCATIONS: %i\n",
-         (long unsigned int) packet->node_id,
-         str,
-         packet->prefix_len,
-         packet->blocksize,
-         packet->command,
-         packet->count
-        );
+  DEBUG("NODE: %lu PREFIX: %s/%i BLOCKSIZE: %i COMMAND: %i ALLOCATIONS: %i\n",
+        (long unsigned int) packet->node_id,
+        str,
+        packet->prefix_len,
+        packet->blocksize,
+        packet->command,
+        packet->count
+       );
 
   // Payload
   uint8_t  tmp8;
@@ -148,8 +148,14 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
   case DDHCP_MSG_LEASEACK:
   case DDHCP_MSG_LEASENAK:
   case DDHCP_MSG_RELEASE:
+    packet->renew_payload = (struct ddhcp_renew_payload*) calloc(sizeof(struct ddhcp_renew_payload), 1);
     copy_buf_to_var_inc(buffer, uint32_t, tmp32);
-    packet->address = ntohl(tmp32);
+    packet->renew_payload->address = ntohl(tmp32);
+    copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+    packet->renew_payload->xid = ntohl(tmp32);
+    copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+    packet->renew_payload->lease_seconds = ntohl(tmp32);
+    memcpy(&packet->renew_payload->chaddr, buffer, 16);
     break;
 
   default:
@@ -218,9 +224,17 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 
     break;
 
+  case DDHCP_MSG_LEASEACK:
+  case DDHCP_MSG_LEASENAK:
+  case DDHCP_MSG_RELEASE:
   case DDHCP_MSG_RENEWLEASE:
-    tmp32 = htonl(packet->address);
+    tmp32 = htonl(packet->renew_payload->address);
     copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+    tmp32 = htonl(packet->renew_payload->xid);
+    copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+    tmp32 = htonl(packet->renew_payload->lease_seconds);
+    copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+    memcpy(buffer, &packet->renew_payload->chaddr, 16);
 
   default:
 
