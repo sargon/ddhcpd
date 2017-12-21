@@ -114,20 +114,29 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
 
 void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_renewlease(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
-  int ret = dhcp_rhdl_request(&(packet->address), blocks, config);
 
-  // We are reusing the packet here
-  if (! ret) {
+
+  int ret = dhcp_rhdl_request(&(packet->renew_payload->address), blocks, config);
+
+  ddhcp_mcast_packet* answer = NULL;
+
+  if (ret == 0) {
     DEBUG("ddhcp_dhcp_renewlease( ... ): %i ACK\n", ret);
-    packet->command = DDHCP_MSG_LEASEACK;
-  } else {
+    answer = new_ddhcp_packet(DDHCP_MSG_LEASEACK, config);
+  } else if (ret == 1) {
     DEBUG("ddhcp_dhcp_renewlease( ... ): %i NAK\n", ret);
-    packet->command = DDHCP_MSG_LEASENAK;
-
+    answer = new_ddhcp_packet(DDHCP_MSG_LEASENAK, config);
     // TODO Can we hand over the block?
+  } else {
+    // Unexpected behaviour
+    WARNING("ddhcp_dhcp_renewlease( ... ) -> Unexpected return value from dhcp_rhdl_request.");
+    return;
   }
 
-  send_packet_direct(packet, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  answer->renew_payload = packet->renew_payload;
+
+  send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  free(answer);
 }
 
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
