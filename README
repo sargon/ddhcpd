@@ -75,11 +75,9 @@ To deconfigure the setup you can call.
 
     # ./network-test net-stop
 
-Performance Factors
--------------------
+Gluon Packages
+--------------
 
-### Life cycle packets
+For a maintained gluon package description see
 
-We call packets life cycle packets if they would be send during scenario where
-the amount of instances is constant and no client interaction is happening. 
-
+  https://github.com/sargon/gluon-sargon
