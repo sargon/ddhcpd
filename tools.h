@@ -10,5 +10,6 @@
 
 void addr_add(struct in_addr* subnet, struct in_addr* result, int add);
 dhcp_option* parse_option();
+char* hwaddr2c(uint8_t* hwaddr);
 
 #endif
