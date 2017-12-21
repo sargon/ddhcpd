@@ -70,6 +70,9 @@ ddhcp_block* block_find_free(ddhcp_block* blocks, ddhcp_config* config) {
 
   if (num_free_blocks > 0) {
     r = rand() % num_free_blocks;
+  } else {
+    DEBUG("block_find_free(...) -> no free block found\n");
+    return NULL;
   }
 
   struct list_head* pos, *q;
