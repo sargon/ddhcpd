@@ -318,39 +318,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     return 2;
   }
 
-  dhcp_packet* packet = build_initial_packet(request);
-
-  if (! packet) {
-    DEBUG("dhcp_request(...) -> memory allocation failure\n");
-    return 1;
-  }
-
-  // Mark lease as leased and register client
-  memcpy(&lease->chaddr, &request->chaddr, 16);
-  lease->xid = request->xid;
-  lease->state = LEASED;
-  lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
-
-  addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
-  DEBUG("dhcp_request(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
-
-  // TODO We need a more extendable way to build up options
-  packet->options_len = fill_options(request->options, request->options_len, &(config->options), 2, &packet->options) ;
-
-  // TODO Error handling
-  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
-    DHCPACK
-  });
-  // TODO correct type conversion, currently solution is simply wrong
-  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) {
-    0, 0, 0, DHCP_LEASE_TIME
-  });
-
-  dhcp_packet_send(socket, packet);
-  free(packet->options);
-  free(packet);
-
-  return 0;
+  return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* config) {
@@ -405,6 +373,43 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
   dhcp_packet_send(socket, packet);
   free(packet);
 
+  return 0;
+}
+
+int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_t lease_index, ddhcp_config* config) {
+  time_t now = time(NULL);
+  dhcp_packet* packet = build_initial_packet(request);
+  dhcp_lease* lease = lease_block->addresses + lease_index;
+
+  if (! packet) {
+    DEBUG("dhcp_request(...) -> memory allocation failure\n");
+    return 1;
+  }
+
+  // Mark lease as leased and register client
+  memcpy(&lease->chaddr, &request->chaddr, 16);
+  lease->xid = request->xid;
+  lease->state = LEASED;
+  lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
+
+  addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
+  DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
+
+  // TODO We need a more extendable way to build up options
+  packet->options_len = fill_options(request->options, request->options_len, &(config->options), 2, &packet->options) ;
+
+  // TODO Error handling
+  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
+    DHCPACK
+  });
+  // TODO correct type conversion, currently solution is simply wrong
+  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) {
+    0, 0, 0, DHCP_LEASE_TIME
+  });
+
+  dhcp_packet_send(socket, packet);
+  free(packet->options);
+  free(packet);
   return 0;
 }
 
