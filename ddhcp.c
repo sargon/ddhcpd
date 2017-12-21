@@ -155,16 +155,17 @@ void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* 
   DEBUG("ddhcp_dhcp_leaseack( ... ): ACK for xid: %u chaddr: %s\n",request->renew_payload->xid,hwaddr);
   free(hwaddr);
   #endif
-  dhcp_packet_list* pkt_list = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
+  dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
-  if (pkt_list == NULL) {
+  if (packet == NULL) {
     // Ignore packet
     DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
   } else {
-    dhcp_packet* packet = &pkt_list->packet;
     // Process packet
     dhcp_rhdl_ack(config->client_socket, packet, blocks, config);
   }
+  dhcp_packet_free(packet,1);
+  free(packet);
   free(request->renew_payload);
 }
 

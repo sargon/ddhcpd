@@ -28,7 +28,7 @@ struct dhcp_packet {
 typedef struct dhcp_packet dhcp_packet;
 
 struct dhcp_packet_list {
-  struct dhcp_packet packet;
+  struct dhcp_packet* packet;
   struct list_head list;
 };
 typedef struct dhcp_packet_list dhcp_packet_list;
@@ -52,7 +52,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
 /**
  * Search for a packet in the dhcp_packet_list checking chaddr and xid.
  */
-dhcp_packet_list* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr);
+dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr);
 
 /**
  * Cleanup the packet list.
