@@ -114,6 +114,9 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   int lease_index = 0;
   int lease_ratio = config->block_size + 1;
 
+
+  // TODO Select Block according to usage, current behavior leads to fragmentation
+  //      of block usage, if more that one block is claimed.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
       int free_leases = dhcp_num_free(block);
@@ -193,6 +196,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
 
   if (found == 0) {
     // Update lease information
+    // TODO Check for validity of request (chaddr)
     dhcp_lease* lease = lease_block->addresses + lease_index;
     lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
     // Report ack
@@ -204,6 +208,28 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
   } else {
     return 2;
   }
+}
+
+int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
+
+  ddhcp_block* lease_block = NULL;
+  uint32_t lease_index = 0;
+  struct in_addr requested_address;
+
+  uint8_t* address = find_option_requested_address(request->options, request->options_len);
+
+  if (address) {
+    memcpy(&requested_address, address, sizeof(struct in_addr));
+  } else if (request->ciaddr.s_addr != INADDR_ANY) {
+    memcpy(&requested_address, &request->ciaddr.s_addr, sizeof(struct in_addr));
+  }
+
+  if (find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index) != 1) {
+    DEBUG("dhcp_rhdl_ack( ... ) -> lease not found\n");
+    return 1;
+  }
+
+  return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
 int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
@@ -256,10 +282,27 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
         memcpy(&lease->chaddr, &request->chaddr, 16);
 
         // Build packet and send it
+        ddhcp_renew_payload payload;
+        memcpy(&payload.chaddr, &request->chaddr, 16);
+        memcpy(&payload.address, &requested_address, sizeof(struct in_addr));
+        payload.xid = request->xid;
+        payload.lease_seconds = 0;
+        #if LOG_LEVEL >= LOG_DEBUG
+        char* hwaddr = hwaddr2c(payload.chaddr);
+        DEBUG("dhcp_hdl_request( ... ): Save request for xid: %u chaddr: %s\n",payload.xid,hwaddr);
+        free(hwaddr);
+        #endif
+
+        // Send packet
         ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);
-        memcpy(&packet->address, &requested_address, sizeof(struct in_addr));
+        packet->renew_payload = &payload;
+
+        // Store packet for later usage.
+        // TODO Error handling
+        dhcp_packet_list_add(&config->dhcp_packet_cache,request);
+
         send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
-        free(packet->sender);
+        free(packet);
         return 2;
 
       } else if (lease_block->state == DDHCP_OURS) {
@@ -474,6 +517,7 @@ void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* con
 }
 
 int dhcp_check_timeouts(ddhcp_block* block) {
+  DEBUG("dhcp_check_timeouts(block)\n");
   dhcp_lease* lease = block->addresses;
   time_t now = time(NULL);
 

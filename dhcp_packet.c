@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "dhcp_packet.h"
+#include "types.h"
 #include "logger.h"
 
 struct sockaddr_in broadcast = {
@@ -219,13 +219,15 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
 
   assert(i == options);
 
+#if LOG_LEVEL >= LOG_INFO
   printf_dhcp(packet);
+#endif
 
   return 0;
 }
 
 int dhcp_packet_send(int socket, dhcp_packet* packet) {
-  DEBUG("dhcp_packet_send(%i, dhcp_packet)\n",socket);
+  DEBUG("dhcp_packet_send(%i, dhcp_packet)\n", socket);
   uint16_t tmp16;
   uint32_t tmp32;
 

@@ -64,10 +64,12 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
       // TODO Save the connection details for the claiming node, so we can contact him, for dhcp actions.
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
+      #if LOG_LEVEL >= LOG_DEBUG
       char ipv6_sender[INET6_ADDRSTRLEN];
       memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
       DEBUG("Register block to %s\n",
             inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
+      #endif
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
@@ -115,6 +117,11 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
 void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_renewlease(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
 
+  #if LOG_LEVEL >= LOG_DEBUG
+  char* hwaddr = hwaddr2c(packet->renew_payload->chaddr);
+  DEBUG("ddhcp_dhcp_renewlease( ... ): Request for xid: %u chaddr: %s\n",packet->renew_payload->xid,hwaddr);
+  free(hwaddr);
+  #endif
 
   int ret = dhcp_rhdl_request(&(packet->renew_payload->address), blocks, config);
 
@@ -139,9 +146,25 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
   free(answer);
 }
 
-void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
-  DEBUG("ddhcp_dhcp_leaseack(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+  DEBUG("ddhcp_dhcp_leaseack(%li,%li,%li)\n", (long int) &blocks, (long int) &request, (long int) &config);
+  #if LOG_LEVEL >= LOG_DEBUG
+  char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
+  DEBUG("ddhcp_dhcp_leaseack( ... ): ACK for xid: %u chaddr: %s\n",request->renew_payload->xid,hwaddr);
+  free(hwaddr);
+  #endif
+  dhcp_packet_list* pkt_list = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
+
+  if (pkt_list == NULL) {
+    // Ignore packet
+    DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
+    return;
+  } else {
+    dhcp_packet* packet = &pkt_list->packet;
+    // Process packet
+    dhcp_rhdl_ack(config->client_socket, packet, blocks, config);
+  }
 }
 
 void ddhcp_dhcp_leasenak(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
@@ -151,5 +174,5 @@ void ddhcp_dhcp_leasenak(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* 
 
 void ddhcp_dhcp_release(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_release(blocks,packet,config)\n");
-  dhcp_release_lease(packet->address, blocks, config);
+  dhcp_release_lease(packet->renew_payload->address, blocks, config);
 }

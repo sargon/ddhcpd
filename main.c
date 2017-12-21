@@ -57,6 +57,8 @@ void house_keeping(ddhcp_block* blocks, ddhcp_config* config) {
 
   block_claim(blocks, blocks_needed, config);
   block_update_claims(blocks, blocks_needed, config);
+
+  dhcp_packet_list_timeout(&config->dhcp_packet_cache);
   DEBUG("house_keeping( ... ) finish\n\n");
 }
 
@@ -140,6 +142,8 @@ int main(int argc, char** argv) {
   INIT_LIST_HEAD(&(config->options).list);
 
   INIT_LIST_HEAD(&(config->claiming_blocks).list);
+
+  INIT_LIST_HEAD(&(config->dhcp_packet_cache).list);
 
   char* interface = "server0";
   char* interface_client = "client0";
@@ -353,13 +357,16 @@ int main(int argc, char** argv) {
         fprintf(stderr, "epoll error:%i \n", errno);
         close(events[i].data.fd);
       } else if (config->server_socket == events[i].data.fd) {
+        // DDHCP Roamed DHCP Requests
         struct sockaddr_in6 sender;
         socklen_t sender_len = sizeof sender;
         bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
+        #if LOG_LEVEL >= LOG_DEBUG
         char ipv6_sender[INET6_ADDRSTRLEN];
         DEBUG("Receive message from %s\n",
               inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+        #endif
         ret = ntoh_mcast_packet(buffer, bytes, &packet);
         packet.sender = &sender;
 
@@ -388,13 +395,16 @@ int main(int argc, char** argv) {
           DEBUG("epoll_ret: %i\n", ret);
         }
       } else if (config->mcast_socket == events[i].data.fd) {
+        // DDHCP Block Handling
         struct sockaddr_in6 sender;
         socklen_t sender_len = sizeof sender;
         bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
         // TODO Error Handling
+        #if LOG_LEVEL >= LOG_DEBUG
         char ipv6_sender[INET6_ADDRSTRLEN];
         DEBUG("Receive message from %s\n",
               inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+        #endif
         ret = ntoh_mcast_packet(buffer, bytes, &packet);
         packet.sender = &sender;
 
@@ -420,6 +430,7 @@ int main(int argc, char** argv) {
         house_keeping(blocks, config);
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {
+        // DHCP
         bytes = read(config->client_socket, buffer, 1500);
 
         // TODO Error Handling
@@ -457,6 +468,7 @@ int main(int argc, char** argv) {
           }
         }
       } else if (config->control_socket == events[i].data.fd) {
+        // Handle new control socket connections
         struct sockaddr_un client_fd;
         unsigned int len = sizeof(client_fd);
         config->client_control_socket = accept(config->control_socket, (struct sockaddr*) &client_fd, &len);
@@ -464,11 +476,13 @@ int main(int argc, char** argv) {
         add_fd(efd, config->client_control_socket, EPOLLIN | EPOLLET);
         DEBUG("ControlSocket: new connections\n");
       } else if (events[i].events & EPOLLIN) {
+        // Handle commands comming over a control_socket
         bytes = read(events[i].data.fd, buffer, 1500);
 
         if (handle_command(events[i].data.fd, buffer, bytes, blocks, config) < 0) {
           ERROR("Malformed command\n");
         }
+
         del_fd(efd, events[i].data.fd, 0);
         close(events[i].data.fd);
       } else if (events[i].events & EPOLLHUP) {

@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
-
 #include "types.h"
 
 struct dhcp_packet {
@@ -14,6 +13,7 @@ struct dhcp_packet {
   uint8_t hops;
   uint32_t xid;
   uint16_t secs;
+  time_t timeout;
   uint16_t flags;
   struct in_addr ciaddr;
   struct in_addr yiaddr;
@@ -23,7 +23,7 @@ struct dhcp_packet {
   char sname[64];
   char file[128];
   uint8_t options_len;
-  dhcp_option* options;
+  struct dhcp_option* options;
 };
 typedef struct dhcp_packet dhcp_packet;
 

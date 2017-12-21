@@ -5,8 +5,13 @@
 #include <time.h>
 
 #include "list.h"
+#include "dhcp_packet.h"
 
 #define NODE_ID_CMP(id1,id2) memcmp((char*) (id1), (char*) (id2), sizeof(ddhcp_node_id))
+
+// node ident
+
+typedef uint8_t ddhcp_node_id[8];
 
 // block structures
 
@@ -24,6 +29,7 @@ struct ddhcp_block {
   enum ddhcp_block_state state;
   struct in_addr subnet;
   uint8_t  subnet_len;
+  ddhcp_node_id node_id;
   struct in6_addr owner_address;
   time_t timeout;
   uint8_t claiming_counts;
@@ -82,7 +88,6 @@ enum dhcp_option_code {
   DHCP_CODE_END = 255,
 };
 
-typedef uint8_t ddhcp_node_id[8];
 
 // state
 
@@ -102,6 +107,9 @@ struct ddhcp_config {
   uint32_t loop_timeout;
   unsigned int claiming_blocks_amount;
   ddhcp_block_list claiming_blocks;
+
+  // DHCP packets for later use.
+  struct dhcp_packet_list dhcp_packet_cache;
 
   // DHCP Options
   dhcp_option_list options;

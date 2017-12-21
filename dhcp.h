@@ -27,6 +27,10 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
  * DDHCP Remote Request (Renew)
  */
 int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* config);
+/**
+ * DDHCP Remote Answer (Ack)
+ */
+int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
 
 /**
  * DHCP Release
@@ -34,6 +38,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* block, ddhcp_config* config);
 
 int dhcp_nack(int socket, dhcp_packet* from_client);
+int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_t lease_index, ddhcp_config* config);
 
 /**
  * DHCP Lease Available
