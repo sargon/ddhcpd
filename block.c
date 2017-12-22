@@ -210,6 +210,33 @@ int block_num_free_leases(ddhcp_block* block, ddhcp_config* config) {
   return free_leases;
 }
 
+ddhcp_block* block_find_free_leases(ddhcp_block* block, ddhcp_config* config) {
+  DEBUG("block_find_free_leases(blocks,config)\n");
+  ddhcp_block* selected = NULL;
+  uint32_t selected_free_leases = config->block_size + 1;
+
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+    if (block->state == DDHCP_OURS) {
+      uint32_t free_leases = dhcp_num_free(block);
+
+      if (free_leases > 0) {
+        if (free_leases < selected_free_leases) {
+          selected = block;
+        }
+      }
+    }
+    block++;
+  }
+  #if LOG_LEVEL >= LOG_DEBUG
+  if ( selected != NULL ) {
+    DEBUG("block_find_free_leases(blocks,config) -> Block %i selected\n",selected->index);
+  } else {
+    DEBUG("block_find_free_leases(blocks,config) -> No block found!\n");
+  }
+  #endif
+  return selected;
+}
+
 void block_update_claims(ddhcp_block* blocks, int blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(blocks, %i, config)\n", blocks_needed);
   unsigned int our_blocks = 0;

@@ -39,6 +39,13 @@ int block_claim(ddhcp_block* blocks, int num_blocks , ddhcp_config* config);
 int block_num_free_leases(ddhcp_block* block, ddhcp_config* config);
 
 /**
+ * Find and return claimed block with free leases. Try to
+ * reduce fragmentation of lease usage by returning already
+ * used blocks.
+ */
+ddhcp_block* block_find_free_leases(ddhcp_block* block, ddhcp_config* config);
+
+/**
  *  Update the timeout of claimed blocks and send packets to
  *  distribute the continuations of that claim.
  *

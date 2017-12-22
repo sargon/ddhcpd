@@ -9,8 +9,9 @@
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
-uint16_t DHCP_LEASE_TIME    = 3600;
-uint16_t DHCP_LEASE_SERVER_DELTA = 100;
+// TODO Make lease time configurable
+uint16_t DHCP_LEASE_TIME    = 60;
+uint16_t DHCP_LEASE_SERVER_DELTA = 10;
 
 #if LOG_LEVEL >= LOG_DEBUG
 #define DEBUG_DHCP_LEASE(...) do { \
@@ -107,42 +108,18 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n", socket);
 
   time_t now = time(NULL);
-  ddhcp_block* block = blocks;
-  dhcp_lease* lease = NULL;
-  ddhcp_block* lease_block = NULL;
+  ddhcp_block* lease_block = block_find_free_leases(blocks,config);
 
-  int lease_index = 0;
-  int lease_ratio = config->block_size + 1;
-
-
-  // TODO Select Block according to usage, current behavior leads to fragmentation
-  //      of block usage, if more that one block is claimed.
-  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    if (block->state == DDHCP_OURS) {
-      int free_leases = dhcp_num_free(block);
-
-      if (free_leases > 0) {
-        DEBUG("dhcp_discover(...) -> block %i has %i free leases\n", block->index, free_leases);
-
-        if (free_leases < lease_ratio) {
-          DEBUG("dhcp_discover(...) -> block %i has best lease ratio until now\n", block->index);
-
-          uint32_t index = dhcp_get_free_lease(block);
-
-          lease_block = block;
-          lease_index = index;
-          lease_ratio = free_leases;
-
-          lease = block->addresses + index;
-        }
-      }
-    }
-
-    block++;
+  if ( lease_block == NULL ) {
+    DEBUG("dhcp_discover( ... ) -> no block with free leases found\n");
+    return 3;
   }
 
+  uint32_t lease_index = dhcp_get_free_lease(lease_block);
+  dhcp_lease* lease = lease_block->addresses + lease_index;
+
   if (! lease) {
-    DEBUG("dhcp_discover(...) -> no free leases found");
+    DEBUG("dhcp_discover(...) -> no free leases found, this should not happen!");
     return 2;
   }
 
