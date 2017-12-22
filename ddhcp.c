@@ -61,12 +61,15 @@ void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_p
       // TODO Decide when and if we reclaim this block
       //      Which node has more leases in this block, ..., who has the better node_id.
     } else {
-      // TODO Save the connection details for the claiming node, so we can contact him, for dhcp actions.
+      // Notice the ownership
       blocks[block_index].state = DDHCP_CLAIMED;
       blocks[block_index].timeout = now + claim->timeout;
+      // Save the connection details for the claiming node
+      // We need to contact him, for dhcp forwarding actions.
+      memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
+      memcpy(&blocks[block_index].node_id, &packet->node_id, sizeof(ddhcp_node_id));
       #if LOG_LEVEL >= LOG_DEBUG
       char ipv6_sender[INET6_ADDRSTRLEN];
-      memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
       DEBUG("Register block to %s\n",
             inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
       #endif
