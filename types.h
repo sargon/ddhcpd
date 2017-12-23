@@ -12,6 +12,7 @@
 // node ident
 
 typedef uint8_t ddhcp_node_id[8];
+#define NODE_ID_CLEAR(id) memset(id,'\0',sizeof(ddhcp_node_id))
 
 // block structures
 
