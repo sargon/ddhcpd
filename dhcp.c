@@ -391,6 +391,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
   });
 
   dhcp_packet_send(socket, packet);
+  free(packet->options);
   free(packet);
 
   return 0;
