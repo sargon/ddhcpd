@@ -33,7 +33,8 @@ int block_own(ddhcp_block* block) {
 void block_free(ddhcp_block* block) {
   DEBUG("block_free(%i)\n", block->index);
 
-  if (block->state == DDHCP_OURS) {
+  if (block->state != DDHCP_BLOCKED) {
+    NODE_ID_CLEAR(&block->node_id);
     block->state = DDHCP_FREE;
   }
 
