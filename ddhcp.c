@@ -118,7 +118,7 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
 }
 
 void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  DEBUG("ddhcp_dhcp_renewlease(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
+  DEBUG("ddhcp_dhcp_renewlease(blocks, request, config)\n");
 
   #if LOG_LEVEL >= LOG_DEBUG
   char* hwaddr = hwaddr2c(packet->renew_payload->chaddr);
@@ -152,7 +152,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet
 
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
-  DEBUG("ddhcp_dhcp_leaseack(%li,%li,%li)\n", (long int) &blocks, (long int) &request, (long int) &config);
+  DEBUG("ddhcp_dhcp_leaseack(blocks,request,config)\n");
   #if LOG_LEVEL >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_leaseack( ... ): ACK for xid: %u chaddr: %s\n",request->renew_payload->xid,hwaddr);
@@ -172,10 +172,26 @@ void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* 
   free(request->renew_payload);
 }
 
-void ddhcp_dhcp_leasenak(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
-  DEBUG("ddhcp_dhcp_leasenak(%li,%li,%li)\n", (long int) &blocks, (long int) &packet, (long int) &config);
-  free(packet->renew_payload);
+  DEBUG("ddhcp_dhcp_leasenak(blocks,request,config)\n");
+  #if LOG_LEVEL >= LOG_DEBUG
+  char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
+  DEBUG("ddhcp_dhcp_leaseack( ... ): NAK for xid: %u chaddr: %s\n",request->renew_payload->xid,hwaddr);
+  free(hwaddr);
+  #endif
+  dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
+
+  if (packet == NULL) {
+    // Ignore packet
+    DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
+  } else {
+    // Process packet
+    dhcp_nack(config->client_socket, packet);
+  }
+  dhcp_packet_free(packet,1);
+  free(packet);
+  free(request->renew_payload);
 }
 
 void ddhcp_dhcp_release(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {

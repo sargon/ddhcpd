@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
             break;
 
           case DDHCP_MSG_LEASENAK:
-            ddhcp_dhcp_leasenak(blocks, &packet, config);
+            ddhcp_dhcp_leasenak(&packet, config);
             break;
 
           case DDHCP_MSG_RELEASE:
