@@ -146,7 +146,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
     DHCPOFFER
   });
   set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t[]) {
-    DHCP_LEASE_TIME
+    config->dhcp_lease_time
   });
 
   dhcp_packet_send(socket, packet);
@@ -173,7 +173,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
     // Update lease information
     // TODO Check for validity of request (chaddr)
     dhcp_lease* lease = lease_block->addresses + lease_index;
-    lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
+    lease->lease_end = now + config->dhcp_lease_time + DHCP_LEASE_SERVER_DELTA;
     // Report ack
     return 0;
   } else if (found == 1) {
@@ -253,7 +253,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
         // TODO This isn't a good idea, because of multi request on the same address from various clients, register it elsewhere and append xid.
         lease->xid = request->xid;
         lease->state = OFFERED;
-        lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
+        lease->lease_end = now + config->dhcp_lease_time + DHCP_LEASE_SERVER_DELTA;
         memcpy(&lease->chaddr, &request->chaddr, 16);
 
         // Build packet and send it
@@ -409,7 +409,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   memcpy(&lease->chaddr, &request->chaddr, 16);
   lease->xid = request->xid;
   lease->state = LEASED;
-  lease->lease_end = now + DHCP_LEASE_TIME + DHCP_LEASE_SERVER_DELTA;
+  lease->lease_end = now + config->dhcp_lease_time + DHCP_LEASE_SERVER_DELTA;
 
   addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
   DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
@@ -423,7 +423,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   });
   // TODO correct type conversion, currently solution is simply wrong
   set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t[]) {
-    0, 0, 0, DHCP_LEASE_TIME
+    0, 0, 0, config->dhcp_lease_time
   });
 
   dhcp_packet_send(socket, packet);

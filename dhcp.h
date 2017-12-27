@@ -7,8 +7,7 @@
 #include "types.h"
 #include "dhcp_packet.h"
 
-// TODO Make lease time configurable
-uint16_t DHCP_LEASE_TIME    = 60;
+#define DHCP_LEASE_TIME 60;
 
 /**
  * DHCP Discover
