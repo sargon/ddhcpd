@@ -80,4 +80,9 @@ void dhcp_options_show(int fd, dhcp_option_list* store);
  * Initialize dhcp_options store in the configuration.
  */
 void dhcp_options_init(ddhcp_config* config);
+
+/** 
+ * Search for option in store and if found store it in the options list.
+ */
+int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code);
 #endif

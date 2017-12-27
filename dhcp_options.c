@@ -40,6 +40,15 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
   return 1;
 }
 
+int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code) {
+  dhcp_option* option = find_in_option_store(store, code);
+  if (option == NULL) {
+    DEBUG("set_option_from_store( ... ) -> Option %u not found in store\n", code);
+    return 1;
+  }
+  return set_option(options,len,code,option->len,option->payload);
+}
+
 int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_t** requested) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_PARAMETER_REQUEST_LIST);
 
