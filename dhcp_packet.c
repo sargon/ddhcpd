@@ -178,9 +178,13 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     }
   }
 
-  if (dhcp_message_type + dhcp_request_list < 2) {
-    printf("Warning: Required DHCP options are available, invalid message!\n");
+  if (dhcp_message_type != 1) {
+    INFO("Message contains no message type - invalid!\n");
     return -6;
+  }
+
+  if (dhcp_request_list != 1) {
+    DEBUG("Message contains no dhcp request list - broken client?\n");
   }
 
   packet->options_len = options;
