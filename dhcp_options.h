@@ -37,7 +37,7 @@ uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len);
  * left in the fullfil list. In front of the list additional many options are reserved.
  * On failure fullfil_list is the null-pointer and 0 is returned.
  *
- * When fullful is pointer not to NULL caller has to handle memory deallocation.
+ * Caller must handle memory deallocation.
  */
 int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil);
 

@@ -139,12 +139,11 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
   uint8_t* requested = NULL;
   int8_t max_options = find_option_parameter_request_list(options, len, &requested);
 
-  if (! max_options) {
-    *fullfil = NULL;
-    return 0;
-  }
-
   *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option), max_options + additional);
+
+  if (! max_options) {
+    return additional;
+  }
 
   for (uint8_t i = additional; i < max_options; i++) {
     uint8_t code = requested[i];
