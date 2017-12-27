@@ -82,6 +82,7 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
   return NULL;
 }
 
+
 dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
   DEBUG("set_in_option_store( store, code/len: %i/%i)\n", option->code, option->len);
 
@@ -110,6 +111,26 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
     list_add_tail((&tmp->list), &(store->list));
 
     return option;
+  }
+}
+
+void remove_option_in_store(dhcp_option_list* store, uint8_t code) {
+  struct list_head* pos, *q;
+  dhcp_option_list* tmp;
+
+  list_for_each_safe(pos, q, &store->list) {
+    tmp = list_entry(pos, dhcp_option_list, list);
+    dhcp_option* option = tmp->option;
+    if ( option->code == code ) {
+      list_del(pos);
+
+      if (option->payload) {
+        free(option->payload);
+      }
+
+      free(option);
+      free(tmp);
+    }
   }
 }
 

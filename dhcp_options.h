@@ -17,6 +17,11 @@ dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code);
  */
 int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_len, uint8_t* payload);
 
+/** 
+ * Remove options.
+ */
+void remove_option(dhcp_option* options, uint8_t code);
+
 /**
  * Search for the parameter request list option in a list of options.
  * On success the requested pointer is set and a positiv integer
@@ -55,6 +60,11 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code);
  * Search and replace a option in the store, otherwise append it to the store.
  */
 dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option);
+
+/**
+ * Search and remove a option in the store.
+ */
+void remove_option_in_store(dhcp_option_list* store, uint8_t code);
 
 /**
  * Free option store and all contained dhcp_options.

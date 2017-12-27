@@ -59,6 +59,18 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
     set_option_in_store(&config->options, option);
     return 0;
 
+  case 4:
+    DEBUG("handle_command(...) -> set dhcp option\n");
+
+    if (msglen < 2) {
+      DEBUG("handle_command(...) -> message not long enought\n");
+      return -2;
+    }
+
+    uint8_t code = buffer[1];
+    remove_option_in_store(&config->options, code);
+    return 0;
+
   default:
     WARNING("handle_command(...) -> unknown command\n");
   }
