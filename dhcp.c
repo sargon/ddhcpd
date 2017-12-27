@@ -139,7 +139,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
   // TODO We need a more extendable way to build up options
-  packet->options_len = fill_options(discover->options, discover->options_len, &config->options, 2, &packet->options) ;
+  packet->options_len = fill_options(discover->options, discover->options_len, &config->options, 3, &packet->options) ;
 
   // TODO Error handling
   set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
@@ -148,6 +148,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t[]) {
     config->dhcp_lease_time
   });
+  set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
 
   dhcp_packet_send(socket, packet);
 
