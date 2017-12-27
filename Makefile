@@ -1,6 +1,8 @@
 OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o
 OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o
 
+REVISION=$(shell git rev-list --first-parent HEAD --max-count=1)
+
 CC=gcc
 CFLAGS+= \
     -Wall \
@@ -37,10 +39,14 @@ INSTALL_DIR     = $(INSTALL) -D -p -d -m  755
 
 all: ddhcpd ddhcpdctl
 
-ddhcpd: ${OBJ}
+.PHONY: version.h
+version.h:
+	echo '#define REVISION "$(REVISION)"' > version.h
+
+ddhcpd: version.h ${OBJ} 
 	${CC} ${OBJ} ${CFLAGS} -o ddhcpd ${LFLAGS}
 
-ddhcpdctl: ${OBJCTL}
+ddhcpdctl: version.h ${OBJCTL}
 	${CC} ${OBJCTL} ${CFLAGS} -o ddhcpdctl ${LFLAGS}
 
 clean:

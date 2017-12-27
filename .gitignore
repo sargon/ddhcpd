@@ -6,3 +6,4 @@ ddhcpd
 ddhcpdctl
 *.orig
 /\
+version.h

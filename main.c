@@ -22,6 +22,7 @@
 #include "tools.h"
 #include "dhcp_options.h"
 #include "control.h"
+#include "version.h"
 
 volatile int daemon_running = 0;
 
@@ -154,7 +155,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:t:dDhLb:N:o:s:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:t:dvDhLb:N:o:s:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -188,6 +189,11 @@ int main(int argc, char** argv) {
     case 'L':
       early_housekeeping = 1;
       break;
+
+		case 'v':
+			printf("Revision: %s\n",REVISION);
+      return 0;
+			break;
 
     case 'N':
       do {
@@ -256,6 +262,7 @@ int main(int argc, char** argv) {
     printf("-d                   Run in background and daemonize\n");
     printf("-D                   Run in foreground and log to console (default)\n");
     printf("-C CTRL_PATH         Path to control socket\n");
+    printf("-v                   Print build revision\n");
     exit(0);
   }
 
