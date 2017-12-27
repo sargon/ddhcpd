@@ -7,6 +7,9 @@
 #include "types.h"
 #include "dhcp_packet.h"
 
+// TODO Make lease time configurable
+uint16_t DHCP_LEASE_TIME    = 60;
+
 /**
  * DHCP Discover
  * Performs a search for a available, not already offered address in the

@@ -9,8 +9,6 @@
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
-// TODO Make lease time configurable
-uint16_t DHCP_LEASE_TIME    = 60;
 uint16_t DHCP_LEASE_SERVER_DELTA = 10;
 
 #if LOG_LEVEL >= LOG_DEBUG
