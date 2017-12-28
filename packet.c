@@ -40,13 +40,13 @@ int _packet_size(int command, int payload_count) {
     break;
 
   default:
-    printf("Error: unknown command: %i/%i \n", command, payload_count);
+    WARNING("_packet_size( ... ) -> Unknown command: %i/%i \n", command, payload_count);
     return -1;
     break;
   }
 
   if (len == 0) {
-    ERROR("_packet_size(%i,%i) - The calculated length is only zero bytes!", command, payload_count);
+    ERROR("_packet_size(%i,%i) - calculated zero length!", command, payload_count);
   }
 
   return len;
@@ -87,7 +87,7 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
   int should_len = _packet_size(packet->command, packet->count);
 
   if (should_len != len) {
-    printf("Wrong length: %i/%i", len, should_len);
+    WARNING("Calculated length differ from packet len: %i/%i", len, should_len);
     return 1;
   }
 
@@ -162,8 +162,6 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
     return 2;
     break;
   }
-
-  printf("\n");
 
   return 0;
 }
@@ -316,8 +314,6 @@ int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest,
 
   // TODO Error handling
   int ret = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
-
-  printf("%i\n", ret);
 
   free(buffer);
 

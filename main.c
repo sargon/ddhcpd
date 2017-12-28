@@ -85,7 +85,7 @@ void del_fd(int efd, int fd, uint32_t events) {
 
   if (s < 0) {
     int errsv = errno;
-    printf("%i", errsv);
+    ERROR("%i", errsv);
     perror("epoll_ctl");
     exit(1);   //("epoll_ctl");
   }
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < n; i++) {
       if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
-        fprintf(stderr, "epoll error:%i \n", errno);
+        ERROR("EPOLL: %i \n", errno);
         close(events[i].data.fd);
       } else if (config->server_socket == events[i].data.fd) {
         // DDHCP Roamed DHCP Requests

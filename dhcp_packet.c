@@ -11,6 +11,8 @@ struct sockaddr_in broadcast = {
   .sin_addr = {INADDR_BROADCAST},
 };
 
+
+#if LOG_LEVEL >= LOG_DEBUG
 void printf_dhcp(dhcp_packet* packet) {
   char* ciaddr_str = (char*) malloc(INET_ADDRSTRLEN);
   inet_ntop(AF_INET, &(packet->ciaddr.s_addr), ciaddr_str, INET_ADDRSTRLEN);
@@ -24,7 +26,7 @@ void printf_dhcp(dhcp_packet* packet) {
   char* siaddr_str = (char*) malloc(INET_ADDRSTRLEN);
   inet_ntop(AF_INET, &(packet->siaddr.s_addr), siaddr_str, INET_ADDRSTRLEN);
 
-  printf(" BOOTP [ op %i, htype %i, hlen %i, hops %i, xid %lu, secs %i, flags %i, ciaddr %s, yiaddr %s, siaddr %s, giaddr %s, sname: %s, file: %s ]\n"
+  DEBUG("BOOTP [ op %i, htype %i, hlen %i, hops %i, xid %lu, secs %i, flags %i, ciaddr %s, yiaddr %s, siaddr %s, giaddr %s, sname: %s, file: %s ]\n"
          , packet->op
          , packet->htype
          , packet->hlen
@@ -49,22 +51,26 @@ void printf_dhcp(dhcp_packet* packet) {
 
   for (int i = 0; i < packet->options_len; i++) {
     if (option->len == 1) {
-      printf("DHCP OPTION [ code %i, length %i, value %i ]\n", option->code, option->len, option->payload[0]);
+      DEBUG("DHCP OPTION [ code %i, length %i, value %i ]\n", option->code, option->len, option->payload[0]);
     } else if (option->code == DHCP_CODE_PARAMETER_REQUEST_LIST) {
-      printf("DHCP OPTION [ code %i, length %i, value ", option->code, option->len);
+      DEBUG("DHCP OPTION [ code %i, length %i, value ", option->code, option->len);
 
       for (int k = 0; k < option->len; k++) {
-        printf("%i ", option->payload[k]);
+        LOG("%i ", option->payload[k]);
       }
 
-      printf("]\n");
+      LOG("]\n");
     } else {
-      printf("DHCP OPTION [ code %i, length %i ]\n", option->code, option->len);
+      DEBUG("DHCP OPTION [ code %i, length %i ]\n", option->code, option->len);
     }
 
     option++;
   }
 }
+# else 
+#define printf_dhcp(packet) {}
+# endif
+
 
 int _dhcp_packet_len(dhcp_packet* packet) {
   int len = 240 + 1;
