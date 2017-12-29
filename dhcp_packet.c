@@ -152,10 +152,10 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
       break;
 
     case DHCP_CODE_END:
-      option += 1;
+      options++;
       exit = 1;
-      //continue;
-      break;
+      continue;
+    break;
 
     case DHCP_CODE_MESSAGE_TYPE:
       dhcp_message_type = 1;
