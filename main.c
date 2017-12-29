@@ -254,7 +254,7 @@ int main(int argc, char** argv) {
     printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
     printf("-i SRV-IFACE           Interface on which different servers communicate\n");
     printf("-N NETWORK/CIDR        Network to announce and manage blocks in\n");
-    printf("-o CODE;LEN;P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
+    printf("-o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
     printf("-b BLKSIZEPOW          Power over two of block size\n");
     printf("-s SPAREBLKS           Amount of spare blocks\n");
     printf("-L                     Deactivate learning phase\n");

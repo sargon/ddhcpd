@@ -16,7 +16,7 @@ very stupid stuff, but also allow you maximal adaption.
     -i SRV-IFACE           Interface on which different servers communicate
     -t TENTATIVE           Time required for a block to be claimed
     -N NETWORK/CIDR        Network to announce and manage blocks in
-    -o CODE;LEN;P1. .. .Pn DHCP Option with code.len and #len chars in decimal
+    -o CODE:LEN:P1. .. .Pn DHCP Option with code.len and #len chars in decimal
     -b BLKSIZEPOW          Power over two of block size
     -s SPAREBLKS           Amount of spare blocks
     -L                     Deactivate learning phase
@@ -34,16 +34,16 @@ Running
 
 On a gluon node the command should look like something like this:.
 
-    ddhcpd -o "3;4;10.116.254.254" -o "1;4;255.255.128.0" -o "28;4;10.116.254.255" -N 10.116.224.0/20 -b 2 -s 1 -c br-client -i bat0
+    ddhcpd -o "3:4:10.116.254.254" -o "1:4:255.255.128.0" -o "28:4:10.116.254.255" -N 10.116.224.0/20 -b 2 -s 1 -c br-client -i bat0
 
 As you can see we can register dhcp options during startup, but we also
 can change the during runtime, i.e. the standard gateway:
 
-    ddhcpdctl -o "3;4;10.116.254.253"
+    ddhcpdctl -o "3:4:10.116.254.253"
 
 or further add knowledge about a emerged timeserver 
 
-    ddhcpdctl -o "42;4;10.116.254.252"
+    ddhcpdctl -o "42:4:10.116.254.252"
 
 and later remove those entries:.
 

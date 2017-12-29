@@ -21,7 +21,7 @@ dhcp_option* parse_option() {
 
   //size_t optlen = strlen(optarg);
 
-  char* len_s = strchr(optarg, ';');
+  char* len_s = strchr(optarg, ':');
 
   if (len_s == NULL) {
     ERROR("Malformed dhcp option '%s'\n", optarg);
@@ -30,7 +30,7 @@ dhcp_option* parse_option() {
 
   len_s++[0] = '\0';
 
-  char* payload_s = strchr(len_s, ';');
+  char* payload_s = strchr(len_s, ':');
 
   if (payload_s == NULL) {
     ERROR("Malformed dhcp option '%s'\n", optarg);
