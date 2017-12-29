@@ -170,13 +170,13 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     }
 
     if (option + 1 > buffer + len) {
-      printf("Warning: DHCP options ended improperly, possible broken client.\n");
+      WARNING("DHCP options ended improperly, possible broken client.\n");
       return -4;
     }
 
     if (option + option[1] + 2 > buffer + len) {
       // Error: Malformed dhcp options
-      printf("Warning: DHCP options smaller than len of last option suggest, possible broken client.\n");
+      WARNING("DHCP options smaller than len of last option suggest, possible broken client.\n");
       return -5;
     } else {
       option += (uint8_t) option[1] + 2;
