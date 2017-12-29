@@ -474,6 +474,8 @@ int main(int argc, char** argv) {
           if (dhcp_packet.options_len > 0) {
             free(dhcp_packet.options);
           }
+        } else {
+          WARNING("Malformed packet!? errcode: %i\n",ret);
         }
       } else if (config->control_socket == events[i].data.fd) {
         // Handle new control socket connections
