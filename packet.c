@@ -313,7 +313,7 @@ int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest,
   hton_packet(packet, buffer);
 
   // TODO Error handling
-  int ret = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
+  sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
 
   free(buffer);
 
