@@ -248,21 +248,20 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
     printf("\n");
-    printf("-h                   This usage information.\n");
-    printf("-c CLT-IFACE         Interface on which requests from clients are handled\n");
-    printf("-i SRV-IFACE         Interface on which different servers communicate\n");
-    printf("-t TENTATIVE         Time required for a block to be claimed\n");
-    printf("-N NETWORK/CIDR      Network to announce and manage blocks in\n");
-    printf("-o CODE;LEN;P1,..,Pn DHCP Option with code,len and #len chars in decimal\n");
-    printf("-b BLKSIZEPOW        Power over two of block size\n");
-    printf("-s SPAREBLKS         Amount of spare blocks\n");
-    printf("-L                   Deactivate learning phase\n");
-    printf("-d                   Run in background and daemonize\n");
-    printf("-D                   Run in foreground and log to console (default)\n");
-    printf("-C CTRL_PATH         Path to control socket\n");
-    printf("-v                   Print build revision\n");
+    printf("-h                     This usage information.\n");
+    printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
+    printf("-i SRV-IFACE           Interface on which different servers communicate\n");
+    printf("-N NETWORK/CIDR        Network to announce and manage blocks in\n");
+    printf("-o CODE;LEN;P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
+    printf("-b BLKSIZEPOW          Power over two of block size\n");
+    printf("-s SPAREBLKS           Amount of spare blocks\n");
+    printf("-L                     Deactivate learning phase\n");
+    printf("-d                     Run in background and daemonize\n");
+    printf("-D                     Run in foreground and log to console (default)\n");
+    printf("-C CTRL_PATH           Path to control socket\n");
+    printf("-v                     Print build revision\n");
     exit(0);
   }
 

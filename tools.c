@@ -48,7 +48,7 @@ dhcp_option* parse_option() {
   option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * len);
 
   for (int i = 0 ; i < len; i++) {
-    char* next_payload_s = strchr(payload_s, ',');
+    char* next_payload_s = strchr(payload_s, '.');
 
     if (next_payload_s == NULL && i < len - 1) {
       ERROR("Malformed dhcp option '%s' to few payload\n", optarg);
