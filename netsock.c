@@ -123,8 +123,10 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   struct ifreq ifr;
   int ret;
 
-  if ( netsock_openv4(interface_client, state) < 0 ) {
-    return -1;
+  if ( state->disable_dhcp == 0 ) {
+    if ( netsock_openv4(interface_client, state) < 0 ) {
+      return -1;
+    }
   }
 
   sock_mc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);

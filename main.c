@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
   config->block_timeout = 30;
   config->tentative_timeout = 15;
   config->control_path = "/tmp/ddhcpd_ctl";
+  config->disable_dhcp = 0;
 
   // DHCP
   config->dhcp_port = 67;
@@ -155,7 +156,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:t:dvDhLb:N:o:s:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:St:dvDhLb:N:o:s:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -224,6 +225,10 @@ int main(int argc, char** argv) {
 
       break;
 
+    case 'S':
+      config->disable_dhcp = 1;
+      break;
+
     case 'o':
       do {
         dhcp_option* option = parse_option();
@@ -253,6 +258,8 @@ int main(int argc, char** argv) {
     printf("-h                     This usage information.\n");
     printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
     printf("-i SRV-IFACE           Interface on which different servers communicate\n");
+    printf("-S                     no Client interface\n");
+    printf("-t TENTATIVE           Time required for a block to be claimed\n");
     printf("-N NETWORK/CIDR        Network to announce and manage blocks in\n");
     printf("-o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
     printf("-b BLKSIZEPOW          Power over two of block size\n");
@@ -267,6 +274,10 @@ int main(int argc, char** argv) {
 
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
   config->dhcp_lease_time = (uint32_t) DHCP_LEASE_TIME;
+
+  if ( config->disable_dhcp ) {
+    config->spare_blocks_needed = 0;
+  }
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix), config->prefix_len);
   INFO("CONFIG: block_size=%i\n", config->block_size);
@@ -298,7 +309,6 @@ int main(int argc, char** argv) {
   dhcp_options_init(config);
 
   // init network and event loops
-  // TODO
   if (netsock_open(interface, interface_client, config) == -1) {
     return 1;
   }
@@ -325,8 +335,10 @@ int main(int argc, char** argv) {
 
   add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->server_socket, EPOLLIN | EPOLLET);
-  add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->control_socket, EPOLLIN | EPOLLET);
+  if ( config->disable_dhcp == 0 ) {
+    add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
+  }
 
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
