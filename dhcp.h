@@ -7,7 +7,7 @@
 #include "types.h"
 #include "dhcp_packet.h"
 
-#define DHCP_LEASE_TIME 60;
+#define DHCP_LEASE_TIME 300;
 
 /**
  * DHCP Discover
