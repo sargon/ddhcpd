@@ -194,13 +194,16 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
   dhcp_option_list* tmp;
   dhcp_option_list* store = &config->options;
 
+  dprintf(fd,"DHCP Lease Time: %u\n\n",config->dhcp_lease_time);
+  dprintf(fd,"DHCP Disabled: %u\n",config->disable_dhcp);
+  dprintf(fd,"DHCP Option Store\ncode\tlen\tpayload\n");
   list_for_each_safe(pos, q, &store->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     dhcp_option* option = tmp->option;
-    dprintf(fd, "%i,%i:", option->code, option->len);
+    dprintf(fd, "%i\t%i\t", option->code, option->len);
 
     for (int i = 0; i < option->len; i++) {
-      dprintf(fd, " %u", option->payload[i]);
+      dprintf(fd, "%u\t", option->payload[i]);
     }
 
     dprintf(fd, "\n");
