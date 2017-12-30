@@ -338,6 +338,11 @@ void block_free_claims(ddhcp_config* config) {
 
 void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
   ddhcp_block* block = blocks;
+  dprintf(fd, "block size/number\t%u/%u \n", config->block_size, config->number_of_blocks);
+  dprintf(fd, "      timeout\t%u\n", config->block_timeout);
+  dprintf(fd, "      spare\t%u\n", config->spare_blocks_needed);
+
+  dprintf(fd, "ddhcp blocks\n");
   dprintf(fd, "index\tstate\towner\t\tclaim_count\tleases\ttimeout\n");
 
   time_t now = time(NULL);
@@ -367,8 +372,9 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
     if ( block->timeout > now ) {
       timeout = block->timeout - now;
     }
-
-    dprintf(fd, "%i\t%i\t%s\t%u\t%s\t%lu\n", block->index, block->state, node_id, block->claiming_counts, leases, timeout);
+    
+    if ( timeout > 0) 
+      dprintf(fd, "%i\t%i\t%s\t%u\t%s\t%lu\n", block->index, block->state, node_id, block->claiming_counts, leases, timeout);
     block++;
   }
 }
