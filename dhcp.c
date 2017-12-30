@@ -145,7 +145,8 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
     DHCPOFFER
   });
-  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t*) &config->dhcp_lease_time);
+  uint32_t lease_time = htonl(config->dhcp_lease_time);
+  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 1, (uint8_t*) &lease_time);
   set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
 
   dhcp_packet_send(socket, packet);
@@ -421,7 +422,8 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
     DHCPACK
   });
   // TODO correct type conversion, currently solution is simply wrong
-  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t*) &config->dhcp_lease_time
+  uint32_t lease_time = htonl(config->dhcp_lease_time);
+  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t*) &lease_time
   );
 
   dhcp_packet_send(socket, packet);
