@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
   }
 
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
-  config->dhcp_lease_time = (uint8_t) DHCP_LEASE_TIME;
+  config->dhcp_lease_time = (uint32_t) DHCP_LEASE_TIME;
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix), config->prefix_len);
   INFO("CONFIG: block_size=%i\n", config->block_size);

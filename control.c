@@ -48,16 +48,20 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
       return -2;
     }
 
-    dhcp_option* option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
-    option->code = buffer[1];
-    option->len = buffer[2];
-    printf("%i:%i\n", buffer[1], buffer[2]);
-    option->payload = (uint8_t*) calloc(sizeof(uint8_t), option->len);
+    if ( buffer[1] == 51 ) {
+      memcpy(&config->dhcp_lease_time,buffer + 3,4);
+    } else {
+      dhcp_option* option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+      option->code = buffer[1];
+      option->len = buffer[2];
+      printf("%i:%i\n", buffer[1], buffer[2]);
+      option->payload = (uint8_t*) calloc(sizeof(uint8_t), option->len);
 
-    memcpy(option->payload, buffer + 3, option->len);
+      memcpy(option->payload, buffer + 3, option->len);
 
-    set_option_in_store(&config->options, option);
-    return 0;
+      set_option_in_store(&config->options, option);
+      return 0;
+    }
 
   case 4:
     DEBUG("handle_command(...) -> set dhcp option\n");

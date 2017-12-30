@@ -102,6 +102,7 @@ struct ddhcp_config {
   uint8_t spare_blocks_needed;
   struct in_addr prefix;
   uint8_t prefix_len;
+  uint8_t disable_dhcp;
 
   // Global Stuff
   time_t next_wakeup;
@@ -113,7 +114,7 @@ struct ddhcp_config {
   struct dhcp_packet_list dhcp_packet_cache;
 
   // DHCP Options
-  uint8_t dhcp_lease_time;
+  uint32_t dhcp_lease_time;
   dhcp_option_list options;
 
   // Network

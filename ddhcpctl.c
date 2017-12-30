@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
-  while ((c = getopt(argc, argv, "C:t:bdho:r:")) != -1) {
+  while ((c = getopt(argc, argv, "C:t:l:bdho:r:")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -46,6 +46,15 @@ int main(int argc, char** argv) {
 
     case 'o':
       option = parse_option();
+      break;
+
+    case 'l':
+      msglen = 7;
+      buffer[0] = (char) 3;
+      buffer[1] = (char) 51;
+      buffer[2] = (char) 4;
+      uint32_t leasetime = atol(optarg);
+      memcpy(buffer + 3,(uint8_t*) &leasetime,sizeof(uint32_t));
       break;
 
     case 'r':
@@ -82,6 +91,7 @@ int main(int argc, char** argv) {
     printf("-h                     This usage information.\n");
     printf("-b                     Show current block usage.\n");
     printf("-d                     Show the current dhcp options store.\n");
+    printf("-l                     Set the dhcp lease time.\n");
     printf("-o CODE:LEN:P1. .. .Pn Set DHCP Option with code,len and #len chars in decimal\n");
     printf("-r CODE                Remove DHCP Option");
     printf("-C PATH                Path to control socket\n");
