@@ -32,7 +32,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
     }
 
     DEBUG("handle_command(...) -> show dhcp options\n");
-    dhcp_options_show(socket, &config->options);
+    dhcp_options_show(socket, config);
     return 0;
 
   case 3:

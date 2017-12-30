@@ -74,7 +74,7 @@ void free_option_store(dhcp_option_list* store);
 /**
  * Print the inventory of a dhcp_option_list into given file descriptor.
  */
-void dhcp_options_show(int fd, dhcp_option_list* store);
+void dhcp_options_show(int fd, ddhcp_config* config);
 
 /**
  * Initialize dhcp_options store in the configuration.
