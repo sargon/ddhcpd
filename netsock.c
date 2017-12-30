@@ -110,31 +110,26 @@ err:
   return -1;
 }
 
+int netsock_openv4(char* interface_client, ddhcp_config* config);
+
 int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 {
-  int sock;
   int sock_mc;
   int sock_srv;
-  struct sockaddr_in sin;
   struct sockaddr_in6 sin6_mc;
   struct sockaddr_in6 sin6_srv;
   struct ipv6_mreq mreq;
   unsigned int mloop = 0;
-  unsigned int broadcast = 1;
   struct ifreq ifr;
   int ret;
 
-  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-  if (sock  < 0) {
-    perror("can't open broadcast socket");
+  if ( netsock_openv4(interface_client, state) < 0 ) {
     return -1;
   }
 
   sock_mc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sock_mc  < 0) {
-    close(sock);
     perror("can't open multicast socket");
     return -1;
   }
@@ -142,7 +137,6 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   sock_srv = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sock_srv  < 0) {
-    close(sock);
     perror("can't open server socket");
     return -1;
   }
@@ -151,7 +145,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   strncpy(ifr.ifr_name, interface, IFNAMSIZ);
   ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 
-  if (ioctl(sock, SIOCGIFINDEX, &ifr) == -1) {
+  if (ioctl(sock_srv, SIOCGIFINDEX, &ifr) == -1) {
     perror("can't get interface");
     goto err;
   }
@@ -159,7 +153,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   uint32_t scope_id = ifr.ifr_ifindex;
   state->mcast_scope_id = ifr.ifr_ifindex;
 
-  if (ioctl(sock, SIOCGIFHWADDR, &ifr) == -1) {
+  if (ioctl(sock_srv, SIOCGIFHWADDR, &ifr) == -1) {
     perror("can't get MAC address");
     goto err;
   }
@@ -168,25 +162,9 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   struct in6_addr address;
 
-  struct in_addr address_client;
-
-  // DHCP server port (IPv4) 
-
   memcpy(&hwaddr, &ifr.ifr_hwaddr.sa_data, 6);
 
   mac_to_ipv6(&hwaddr, &address);
-
-  inet_aton("0.0.0.0", &address_client);
-
-  memset(&sin, 0, sizeof(sin));
-
-  sin.sin_port = htons(state->dhcp_port);
-
-  sin.sin_family = AF_INET;
-
-  memcpy(&sin.sin_addr, &address_client, sizeof(sin.sin_addr));
-
-  // sin.sin_scope_id = scope_id;
 
   // DDHCPD Multicast Port
 
@@ -216,12 +194,6 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   // Socket Options
 
-  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
-                 strlen(interface_client) + 1)) {
-    perror("can't bind to boardcast device");
-    goto err;
-  }
-
   if (setsockopt(sock_mc, SOL_SOCKET, SO_BINDTODEVICE,
                  interface,
                  strlen(interface) + 1)) {
@@ -237,11 +209,6 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   }
 
   // Bind
-
-  if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
-    perror("can't bind broadcast socket");
-    goto err;
-  }
 
   if (bind(sock_mc, (struct sockaddr*)&sin6_mc, sizeof(sin6_mc)) < 0) {
     perror("can't bind multicast");
@@ -273,25 +240,6 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   // Broadcast Options for DHCP 
 
-  if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(unsigned int))) {
-    perror("can't set boardcast on client socket");
-    goto err;
-  }
-
-  ret = fcntl(sock, F_GETFL, 0);
-
-  if (ret < 0) {
-    perror("failed to get file status flags");
-    goto err;
-  }
-
-  ret = fcntl(sock, F_SETFL, ret | O_NONBLOCK);
-
-  if (ret < 0) {
-    perror("failed to set file status flags");
-    goto err;
-  }
-
   ret = fcntl(sock_mc, F_GETFL, 0);
 
   if (ret < 0) {
@@ -320,17 +268,74 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
     goto err;
   }
 
-  //interface->netsock = sock;
   state->mcast_socket = sock_mc;
   state->server_socket = sock_srv;
-  state->client_socket = sock;
 
   memcpy(&state->node_id,&hwaddr,sizeof(hwaddr));
 
   return 0;
 err:
-  close(sock);
   close(sock_srv);
   close(sock_mc);
   return -1;
+}
+
+int netsock_openv4(char* interface_client, ddhcp_config* config) {
+  int sock;
+  struct sockaddr_in sin;
+  struct in_addr address_client;
+  unsigned int broadcast = 1;
+  int ret;
+
+  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+  if (sock  < 0) {
+    perror("can't open broadcast socket");
+    return -1;
+  }
+
+  memset(&sin, 0, sizeof(sin));
+  sin.sin_port = htons(config->dhcp_port);
+  sin.sin_family = AF_INET;
+
+  inet_aton("0.0.0.0", &address_client);
+  memcpy(&sin.sin_addr, &address_client, sizeof(sin.sin_addr));
+
+  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
+                 strlen(interface_client) + 1)) {
+    perror("can't bind to boardcast device");
+    close(sock);
+    return -1;
+  }
+
+  if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
+    perror("can't bind broadcast socket");
+    close(sock);
+    return -1;
+  }
+
+  if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(unsigned int))) {
+    perror("can't set boardcast on client socket");
+    close(sock);
+    return -1;
+  }
+
+  ret = fcntl(sock, F_GETFL, 0);
+
+  if (ret < 0) {
+    perror("failed to get file status flags");
+    close(sock);
+    return -1;
+  }
+
+  ret = fcntl(sock, F_SETFL, ret | O_NONBLOCK);
+
+  if (ret < 0) {
+    perror("failed to set file status flags");
+    close(sock);
+    return -1;
+  }
+  config->client_socket = sock;
+
+  return 0;
 }
