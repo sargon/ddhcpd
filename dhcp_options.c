@@ -175,7 +175,7 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
     return additional;
   }
 
-  for (uint8_t i = additional; i < max_options; i++) {
+  for (uint8_t i = 0; i < max_options; i++) {
     uint8_t code = requested[i];
     // LOOP thought option_store
     dhcp_option* option = find_in_option_store(option_store, code);
