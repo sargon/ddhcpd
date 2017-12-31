@@ -102,6 +102,28 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
   return packet;
 }
 
+void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config) {
+  // TODO We need a more extendable way to build up options
+  // TODO Proper error handling
+
+  // Fill options list with requested options, allocate memory and reserve for additonal
+  // dhcp options.
+  packet->options_len = fill_options(request->options, request->options_len, &config->options, 3, &packet->options) ;
+
+  // DHCP Message Type
+  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
+    msg_type
+  });
+
+  // DHCP Lease Time
+  uint32_t lease_time = htonl(config->dhcp_lease_time);
+  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t*) &lease_time);
+
+  // DHCP Server identifier
+  set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
+
+}
+
 int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config) {
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n", socket);
 
@@ -138,16 +160,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
 
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
-  // TODO We need a more extendable way to build up options
-  packet->options_len = fill_options(discover->options, discover->options_len, &config->options, 3, &packet->options) ;
-
-  // TODO Error handling
-  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
-    DHCPOFFER
-  });
-  uint32_t lease_time = htonl(config->dhcp_lease_time);
-  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t*) &lease_time);
-  set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
+  _dhcp_default_options(DHCPOFFER,packet,discover,config);
 
   dhcp_packet_send(socket, packet);
 
@@ -414,17 +427,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
   DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
 
-  // TODO We need a more extendable way to build up options
-  packet->options_len = fill_options(request->options, request->options_len, &(config->options), 2, &packet->options) ;
-
-  // TODO Error handling
-  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
-    DHCPACK
-  });
-  // TODO correct type conversion, currently solution is simply wrong
-  uint32_t lease_time = htonl(config->dhcp_lease_time);
-  set_option(packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME, 4, (uint8_t*) &lease_time
-  );
+  _dhcp_default_options(DHCPACK, packet, request, config);
 
   dhcp_packet_send(socket, packet);
   free(packet->options);
