@@ -63,6 +63,7 @@ int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_
   return optlen;
 }
 
+
 uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_REQUESTED_ADDRESS);
 
@@ -91,6 +92,15 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
   return NULL;
 }
 
+uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options) {
+  dhcp_option* lease_time_opt = find_in_option_store(options,DHCP_CODE_ADDRESS_LEASE_TIME);
+  if ( lease_time_opt != NULL) {
+    uint32_t buf = 0; 
+    memcpy(&buf,lease_time_opt->payload,4);
+    return ntohl(buf);
+  } 
+  return 0;
+}
 
 dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
   DEBUG("set_in_option_store( store, code/len: %i/%i)\n", option->code, option->len);
@@ -194,7 +204,7 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
   dhcp_option_list* tmp;
   dhcp_option_list* store = &config->options;
 
-  dprintf(fd,"DHCP Lease Time: %u\n\n",config->dhcp_lease_time);
+  dprintf(fd,"DHCP Lease Time: %u\n\n",find_in_option_store_address_lease_time(&config->options));
   dprintf(fd,"DHCP Disabled: %u\n",config->disable_dhcp);
   dprintf(fd,"DHCP Option Store\ncode\tlen\tpayload\n");
   list_for_each_safe(pos, q, &store->list) {
@@ -241,20 +251,6 @@ void dhcp_options_init(ddhcp_config* config) {
     set_option_in_store(&config->options, option);
   }
 
-  /** Deactivate uneducated default router value
-  option = (dhcp_option*) malloc(sizeof(dhcp_option));
-  option->code = DHCP_CODE_ROUTER;
-  option->len = 4;
-  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * 4 );
-  // TODO Configure this throught socket
-  option->payload[0] = 10;
-  option->payload[1] = 0;
-  option->payload[2] = 0;
-  option->payload[3] = 1;
-
-  set_option_in_store( &config->options, option );
-  */
-
   if (! has_in_option_store(&config->options, DHCP_CODE_BROADCAST_ADDRESS)) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
     option->code = DHCP_CODE_BROADCAST_ADDRESS;
@@ -264,6 +260,20 @@ void dhcp_options_init(ddhcp_config* config) {
     option->payload[1] = (((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1);
     option->payload[2] = (((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1);
     option->payload[3] = (((uint8_t*) &config->prefix.s_addr)[3]) | ((1 << min(max(32 - pl, 0), 8)) - 1);
+
+    set_option_in_store(&config->options, option);
+  }
+
+  if (! has_in_option_store(&config->options, DHCP_CODE_ADDRESS_LEASE_TIME)) {
+    option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+    option->code = DHCP_CODE_ADDRESS_LEASE_TIME;
+    option->len = 4;
+    option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    // 300 ms ~ 5min
+    option->payload[0] = 0x00;
+    option->payload[1] = 0x00;
+    option->payload[2] = 0x01;
+    option->payload[3] = 0x2c; 
 
     set_option_in_store(&config->options, option);
   }

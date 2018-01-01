@@ -115,7 +115,6 @@ struct ddhcp_config {
   struct dhcp_packet_list dhcp_packet_cache;
 
   // DHCP Options
-  uint32_t dhcp_lease_time;
   dhcp_option_list options;
 
   // Network

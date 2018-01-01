@@ -52,6 +52,11 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code);
 
 /**
+ * Search and return leasetime option
+ */
+uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options);
+
+/**
  * Is a option defined in a dhcp_option_list
  */
 #define has_in_option_store(options, code) (find_in_option_store(options, code) != NULL)

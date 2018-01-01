@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
       buffer[0] = (char) 3;
       buffer[1] = (char) 51;
       buffer[2] = (char) 4;
-      uint32_t leasetime = atol(optarg);
+      uint32_t leasetime = htonl(atol(optarg));
       memcpy(buffer + 3,(uint8_t*) &leasetime,sizeof(uint32_t));
       break;
 

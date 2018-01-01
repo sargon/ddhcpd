@@ -7,8 +7,6 @@
 #include "types.h"
 #include "dhcp_packet.h"
 
-#define DHCP_LEASE_TIME 300;
-
 /**
  * DHCP Discover
  * Performs a search for a available, not already offered address in the

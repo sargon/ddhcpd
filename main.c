@@ -273,7 +273,6 @@ int main(int argc, char** argv) {
   }
 
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
-  config->dhcp_lease_time = (uint32_t) DHCP_LEASE_TIME;
 
   if ( config->disable_dhcp ) {
     config->spare_blocks_needed = 0;
