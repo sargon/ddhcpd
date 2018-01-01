@@ -464,6 +464,21 @@ int dhcp_num_free(struct ddhcp_block* block) {
   return num;
 }
 
+int dhcp_num_offered(struct ddhcp_block* block) {
+  int num = 0;
+  dhcp_lease* lease = block->addresses;
+
+  for (unsigned int i = 0 ; i < block->subnet_len ; i++) {
+    if (lease->state == OFFERED) {
+      num++;
+    }
+
+    lease++;
+  }
+
+  return num;
+}
+
 uint32_t dhcp_get_free_lease(ddhcp_block* block) {
   dhcp_lease* lease = block->addresses;
 

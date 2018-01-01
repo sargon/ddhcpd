@@ -55,6 +55,11 @@ int dhcp_has_free(struct ddhcp_block* block);
 int dhcp_num_free(struct ddhcp_block* block);
 
 /**
+ * Number of leases offered to clients.
+ */
+int dhcp_num_offered(struct ddhcp_block* block);
+
+/**
  * Find first free lease in lease block and return its index.
  * This function asserts that there is a free lease, otherwise
  * it returns the value of block_subnet_len.
