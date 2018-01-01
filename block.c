@@ -21,11 +21,12 @@ int block_alloc(ddhcp_block* block) {
   return 0;
 }
 
-int block_own(ddhcp_block* block) {
+int block_own(ddhcp_block* block,ddhcp_config* config) {
   if (block_alloc(block)) {
     return 1;
   } else {
     block->state = DDHCP_OURS;
+    NODE_ID_CP(&block->node_id,&config->node_id);
     return 0;
   }
 }
@@ -107,7 +108,7 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
     ddhcp_block* block = tmp->block;
 
     if (block->claiming_counts == 3) {
-      block_own(block);
+      block_own(block,config);
 
       // TODO Error Handling
 

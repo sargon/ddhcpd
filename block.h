@@ -14,7 +14,7 @@ int block_alloc(ddhcp_block* block);
  * Own a block, possibly after you have claimed it an amount of times.
  * This will also malloc and prepare a dhcp_lease_block inside the given block.
  */
-int block_own(ddhcp_block* block);
+int block_own(ddhcp_block* block, ddhcp_config* config);
 
 /**
  * Free a block and release dhcp_lease_block when allocated.
