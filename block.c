@@ -343,19 +343,28 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
   dprintf(fd, "      timeout\t%u\n", config->block_timeout);
   dprintf(fd, "      spare\t%u\n", config->spare_blocks_needed);
 
+  char node_id[17]; 
+  for( uint32_t j = 0; j < 8; j++) {
+    sprintf(node_id + 2 * j,"%02X",config->node_id[j]);
+  }
+  node_id[16] = '\0';
+
+  dprintf(fd, "node id\t%s\n",node_id);
+
   dprintf(fd, "ddhcp blocks\n");
-  dprintf(fd, "index\tstate\towner\t\tclaim_count\tleases\ttimeout\n");
+  dprintf(fd, "index\tstate\towner\t\t\tclaim\tleases\ttimeout\n");
 
   time_t now = time(NULL);
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     uint32_t free_leases = 0;
+    uint32_t offered_leases = 0;
 
     if (block->addresses != NULL) {
       free_leases = dhcp_num_free(block);
+      offered_leases = dhcp_num_offered(block);
     }
 
-    char node_id[17]; 
     for( uint32_t j = 0; j < 8; j++) {
       sprintf(node_id + 2 * j,"%02X",block->node_id[j]);
     }
@@ -363,7 +372,7 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
     
     char leases[10];
     if ( block->addresses != NULL ) {
-      sprintf(leases,"%u",config->block_size - free_leases);
+      sprintf(leases,"%u/%u",offered_leases ,config->block_size - free_leases - offered_leases);
     } else {
       leases[0] = '-';
       leases[1] = '\0';
