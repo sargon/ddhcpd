@@ -102,6 +102,8 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
   return packet;
 }
 
+uint8_t _ddo[1] = { 0 };
+
 void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config) {
   // TODO We need a more extendable way to build up options
   // TODO Proper error handling
@@ -111,9 +113,8 @@ void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* r
   packet->options_len = fill_options(request->options, request->options_len, &config->options, 3, &packet->options) ;
 
   // DHCP Message Type
-  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
-    msg_type
-  });
+  _ddo[0] = msg_type;
+  set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, _ddo);
 
   // DHCP Lease Time
   set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME);
