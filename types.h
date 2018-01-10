@@ -98,6 +98,7 @@ struct ddhcp_config {
   ddhcp_node_id node_id;
   uint32_t number_of_blocks;
   uint16_t block_timeout;
+  uint16_t block_refresh_factor;
   uint16_t tentative_timeout;
   uint8_t block_size;
   uint8_t spare_blocks_needed;

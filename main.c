@@ -134,7 +134,8 @@ int main(int argc, char** argv) {
   inet_aton("10.0.0.0", &config->prefix);
   config->prefix_len = 24;
   config->spare_blocks_needed = 1;
-  config->block_timeout = 30;
+  config->block_timeout = 60;
+  config->block_refresh_factor = 4;
   config->tentative_timeout = 15;
   config->control_path = "/tmp/ddhcpd_ctl";
   config->disable_dhcp = 0;
@@ -283,6 +284,7 @@ int main(int argc, char** argv) {
   INFO("CONFIG: #blocks=%i\n", config->number_of_blocks);
   INFO("CONFIG: #spare_blocks=%i\n", config->spare_blocks_needed);
   INFO("CONFIG: timeout=%i\n", config->block_timeout);
+  INFO("CONFIG: refresh_factor=%i\n", config->block_refresh_factor);
   INFO("CONFIG: tentative_timeout=%i\n", config->tentative_timeout);
   INFO("CONFIG: client_interface=%s\n", interface_client);
   INFO("CONFIG: group_interface=%s\n", interface);
