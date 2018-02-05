@@ -373,9 +373,9 @@ int main(int argc, char** argv) {
     need_house_keeping = 1;
 
     for (int i = 0; i < n; i++) {
-      if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {
-        ERROR("EPOLL: %i \n", errno);
-        close(events[i].data.fd);
+      if ((events[i].events & EPOLLERR) ) {
+        ERROR("Error in epoll: %i \n", errno);
+        exit(1);
       } else if (config->server_socket == events[i].data.fd) {
         // DDHCP Roamed DHCP Requests
         struct sockaddr_in6 sender;
