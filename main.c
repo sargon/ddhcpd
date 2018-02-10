@@ -418,7 +418,9 @@ int main(int argc, char** argv) {
         // DDHCP Block Handling
         struct sockaddr_in6 sender;
         socklen_t sender_len = sizeof sender;
+        while(1) {
         bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
+        if ( bytes < 0 ) break;
         // TODO Error Handling
         #if LOG_LEVEL >= LOG_DEBUG
         char ipv6_sender[INET6_ADDRSTRLEN];
@@ -446,7 +448,7 @@ int main(int argc, char** argv) {
         } else {
           DEBUG("epoll_ret: %i\n", ret);
         }
-
+        }
         house_keeping(blocks, config);
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {
