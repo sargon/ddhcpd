@@ -249,7 +249,7 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
 
   char* buffer = (char*) calloc(1, len);
 
-  if (!buffer) {
+  if (buffer == NULL) {
     return 1;
   }
 
@@ -290,7 +290,7 @@ int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest,
 
   char* buffer = (char*) calloc(1, len);
 
-  if (!buffer) {
+  if (buffer == NULL) {
     ERROR("send_packet_direct( ... ) -> Failure\n");
     return 1;
   }

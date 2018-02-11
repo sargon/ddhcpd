@@ -131,7 +131,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   time_t now = time(NULL);
   ddhcp_block* lease_block = block_find_free_leases(blocks,config);
 
-  if ( lease_block == NULL ) {
+  if (lease_block == NULL) {
     DEBUG("dhcp_discover( ... ) -> no block with free leases found\n");
     return 3;
   }
@@ -139,14 +139,14 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   uint32_t lease_index = dhcp_get_free_lease(lease_block);
   dhcp_lease* lease = lease_block->addresses + lease_index;
 
-  if (! lease) {
+  if (lease == NULL) {
     DEBUG("dhcp_discover(...) -> no free leases found, this should not happen!");
     return 2;
   }
 
   dhcp_packet* packet = build_initial_packet(discover);
 
-  if (! packet) {
+  if (packet == NULL) {
     DEBUG("dhcp_discover(...) -> memory allocation failure");
     return 1;
   }
@@ -343,7 +343,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
     }
   }
 
-  if (!lease) {
+  if (lease == NULL) {
     DEBUG("dhcp_request(...): Requested lease not found\n");
     // Send DHCP_NACK
     dhcp_nack(socket, request);
@@ -389,7 +389,7 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* co
 int dhcp_nack(int socket, dhcp_packet* from_client) {
   dhcp_packet* packet = build_initial_packet(from_client);
 
-  if (! packet) {
+  if (packet == NULL) {
     DEBUG("dhcp_discover(...) -> memory allocation failure\n");
     return 1;
   }
@@ -414,7 +414,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   dhcp_packet* packet = build_initial_packet(request);
   dhcp_lease* lease = lease_block->addresses + lease_index;
 
-  if (! packet) {
+  if (packet == NULL) {
     DEBUG("dhcp_request(...) -> memory allocation failure\n");
     return 1;
   }

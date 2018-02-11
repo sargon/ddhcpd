@@ -16,7 +16,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   DEBUG("ddhcp_block_init( blocks, config)\n");
   *blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
 
-  if (! *blocks) {
+  if (*blocks == NULL) {
     FATAL("ddhcp_block_init(...)-> Can't allocate memory for block structure\n");
     return 1;
   }
