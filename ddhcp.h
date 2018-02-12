@@ -7,9 +7,12 @@
 
 int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config);
 
+void ddhcp_block_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config);
+
 void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config);
 void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config);
 
+void ddhcp_dhcp_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config);
 void ddhcp_dhcp_renewlease(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config);
 void ddhcp_dhcp_leaseack(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config);
 void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* packet, ddhcp_config* config);

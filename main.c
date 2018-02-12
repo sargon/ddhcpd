@@ -354,6 +354,9 @@ int main(int argc, char** argv) {
   INFO("loop timeout: %i msecs\n", get_loop_timeout(config));
 
   // TODO wait loop_timeout before first time housekeeping
+  struct sockaddr_in6 sender;
+  socklen_t sender_len = sizeof sender;
+
   do {
     int n = epoll_wait(efd, events, maxevents, loop_timeout);
 
@@ -378,77 +381,29 @@ int main(int argc, char** argv) {
         exit(1);
       } else if (config->server_socket == events[i].data.fd) {
         // DDHCP Roamed DHCP Requests
-        struct sockaddr_in6 sender;
-        socklen_t sender_len = sizeof sender;
-        bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
-        // TODO Error Handling
-        #if LOG_LEVEL >= LOG_DEBUG
-        char ipv6_sender[INET6_ADDRSTRLEN];
-        DEBUG("Receive message from %s\n",
-              inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
-        #endif
-        ret = ntoh_mcast_packet(buffer, bytes, &packet);
-        packet.sender = &sender;
+        int len;
 
-        if (ret == 0) {
-          switch (packet.command) {
-          case DDHCP_MSG_RENEWLEASE:
-            ddhcp_dhcp_renewlease(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_LEASEACK:
-            ddhcp_dhcp_leaseack(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_LEASENAK:
-            ddhcp_dhcp_leasenak(&packet, config);
-            break;
-
-          case DDHCP_MSG_RELEASE:
-            ddhcp_dhcp_release(blocks, &packet, config);
-            break;
-
-          default:
-            break;
-          }
-        } else {
-          DEBUG("epoll_ret: %i\n", ret);
+        while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
+#if LOG_LEVEL >= LOG_DEBUG
+          char ipv6_sender[INET6_ADDRSTRLEN];
+          DEBUG("Receive message from %s\n",
+                inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+#endif
+          ddhcp_dhcp_process(buffer, len, sender, blocks, config);
         }
       } else if (config->mcast_socket == events[i].data.fd) {
         // DDHCP Block Handling
-        struct sockaddr_in6 sender;
-        socklen_t sender_len = sizeof sender;
-        while(1) {
-        bytes = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len);
-        if ( bytes < 0 ) break;
-        // TODO Error Handling
-        #if LOG_LEVEL >= LOG_DEBUG
-        char ipv6_sender[INET6_ADDRSTRLEN];
-        DEBUG("Receive message from %s\n",
-              inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
-        #endif
-        ret = ntoh_mcast_packet(buffer, bytes, &packet);
-        packet.sender = &sender;
+        int len;
 
-        if (ret == 0) {
-          switch (packet.command) {
-          case DDHCP_MSG_UPDATECLAIM:
-            ddhcp_block_process_claims(blocks, &packet, config);
-            break;
-
-          case DDHCP_MSG_INQUIRE:
-            ddhcp_block_process_inquire(blocks, &packet, config);
-            break;
-
-          default:
-            break;
-          }
-
-          free(packet.payload);
-        } else {
-          DEBUG("epoll_ret: %i\n", ret);
+        while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
+#if LOG_LEVEL >= LOG_DEBUG
+          char ipv6_sender[INET6_ADDRSTRLEN];
+          DEBUG("Receive message from %s\n",
+                inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+#endif
+          ddhcp_block_process(buffer, len, sender, blocks, config);
         }
-        }
+
         house_keeping(blocks, config);
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {

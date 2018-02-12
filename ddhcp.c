@@ -42,6 +42,32 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   return 0;
 }
 
+void ddhcp_block_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config) {
+  struct ddhcp_mcast_packet packet;
+  int ret = ntoh_mcast_packet(buffer, len, &packet);
+  packet.sender = &sender;
+
+  if (ret == 0) {
+    switch (packet.command) {
+    case DDHCP_MSG_UPDATECLAIM:
+      ddhcp_block_process_claims(blocks, &packet, config);
+      break;
+
+    case DDHCP_MSG_INQUIRE:
+      ddhcp_block_process_inquire(blocks, &packet, config);
+      break;
+
+    default:
+      break;
+    }
+
+    free(packet.payload);
+  } else {
+    DEBUG("epoll_ret: %i\n", ret);
+  }
+
+}
+
 void ddhcp_block_process_claims(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_block_process_claims( blocks, packet, config )\n");
   assert(packet->command == 1);
@@ -113,6 +139,35 @@ void ddhcp_block_process_inquire(struct ddhcp_block* blocks, struct ddhcp_mcast_
       INFO("ddhcp_block_process_inquire(...): set block %i to tentative \n", tmp->block_index);
       blocks[tmp->block_index].state = DDHCP_TENTATIVE;
       blocks[tmp->block_index].timeout = now + config->tentative_timeout;
+    }
+  }
+}
+
+void ddhcp_dhcp_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config) {
+  struct ddhcp_mcast_packet packet;
+  int ret = ntoh_mcast_packet(buffer, len, &packet);
+  packet.sender = &sender;
+
+  if (ret == 0) {
+    switch (packet.command) {
+    case DDHCP_MSG_RENEWLEASE:
+      ddhcp_dhcp_renewlease(blocks, &packet, config);
+      break;
+
+    case DDHCP_MSG_LEASEACK:
+      ddhcp_dhcp_leaseack(blocks, &packet, config);
+      break;
+
+    case DDHCP_MSG_LEASENAK:
+      ddhcp_dhcp_leasenak(&packet, config);
+      break;
+
+    case DDHCP_MSG_RELEASE:
+      ddhcp_dhcp_release(blocks, &packet, config);
+      break;
+
+    default:
+      break;
     }
   }
 }
