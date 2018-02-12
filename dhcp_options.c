@@ -76,11 +76,9 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
   DEBUG("find_in_option_store( store, code: %i)\n", code);
 
   dhcp_option* option = NULL;
-  struct list_head* pos, *q;
   dhcp_option_list* tmp;
 
-  list_for_each_safe(pos, q, &options->list) {
-    tmp = list_entry(pos, dhcp_option_list, list);
+  list_for_each_entry(tmp, &options->list, list) {
     option = tmp->option;
 
     if (option->code == code) {

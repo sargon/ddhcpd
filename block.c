@@ -173,8 +173,8 @@ int block_claim(ddhcp_block* blocks, int num_blocks, ddhcp_config* config) {
   // TODO Check we actually got the memory
 
   int index = 0;
-  list_for_each(pos, &(config->claiming_blocks).list) {
-    ddhcp_block_list*  tmp = list_entry(pos, ddhcp_block_list, list);
+  ddhcp_block_list*  tmp;
+  list_for_each_entry(tmp, &(config->claiming_blocks).list, list) {
     ddhcp_block* block = tmp->block;
     block->claiming_counts++;
     packet->payload[index].block_index = block->index;
