@@ -340,8 +340,11 @@ void block_free_claims(ddhcp_config* config) {
 void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
   ddhcp_block* block = blocks;
   dprintf(fd, "block size/number\t%u/%u \n", config->block_size, config->number_of_blocks);
+  dprintf(fd, "      tentative timeout\t%u\n", config->tentative_timeout);
   dprintf(fd, "      timeout\t%u\n", config->block_timeout);
+  dprintf(fd, "      refresh factor\t%u\n", config->block_refresh_factor);
   dprintf(fd, "      spare\t%u\n", config->spare_blocks_needed);
+  dprintf(fd, "      network: %s/%i \n", inet_ntoa(config->prefix), config->prefix_len);
 
   char node_id[17]; 
   for( uint32_t j = 0; j < 8; j++) {
@@ -356,6 +359,7 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
 
   time_t now = time(NULL);
 
+  uint32_t num_reserved_blocks = 0;
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     uint32_t free_leases = 0;
     uint32_t offered_leases = 0;
@@ -383,8 +387,12 @@ void block_show_status(int fd, ddhcp_block* blocks,  ddhcp_config* config) {
       timeout = block->timeout - now;
     }
     
-    if ( timeout > 0) 
+    if (timeout > 0) {
+      num_reserved_blocks++;
       dprintf(fd, "%i\t%i\t%s\t%u\t%s\t%lu\n", block->index, block->state, node_id, block->claiming_counts, leases, timeout);
+    }
+
     block++;
   }
+  dprintf(fd,"\nblocks in use: %i\n",num_reserved_blocks);
 }
