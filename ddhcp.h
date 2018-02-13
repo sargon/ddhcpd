@@ -20,6 +20,6 @@ void ddhcp_dhcp_release(struct ddhcp_block* blocks, struct ddhcp_mcast_packet* p
 
 ddhcp_block* block_find_lease(ddhcp_block* blocks, ddhcp_config* config);
 
-void house_keeping(ddhcp_block* blocks, ddhcp_config* config);
+void house_keeping(ddhcp_config* config);
 
 #endif

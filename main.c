@@ -29,8 +29,6 @@ volatile int daemon_running = 0;
 const int NET = 0;
 const int NET_LEN = 10;
 
-struct ddhcp_block* blocks;
-
 void* get_in_addr(struct sockaddr* sa)
 {
   if (sa->sa_family == AF_INET) {
@@ -48,16 +46,16 @@ void* get_in_addr(struct sockaddr* sa)
  * + Claim new blocks if we are low on spare leases.
  * + Update our claims.
  */
-void house_keeping(ddhcp_block* blocks, ddhcp_config* config) {
+void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping( blocks, config )\n");
-  block_check_timeouts(blocks, config);
+  block_check_timeouts(config->blocks, config);
 
-  int spares = block_num_free_leases(blocks, config);
+  int spares = block_num_free_leases(config->blocks, config);
   int spare_blocks = ceil((double) spares / (double) config->block_size);
   int blocks_needed = config->spare_blocks_needed - spare_blocks;
 
-  block_claim(blocks, blocks_needed, config);
-  block_update_claims(blocks, blocks_needed, config);
+  block_claim(config->blocks, blocks_needed, config);
+  block_update_claims(config->blocks, blocks_needed, config);
 
   dhcp_packet_list_timeout(&config->dhcp_packet_cache);
   DEBUG("house_keeping( ... ) finish\n\n");
@@ -306,7 +304,7 @@ int main(int argc, char** argv) {
   }
 
   // init block stucture
-  ddhcp_block_init(&blocks, config);
+  ddhcp_block_init(&config->blocks, config);
   dhcp_options_init(config);
 
   // init network and event loops
@@ -387,7 +385,7 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_dhcp_process(buffer, len, sender, blocks, config);
+          ddhcp_dhcp_process(buffer, len, sender, config->blocks, config);
         }
       } else if (config->mcast_socket == events[i].data.fd) {
         // DDHCP Block Handling
@@ -399,17 +397,17 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_block_process(buffer, len, sender, blocks, config);
+          ddhcp_block_process(buffer, len, sender, config->blocks, config);
         }
 
-        house_keeping(blocks, config);
+        house_keeping(config);
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {
         // DHCP
         int len;
 
         while ((len = read(config->client_socket, buffer, 1500)) > 0) {
-          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, blocks, config);
+          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, config->blocks, config);
         }
       } else if (config->control_socket == events[i].data.fd) {
         // Handle new control socket connections
@@ -423,7 +421,7 @@ int main(int argc, char** argv) {
         // Handle commands comming over a control_socket
         bytes = read(events[i].data.fd, buffer, 1500);
 
-        if (handle_command(events[i].data.fd, buffer, bytes, blocks, config) < 0) {
+        if (handle_command(events[i].data.fd, buffer, bytes, config->blocks, config) < 0) {
           ERROR("Malformed command\n");
         }
 
@@ -436,14 +434,14 @@ int main(int argc, char** argv) {
     }
 
     if (need_house_keeping) {
-      house_keeping(blocks, config);
+      house_keeping(config);
     }
   } while (daemon_running);
 
   // TODO free dhcp_leases
   free(events);
 
-  ddhcp_block* block = blocks;
+  ddhcp_block* block = config->blocks;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     block_free(block++);
@@ -451,7 +449,7 @@ int main(int argc, char** argv) {
 
   block_free_claims(config);
 
-  free(blocks);
+  free(config->blocks);
   free(buffer);
 
   free_option_store(&config->options);
