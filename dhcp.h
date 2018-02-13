@@ -8,6 +8,11 @@
 #include "dhcp_packet.h"
 
 /**
+ * DHCP Process Packet
+ */
+int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* config);
+
+/**
  * DHCP Discover
  * Performs a search for a available, not already offered address in the
  * available block. When the block has no further available addresses 0 is returned,

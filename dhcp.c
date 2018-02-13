@@ -124,6 +124,47 @@ void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* r
 
 }
 
+int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* config) {
+  // TODO Error Handling
+  struct dhcp_packet dhcp_packet;
+  int ret = ntoh_dhcp_packet(&dhcp_packet, buffer, len);
+
+  if (ret == 0) {
+    int message_type = dhcp_packet_message_type(&dhcp_packet);
+
+    switch (message_type) {
+    case DHCPDISCOVER:
+      ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, blocks, config);
+
+      if (ret == 1) {
+        INFO("we need to inquire new blocks\n");
+        return 1;
+      }
+
+      break;
+
+    case DHCPREQUEST:
+      dhcp_hdl_request(config->client_socket, &dhcp_packet, blocks, config);
+      break;
+
+    case DHCPRELEASE:
+      dhcp_hdl_release(&dhcp_packet, blocks, config);
+      break;
+
+    default:
+      WARNING("Unknown DHCP message of type: %i\n", message_type);
+      break;
+    }
+
+    if (dhcp_packet.options_len > 0) {
+      free(dhcp_packet.options);
+    }
+  } else {
+    WARNING("Malformed packet!? errcode: %i\n", ret);
+  }
+
+  return 0;
+}
 
 int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config) {
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n", socket);

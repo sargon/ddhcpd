@@ -319,9 +319,7 @@ int main(int argc, char** argv) {
   }
 
   uint8_t* buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
-  struct ddhcp_mcast_packet packet;
-  struct dhcp_packet dhcp_packet;
-  int ret = 0, bytes = 0;
+  int bytes = 0;
 
   int efd;
   int maxevents = 64;
@@ -408,43 +406,10 @@ int main(int argc, char** argv) {
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {
         // DHCP
-        bytes = read(config->client_socket, buffer, 1500);
+        int len;
 
-        // TODO Error Handling
-        ret = ntoh_dhcp_packet(&dhcp_packet, buffer, bytes);
-
-        if (ret == 0) {
-          int message_type = dhcp_packet_message_type(&dhcp_packet);
-
-          switch (message_type) {
-          case DHCPDISCOVER:
-            ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, blocks, config);
-
-            if (ret == 1) {
-              INFO("we need to inquire new blocks\n");
-              need_house_keeping = 1;
-            }
-
-            break;
-
-          case DHCPREQUEST:
-            dhcp_hdl_request(config->client_socket, &dhcp_packet, blocks, config);
-            break;
-
-          case DHCPRELEASE:
-            dhcp_hdl_release(&dhcp_packet, blocks, config);
-            break;
-
-          default:
-            WARNING("Unknown DHCP message of type: %i\n", message_type);
-            break;
-          }
-
-          if (dhcp_packet.options_len > 0) {
-            free(dhcp_packet.options);
-          }
-        } else {
-          WARNING("Malformed packet!? errcode: %i\n",ret);
+        while ((len = read(config->client_socket, buffer, 1500)) > 0) {
+          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, blocks, config);
         }
       } else if (config->control_socket == events[i].data.fd) {
         // Handle new control socket connections
