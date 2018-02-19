@@ -27,20 +27,20 @@ void printf_dhcp(dhcp_packet* packet) {
   inet_ntop(AF_INET, &(packet->siaddr.s_addr), siaddr_str, INET_ADDRSTRLEN);
 
   DEBUG("BOOTP [ op %i, htype %i, hlen %i, hops %i, xid %lu, secs %i, flags %i, ciaddr %s, yiaddr %s, siaddr %s, giaddr %s, sname: %s, file: %s ]\n"
-         , packet->op
-         , packet->htype
-         , packet->hlen
-         , packet->hops
-         , (unsigned long) packet->xid
-         , packet->secs
-         , packet->flags
-         , ciaddr_str
-         , yiaddr_str
-         , siaddr_str
-         , giaddr_str
-         , packet->sname
-         , packet->file
-        );
+        , packet->op
+        , packet->htype
+        , packet->hlen
+        , packet->hops
+        , (unsigned long) packet->xid
+        , packet->secs
+        , packet->flags
+        , ciaddr_str
+        , yiaddr_str
+        , siaddr_str
+        , giaddr_str
+        , packet->sname
+        , packet->file
+       );
 
   free(ciaddr_str);
   free(yiaddr_str);
@@ -67,7 +67,7 @@ void printf_dhcp(dhcp_packet* packet) {
     option++;
   }
 }
-# else 
+# else
 #define printf_dhcp(packet) {}
 # endif
 
@@ -155,7 +155,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
       options++;
       exit = 1;
       continue;
-    break;
+      break;
 
     case DHCP_CODE_MESSAGE_TYPE:
       dhcp_message_type = 1;
@@ -337,11 +337,20 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   time_t now = time(NULL);
   // Save dhcp packet, for further actions, later.
   dhcp_packet_list* tmp = calloc(1, sizeof(dhcp_packet_list));
-  dhcp_packet* copy = calloc(1,sizeof(dhcp_packet));
-  if ( !tmp ) {
+
+  if (tmp == NULL) {
     ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
     return 1;
   }
+
+  dhcp_packet* copy = calloc(1, sizeof(dhcp_packet));
+
+  if (copy == NULL) {
+    free(tmp);
+    ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
+    return 1;
+  }
+
   dhcp_packet_copy(copy, packet);
   tmp->packet = copy;
   tmp->packet->timeout = now + 120;
@@ -356,6 +365,7 @@ dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t
 
   list_for_each_safe(pos, q, &list->list) {
     tmp = list_entry(pos, dhcp_packet_list, list);
+
     if (tmp->packet->xid == xid) {
       if (memcmp(tmp->packet->chaddr, chaddr, 16) == 0) {
         DEBUG("dhcp_packet_list_find( ... ) -> packet found\n");
