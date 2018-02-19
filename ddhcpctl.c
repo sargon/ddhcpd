@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
   size_t bw = send(ctl_sock, buffer, msglen, 0);
 
   if (bw < msglen) {
-    printf("Wrote %i / %i bytes to control socket", (int) bw, msglen);
+    printf("Wrote %i / %u bytes to control socket", (int) bw, msglen);
     perror("send error:");
     return -1;
   }
