@@ -5,8 +5,6 @@
 
 int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks, ddhcp_config* config) {
   // TODO Rethink command handling and command design
-  config->block_size = config->block_size;
-
   DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
 
   if (msglen == 0) {
