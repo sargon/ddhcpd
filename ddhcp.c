@@ -5,8 +5,7 @@
 #include "logger.h"
 #include "tools.h"
 
-int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
-  assert(blocks);
+int ddhcp_block_init(ddhcp_config* config) {
 
   if (config->number_of_blocks < 1) {
     FATAL("ddhcp_block_init(...)-> Need at least 1 blocks to be configured\n");
@@ -14,9 +13,9 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   }
 
   DEBUG("ddhcp_block_init( blocks, config)\n");
-  *blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
+  config->blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
 
-  if (*blocks == NULL) {
+  if (config->blocks == NULL) {
     FATAL("ddhcp_block_init(...)-> Can't allocate memory for block structure\n");
     return 1;
   }
@@ -25,7 +24,7 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
 
   // TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
   //      and assign one here instead of NULL. Performance boost, Memory defrag?
-  struct ddhcp_block* block = *blocks;
+  struct ddhcp_block* block = config->blocks;
 
   for (uint32_t index = 0; index < config->number_of_blocks; index++) {
     block->index = index;
@@ -40,6 +39,17 @@ int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config) {
   }
 
   return 0;
+}
+
+void ddhcp_block_free(ddhcp_config* config) {
+  ddhcp_block* block = config->blocks;
+
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+    block_free(block++);
+  }
+
+  block_free_claims(config);
+  free(config->blocks);
 }
 
 void ddhcp_block_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config) {

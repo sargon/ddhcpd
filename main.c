@@ -304,7 +304,7 @@ int main(int argc, char** argv) {
   }
 
   // init block stucture
-  ddhcp_block_init(&config->blocks, config);
+  ddhcp_block_init(config);
   dhcp_options_init(config);
 
   // init network and event loops
@@ -440,17 +440,9 @@ int main(int argc, char** argv) {
 
   // TODO free dhcp_leases
   free(events);
-
-  ddhcp_block* block = config->blocks;
-
-  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    block_free(block++);
-  }
-
-  block_free_claims(config);
-
-  free(config->blocks);
   free(buffer);
+
+  ddhcp_block_free(config);
 
   free_option_store(&config->options);
   dhcp_packet_list_free(&config->dhcp_packet_cache);

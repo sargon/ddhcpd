@@ -5,7 +5,8 @@
 #include "list.h"
 #include "block.h"
 
-int ddhcp_block_init(struct ddhcp_block** blocks, ddhcp_config* config);
+int ddhcp_block_init(ddhcp_config* config);
+void ddhcp_block_free(ddhcp_config* config);
 
 void ddhcp_block_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_block* blocks, ddhcp_config* config);
 
