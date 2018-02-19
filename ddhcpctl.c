@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
       buffer[1] = (char) 51;
       buffer[2] = (char) 4;
       uint32_t leasetime = htonl(atol(optarg));
-      memcpy(buffer + 3,(uint8_t*) &leasetime,sizeof(uint32_t));
+      memcpy(buffer + 3, (uint8_t*) &leasetime, sizeof(uint32_t));
       break;
 
     case 'r':
@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
 
   if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
     perror("can't create socket:");
+    free(buffer);
     return (-1);
   }
 
