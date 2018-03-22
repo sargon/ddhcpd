@@ -10,7 +10,7 @@
 /**
  * DHCP Process Packet
  */
-int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config);
 
 /**
  * DHCP Discover
@@ -20,27 +20,27 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* co
  *
  * In a second step a dhcp_packet is created an send back.
  */
-int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config);
 
 /**
  * DHCP Request
  * Performs on base of de
  */
-int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* config);
 
 /**
  * DDHCP Remote Request (Renew)
  */
-int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_rhdl_request(uint32_t* address, ddhcp_config* config);
 /**
  * DDHCP Remote Answer (Ack)
  */
-int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config);
+int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config);
 
 /**
  * DHCP Release
  */
-void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* block, ddhcp_config* config);
+void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config);
 
 int dhcp_nack(int socket, dhcp_packet* from_client);
 int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_t lease_index, ddhcp_config* config);
@@ -75,7 +75,7 @@ uint32_t dhcp_get_free_lease(ddhcp_block* block);
  * since there is no reply to a dhcp release packet
  * no further internal handling is needed.
  */
-void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* config);
+void dhcp_release_lease(uint32_t address, ddhcp_config* config);
 
 /**
  * HouseKeeping: Check for timed out leases.

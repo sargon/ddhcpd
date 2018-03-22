@@ -48,14 +48,14 @@ void* get_in_addr(struct sockaddr* sa)
  */
 void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping( blocks, config )\n");
-  block_check_timeouts(config->blocks, config);
+  block_check_timeouts(config);
 
-  int spares = block_num_free_leases(config->blocks, config);
+  int spares = block_num_free_leases(config);
   int spare_blocks = ceil((double) spares / (double) config->block_size);
   int blocks_needed = config->spare_blocks_needed - spare_blocks;
 
-  block_claim(config->blocks, blocks_needed, config);
-  block_update_claims(config->blocks, blocks_needed, config);
+  block_claim(blocks_needed, config);
+  block_update_claims(blocks_needed, config);
 
   dhcp_packet_list_timeout(&config->dhcp_packet_cache);
   DEBUG("house_keeping( ... ) finish\n\n");
@@ -385,7 +385,7 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_dhcp_process(buffer, len, sender, config->blocks, config);
+          ddhcp_dhcp_process(buffer, len, sender, config);
         }
       } else if (config->mcast_socket == events[i].data.fd) {
         // DDHCP Block Handling
@@ -397,7 +397,7 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_block_process(buffer, len, sender, config->blocks, config);
+          ddhcp_block_process(buffer, len, sender, config);
         }
 
         house_keeping(config);
@@ -407,7 +407,7 @@ int main(int argc, char** argv) {
         int len;
 
         while ((len = read(config->client_socket, buffer, 1500)) > 0) {
-          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, config->blocks, config);
+          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, config);
         }
       } else if (config->control_socket == events[i].data.fd) {
         // Handle new control socket connections
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
         // Handle commands comming over a control_socket
         bytes = read(events[i].data.fd, buffer, 1500);
 
-        if (handle_command(events[i].data.fd, buffer, bytes, config->blocks, config) < 0) {
+        if (handle_command(events[i].data.fd, buffer, bytes, config) < 0) {
           ERROR("Malformed command\n");
         }
 

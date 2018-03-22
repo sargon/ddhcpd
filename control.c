@@ -3,7 +3,7 @@
 #include "block.h"
 #include "dhcp_options.h"
 
-int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks, ddhcp_config* config) {
+int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config) {
   // TODO Rethink command handling and command design
   DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
 
@@ -20,7 +20,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_block* blocks,
     }
 
     DEBUG("handle_command(...) -> show block status\n");
-    block_show_status(socket, blocks, config);
+    block_show_status(socket, config);
     return 0;
 
   case 2:

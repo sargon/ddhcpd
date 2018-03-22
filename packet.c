@@ -169,8 +169,6 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
 
 int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 
-  char* buffer_orig = buffer;
-
   // Header
   copy_var_to_buf_inc(buffer, ddhcp_node_id, packet->node_id);
 

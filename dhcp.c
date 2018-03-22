@@ -26,10 +26,11 @@ uint16_t DHCP_LEASE_SERVER_DELTA = 10;
  * Of 1, iff result is non in our blocks.
  * And 2 on failure.
  */
-uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_block* blocks, ddhcp_config* config, ddhcp_block** lease_block, uint32_t* lease_index) {
+uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhcp_block** lease_block, uint32_t* lease_index) {
 #if LOG_LEVEL >= LOG_DEBUG
   DEBUG("find_lease_from_address( %s, ...)\n", inet_ntoa(*addr));
 #endif
+  ddhcp_block* blocks = config->blocks;
   uint32_t address = (uint32_t) addr->s_addr;
 
   uint32_t block_number = (ntohl(address) - ntohl((uint32_t) config->prefix.s_addr)) / config->block_size;
@@ -124,7 +125,7 @@ void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* r
 
 }
 
-int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config) {
   // TODO Error Handling
   struct dhcp_packet dhcp_packet;
   int ret = ntoh_dhcp_packet(&dhcp_packet, buffer, len);
@@ -134,7 +135,7 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* co
 
     switch (message_type) {
     case DHCPDISCOVER:
-      ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, blocks, config);
+      ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, config);
 
       if (ret == 1) {
         INFO("we need to inquire new blocks\n");
@@ -144,11 +145,11 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* co
       break;
 
     case DHCPREQUEST:
-      dhcp_hdl_request(config->client_socket, &dhcp_packet, blocks, config);
+      dhcp_hdl_request(config->client_socket, &dhcp_packet, config);
       break;
 
     case DHCPRELEASE:
-      dhcp_hdl_release(&dhcp_packet, blocks, config);
+      dhcp_hdl_release(&dhcp_packet, config);
       break;
 
     default:
@@ -166,11 +167,11 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_block* blocks, ddhcp_config* co
   return 0;
 }
 
-int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
   DEBUG("dhcp_discover( %i, packet, blocks, config)\n", socket);
 
   time_t now = time(NULL);
-  ddhcp_block* lease_block = block_find_free_leases(blocks,config);
+  ddhcp_block* lease_block = block_find_free_leases(config);
 
   if (lease_block == NULL) {
     DEBUG("dhcp_discover( ... ) -> no block with free leases found\n");
@@ -212,7 +213,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_block* blocks, dd
   return 0;
 }
 
-int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_rhdl_request(uint32_t* address, ddhcp_config* config) {
   DEBUG("dhcp_rhdl_request(address, blocks, config)\n");
 
   time_t now = time(NULL);
@@ -222,7 +223,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
 
   memcpy(&requested_address, address, sizeof(struct in_addr));
 
-  uint8_t found = find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index);
+  uint8_t found = find_lease_from_address(&requested_address, config, &lease_block, &lease_index);
 
   if (found == 0) {
     // Update lease information
@@ -240,7 +241,7 @@ int dhcp_rhdl_request(uint32_t* address, ddhcp_block* blocks, ddhcp_config* conf
   }
 }
 
-int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config) {
 
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
@@ -254,7 +255,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, 
     memcpy(&requested_address, &request->ciaddr.s_addr, sizeof(struct in_addr));
   }
 
-  if (find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index) != 1) {
+  if (find_lease_from_address(&requested_address, config, &lease_block, &lease_index) != 1) {
     DEBUG("dhcp_rhdl_ack( ... ) -> lease not found\n");
     return 1;
   }
@@ -262,7 +263,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_block* blocks, 
   return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
-int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* blocks, ddhcp_config* config) {
+int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* config) {
   DEBUG("dhcp_hdl_request( %i, dhcp_packet, blocks, config)\n", socket);
 
   // search the lease we may have offered
@@ -287,7 +288,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
 
   if (found_address) {
     // Calculate block and dhcp_lease from address
-    uint8_t found = find_lease_from_address(&requested_address, blocks, config, &lease_block, &lease_index);
+    uint8_t found = find_lease_from_address(&requested_address, config, &lease_block, &lease_index);
 
     if (found != 2) {
       lease = lease_block->addresses + lease_index;
@@ -317,11 +318,11 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
         memcpy(&payload.address, &requested_address, sizeof(struct in_addr));
         payload.xid = request->xid;
         payload.lease_seconds = 0;
-        #if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL >= LOG_DEBUG
         char* hwaddr = hwaddr2c(payload.chaddr);
-        DEBUG("dhcp_hdl_request( ... ): Save request for xid: %u chaddr: %s\n",payload.xid,hwaddr);
+        DEBUG("dhcp_hdl_request( ... ): Save request for xid: %u chaddr: %s\n", payload.xid, hwaddr);
         free(hwaddr);
-        #endif
+#endif
 
         // Send packet
         ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);
@@ -354,7 +355,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
       }
     }
   } else {
-    ddhcp_block* block = blocks;
+    ddhcp_block* block = config->blocks;
 
     // Find lease from xid
     for (uint32_t i = 0; i < config->number_of_blocks; i++) {
@@ -394,13 +395,13 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_block* block
   return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
-void dhcp_hdl_release(dhcp_packet* packet, ddhcp_block* blocks, ddhcp_config* config) {
+void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
   DEBUG("dhcp_hdl_release(dhcp_packet, blocks, config)\n");
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
   struct in_addr addr;
   memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
-  uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
+  uint8_t found = find_lease_from_address(&addr, config, &lease_block, &lease_index);
 
 
   dhcp_lease* lease;
@@ -537,13 +538,13 @@ uint32_t dhcp_get_free_lease(ddhcp_block* block) {
   return block->subnet_len;
 }
 
-void dhcp_release_lease(uint32_t address, ddhcp_block* blocks, ddhcp_config* config) {
+void dhcp_release_lease(uint32_t address, ddhcp_config* config) {
 
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
   struct in_addr addr;
   memcpy(&addr, &address, sizeof(struct in_addr));
-  uint8_t found = find_lease_from_address(&addr, blocks, config, &lease_block, &lease_index);
+  uint8_t found = find_lease_from_address(&addr, config, &lease_block, &lease_index);
 
   if (found == 0) {
     _dhcp_release_lease(lease_block, lease_index);
