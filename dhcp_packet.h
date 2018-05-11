@@ -13,16 +13,16 @@ struct dhcp_packet {
   uint8_t hops;
   uint32_t xid;
   uint16_t secs;
-  time_t timeout;
   uint16_t flags;
-  struct in_addr ciaddr;
-  struct in_addr yiaddr;
-  struct in_addr siaddr;
-  struct in_addr giaddr;
   int8_t chaddr[16];
   char sname[64];
   char file[128];
   uint8_t options_len;
+  time_t timeout;
+  struct in_addr ciaddr;
+  struct in_addr yiaddr;
+  struct in_addr siaddr;
+  struct in_addr giaddr;
   struct dhcp_option* options;
 };
 typedef struct dhcp_packet dhcp_packet;
@@ -48,6 +48,10 @@ enum dhcp_message_type {
  * Store a packet in the packet_list, create a copy of the packet.
  */
 int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
+  int8_t chaddr[16];
+  char sname[64];
+  char file[128];
+  uint8_t options_len;
 
 /**
  * Search for a packet in the dhcp_packet_list checking chaddr and xid.
