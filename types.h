@@ -31,10 +31,10 @@ struct ddhcp_block {
   enum ddhcp_block_state state;
   struct in_addr subnet;
   uint8_t  subnet_len;
+  uint8_t claiming_counts;
   ddhcp_node_id node_id;
   struct in6_addr owner_address;
   time_t timeout;
-  uint8_t claiming_counts;
   // Only iff state is equal to CLAIMED lease_block is not equal to NULL.
   struct dhcp_lease* addresses;
 };
