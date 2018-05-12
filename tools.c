@@ -68,12 +68,14 @@ dhcp_option* parse_option() {
 }
 
 char* hwaddr2c(uint8_t* hwaddr) {
-  char* str = calloc(33,sizeof(char));
+  char* str = calloc(18, sizeof(char));
   char* istr = str;
-  for(int i = 0; i < 16; i++){
-    sprintf(istr,"%02X",(char) hwaddr[i]);
+
+  for (int i = 0; i < 6; i++) {
+    sprintf(istr, "%02X:", (char) hwaddr[i]);
     istr = istr + 2;
   }
+
   str[32] = '\0';
   return str;
 }
