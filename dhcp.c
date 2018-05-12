@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "packet.h"
 #include "tools.h"
+#include "hook.h"
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
@@ -413,6 +414,7 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
     // Check Hardware Address of client
     if (memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
       _dhcp_release_lease(lease_block, lease_index);
+      hook(HOOK_RELEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
     } else {
       ERROR("Hardware Adress transmitted by client and our record did not match, do nothing.\n");
     }
@@ -473,6 +475,9 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   _dhcp_default_options(DHCPACK, packet, request, config);
 
   dhcp_packet_send(socket, packet);
+
+  hook(HOOK_LEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
+
   free(packet->options);
   free(packet);
   return 0;

@@ -138,6 +138,8 @@ int main(int argc, char** argv) {
   config->control_path = "/tmp/ddhcpd_ctl";
   config->disable_dhcp = 0;
 
+  config->hook_command = NULL;
+
   // DHCP
   config->dhcp_port = 67;
   INIT_LIST_HEAD(&(config->options).list);
@@ -155,7 +157,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:St:dvDhLb:N:o:s:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:St:dvDhLb:N:o:s:H:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -190,10 +192,10 @@ int main(int argc, char** argv) {
       early_housekeeping = 1;
       break;
 
-		case 'v':
-			printf("Revision: %s\n",REVISION);
+    case 'v':
+      printf("Revision: %s\n", REVISION);
       return 0;
-			break;
+      break;
 
     case 'N':
       do {
@@ -244,6 +246,10 @@ int main(int argc, char** argv) {
       config->control_path = optarg;
       break;
 
+    case 'H':
+      config->hook_command = optarg;
+      break;
+
     default:
       printf("ARGC: %i\n", argc);
       show_usage = 1;
@@ -267,13 +273,14 @@ int main(int argc, char** argv) {
     printf("-d                     Run in background and daemonize\n");
     printf("-D                     Run in foreground and log to console (default)\n");
     printf("-C CTRL_PATH           Path to control socket\n");
+    printf("-H COMMAND             Hook to call on events\n");
     printf("-v                     Print build revision\n");
     exit(0);
   }
 
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
 
-  if ( config->disable_dhcp ) {
+  if (config->disable_dhcp) {
     config->spare_blocks_needed = 0;
   }
 

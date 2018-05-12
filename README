@@ -51,6 +51,15 @@ and later remove those entries:.
 
 Be careful with this, as stated above we do not save you from doing dumb things.
 
+Hook
+----
+
+If you like to act on events of ddhcpd you may register a binary via the '-H' 
+command. Every time an event that binary will be called. The binary is given
+a list of arguments:
+
+  <command> [lease|release] <ip-addr> <hwaddr>
+
 Testing
 -------
 

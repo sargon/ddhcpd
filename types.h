@@ -132,6 +132,9 @@ struct ddhcp_config {
   char* control_path;
   int client_control_socket;
 
+  // Hook
+  char* hook_command;
+
   // DHCP
   uint16_t dhcp_port;
 };
