@@ -83,7 +83,7 @@ void del_fd(int efd, int fd, uint32_t events) {
 
   if (s < 0) {
     int errsv = errno;
-    ERROR("%i", errsv);
+    FATAL("%i", errsv);
     perror("epoll_ctl");
     exit(1);   //("epoll_ctl");
   }
