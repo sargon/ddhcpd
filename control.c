@@ -11,9 +11,8 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config
     WARNING("handle_command(...) -> zero length command received\n");
   }
 
-  // TODO Avoid magic numbers for commands
   switch (buffer[0]) {
-  case 1:
+  case DDHCPCTL_BLOCK_SHOW:
     if (msglen != 1) {
       DEBUG("handle_command(...) -> message length mismatch\n");
       return -2;
@@ -23,7 +22,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config
     block_show_status(socket, config);
     return 0;
 
-  case 2:
+  case DDHCPCTL_DHCP_OPTIONS_SHOW:
     if (msglen != 1) {
       DEBUG("handle_command(...) -> message length mismatch\n");
       return -2;
@@ -33,7 +32,7 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config
     dhcp_options_show(socket, config);
     return 0;
 
-  case 3:
+  case DDHCPCTL_DHCP_OPTION_SET:
     DEBUG("handle_command(...) -> set dhcp option\n");
 
     if (msglen < 3) {
@@ -57,8 +56,8 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config
     set_option_in_store(&config->options, option);
     return 0;
 
-  case 4:
-    DEBUG("handle_command(...) -> set dhcp option\n");
+  case DDHCPCTL_DHCP_OPTION_REMOVE:
+    DEBUG("handle_command(...) -> remove dhcp option\n");
 
     if (msglen < 2) {
       DEBUG("handle_command(...) -> message not long enought\n");

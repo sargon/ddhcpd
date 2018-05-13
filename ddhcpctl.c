@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "tools.h"
+#include "control.h"
 
 int main(int argc, char** argv) {
 
@@ -35,13 +36,13 @@ int main(int argc, char** argv) {
     case 'b':
       //show blocks
       msglen = 1;
-      buffer[0] = (char) 1;
+      buffer[0] = (char) DDHCPCTL_BLOCK_SHOW;
       break;
 
     case 'd':
       // show dhcp
       msglen = 1;
-      buffer[0] = (char) 2;
+      buffer[0] = (char) DDHCPCTL_DHCP_OPTIONS_SHOW;
       break;
 
     case 'o':
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
 
     case 'l':
       msglen = 7;
-      buffer[0] = (char) 3;
+      buffer[0] = (char) DDHCPCTL_DHCP_OPTION_SET;
       buffer[1] = (char) 51;
       buffer[2] = (char) 4;
       uint32_t leasetime = htonl(atol(optarg));
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
 
     case 'r':
       msglen = 1;
-      buffer[0] = (char) 4;
+      buffer[0] = (char) DDHCPCTL_DHCP_OPTION_REMOVE;
       buffer[1] = (char) atoi(optarg);
       break;
 
