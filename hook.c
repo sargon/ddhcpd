@@ -7,7 +7,7 @@
 void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
   DEBUG("hook(%i,%s,%s,config)\n",type, inet_ntoa(*address), hwaddr2c(chaddr));
 
-  if (config->hook_command) {
+  if (!config->hook_command) {
     DEBUG("hook( ... ): No hook command set");
     return;
   }
