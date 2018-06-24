@@ -23,6 +23,7 @@
 #include "dhcp_options.h"
 #include "control.h"
 #include "version.h"
+#include "hook.h"
 
 volatile int daemon_running = 0;
 
@@ -313,6 +314,7 @@ int main(int argc, char** argv) {
   // init block stucture
   ddhcp_block_init(config);
   dhcp_options_init(config);
+  hook_init();
 
   // init network and event loops
   if (netsock_open(interface, interface_client, config) == -1) {

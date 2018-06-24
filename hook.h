@@ -7,5 +7,6 @@
 #define HOOK_RELEASE 2
 
 void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config);
+void hook_init();
 
 #endif
