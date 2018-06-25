@@ -254,7 +254,7 @@ void dhcp_options_init(ddhcp_config* config) {
     option->code = DHCP_CODE_BROADCAST_ADDRESS;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
-    option->payload[0] = (uint8_t) config->prefix.s_addr | ((1 << min(max(8 - pl, 0), 8)) - 1);
+    option->payload[0] = (((uint8_t*) &config->prefix.s_addr)[0]) | ((1 << min(max( 8 - pl, 0), 8)) - 1);
     option->payload[1] = (((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1);
     option->payload[2] = (((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1);
     option->payload[3] = (((uint8_t*) &config->prefix.s_addr)[3]) | ((1 << min(max(32 - pl, 0), 8)) - 1);
