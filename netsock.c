@@ -305,7 +305,7 @@ int netsock_openv4(char* interface_client, ddhcp_config* config) {
 
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
                  strlen(interface_client) + 1)) {
-    perror("can't bind to boardcast device");
+    perror("can't bind to broadcast device");
     close(sock);
     return -1;
   }
@@ -317,7 +317,7 @@ int netsock_openv4(char* interface_client, ddhcp_config* config) {
   }
 
   if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(unsigned int))) {
-    perror("can't set boardcast on client socket");
+    perror("can't set broadcast on client socket");
     close(sock);
     return -1;
   }
