@@ -193,8 +193,8 @@ case "$1" in
     $0 net-init 1
     trap "pkill dhclient ; pkill ddhcpd ; rm /tmp/ddhcpd-ctl* ; $0 net-stop" EXIT
     # Start two daemons
-    ( $0 srv-start 0 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl0 > /tmp/ddhcpd-0.log 2>&1 ) &
-    ( $0 srv-start 1 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl1 > /tmp/ddhcpd-1.log 2>&1 ) &
+    ( $0 srv-start 0 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ) &
+    ( $0 srv-start 1 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl1 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ) &
     # Wait some seconds
     sleep 20
     # Start some clients 
