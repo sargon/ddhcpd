@@ -14,30 +14,59 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
     return;
   }
 
-  int err = 0;
   int pid;
 
-// TODO: should we synchronize the hook runs?
+  char* action = NULL;
+
   switch (type) {
   case HOOK_LEASE:
-    pid = fork();
-    if (pid == 0) {
-        execl("/bin/sh", "sh", config->hook_command, "lease", inet_ntoa(*address), hwaddr2c(chaddr), (char*) 0);
-        err = -1;
-  }
+    action = "lease";
     break;
 
   case HOOK_RELEASE:
-    pid = fork();
-    if (pid == 0) {
-        execl("/bin/sh", "sh", config->hook_command, "release", inet_ntoa(*address), hwaddr2c(chaddr), (char*) 0);
-        err = -1;
-    }
+    action = "release";
     break;
+
+  default:
   }
 
+  if(!action) {
+    DEBUG("hook: unknown hook type: %i\n", type);
+    return;
+  }
+
+  pid = fork();
+  if(pid < 0) {
+    // TODO: Include errno from fork
+    FATAL("hook( ... ): Failed to fork() for hook command execution.\n");
+    return;
+  }
+
+  if (pid != 0) {
+    //Nothing to do as the parent
+    return;
+  }
+
+  int err = execl(
+    // Binary to execute
+    "/bin/sh",
+
+    // Arguments to pass
+    "/bin/sh", //Be pedantic about executing /bin/sh
+    "-c", // read command from arguments
+    "-e", // Terminate on error return
+    "--", // Terminate argument parsing
+    config->hook_command, // Our actual command to run
+    action, // The action we notify about
+    inet_ntoa(*address), // The affected IP address
+    hwaddr2c(chaddr), // The affected MAC address
+    (char*) NULL // End of command line
+  );
+
   if (err < 0) {
-    FATAL("hook( ... ): Command can not be executed.\n");
+    // TODO: Logging from the child should be synchronized
+    FATAL("hook( ... ): Command could not be executed.\n");
+    // TODO: Include errno from execl
   }
 }
 
