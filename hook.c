@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 
 void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
-  DEBUG("hook(%i,%s,%s,config)\n",type, inet_ntoa(*address), hwaddr2c(chaddr));
+  DEBUG("hook(%i,%s,%s,config)\n", type, inet_ntoa(*address), hwaddr2c(chaddr));
 
   if (!config->hook_command) {
     DEBUG("hook( ... ): No hook command set");
@@ -31,13 +31,14 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
     break;
   }
 
-  if(!action) {
+  if (!action) {
     DEBUG("hook: unknown hook type: %i\n", type);
     return;
   }
 
   pid = fork();
-  if(pid < 0) {
+
+  if (pid < 0) {
     // TODO: Include errno from fork
     FATAL("hook( ... ): Failed to fork() for hook command execution (errno: %i).\n", pid);
     return;
@@ -73,11 +74,11 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 
 void cleanup_process_table(int signum)
 {
-    UNUSED(signum);
-    DEBUG("signal: %i\n", signum);
-    wait(NULL);
+  UNUSED(signum);
+  DEBUG("signal: %i\n", signum);
+  wait(NULL);
 }
 
 void hook_init() {
-    signal(SIGCHLD, cleanup_process_table);
+  signal(SIGCHLD, cleanup_process_table);
 }

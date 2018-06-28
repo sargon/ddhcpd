@@ -17,7 +17,7 @@ dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code);
  */
 int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_len, uint8_t* payload);
 
-/** 
+/**
  * Remove options.
  */
 void remove_option(dhcp_option* options, uint8_t code);
@@ -86,7 +86,7 @@ void dhcp_options_show(int fd, ddhcp_config* config);
  */
 void dhcp_options_init(ddhcp_config* config);
 
-/** 
+/**
  * Search for option in store and if found store it in the options list.
  */
 int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code);

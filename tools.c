@@ -69,7 +69,8 @@ dhcp_option* parse_option() {
 
 char* hwaddr2c(uint8_t* hwaddr) {
   char* str = calloc(18, sizeof(char));
-  if(!str) {
+
+  if (!str) {
     FATAL("hwaddr2c(...): Failed to allocate buffer.\n");
     return NULL;
   }

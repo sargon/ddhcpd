@@ -42,11 +42,13 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
 
 int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code) {
   dhcp_option* option = find_in_option_store(store, code);
+
   if (option == NULL) {
     DEBUG("set_option_from_store( ... ) -> Option %u not found in store\n", code);
     return 1;
   }
-  return set_option(options,len,code,option->len,option->payload);
+
+  return set_option(options, len, code, option->len, option->payload);
 }
 
 int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_t** requested) {
@@ -91,12 +93,14 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
 }
 
 uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options) {
-  dhcp_option* lease_time_opt = find_in_option_store(options,DHCP_CODE_ADDRESS_LEASE_TIME);
-  if ( lease_time_opt != NULL) {
-    uint32_t buf = 0; 
-    memcpy(&buf,lease_time_opt->payload,4);
+  dhcp_option* lease_time_opt = find_in_option_store(options, DHCP_CODE_ADDRESS_LEASE_TIME);
+
+  if (lease_time_opt != NULL) {
+    uint32_t buf = 0;
+    memcpy(&buf, lease_time_opt->payload, 4);
     return ntohl(buf);
-  } 
+  }
+
   return 0;
 }
 
@@ -138,7 +142,8 @@ void remove_option_in_store(dhcp_option_list* store, uint8_t code) {
   list_for_each_safe(pos, q, &store->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     dhcp_option* option = tmp->option;
-    if ( option->code == code ) {
+
+    if (option->code == code) {
       list_del(pos);
 
       if (option->payload) {
@@ -202,9 +207,9 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
   dhcp_option_list* tmp;
   dhcp_option_list* store = &config->options;
 
-  dprintf(fd,"DHCP Lease Time: %u\n\n",find_in_option_store_address_lease_time(&config->options));
-  dprintf(fd,"DHCP Disabled: %u\n",config->disable_dhcp);
-  dprintf(fd,"DHCP Option Store\ncode\tlen\tpayload\n");
+  dprintf(fd, "DHCP Lease Time: %u\n\n", find_in_option_store_address_lease_time(&config->options));
+  dprintf(fd, "DHCP Disabled: %u\n", config->disable_dhcp);
+  dprintf(fd, "DHCP Option Store\ncode\tlen\tpayload\n");
   list_for_each_safe(pos, q, &store->list) {
     tmp = list_entry(pos, dhcp_option_list, list);
     dhcp_option* option = tmp->option;
@@ -271,7 +276,7 @@ void dhcp_options_init(ddhcp_config* config) {
     option->payload[0] = 0x00;
     option->payload[1] = 0x00;
     option->payload[2] = 0x01;
-    option->payload[3] = 0x2c; 
+    option->payload[3] = 0x2c;
 
     set_option_in_store(&config->options, option);
   }

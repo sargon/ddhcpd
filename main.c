@@ -342,7 +342,8 @@ int main(int argc, char** argv) {
   add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->server_socket, EPOLLIN | EPOLLET);
   add_fd(efd, config->control_socket, EPOLLIN | EPOLLET);
-  if ( config->disable_dhcp == 0 ) {
+
+  if (config->disable_dhcp == 0) {
     add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
   }
 
@@ -381,7 +382,7 @@ int main(int argc, char** argv) {
     need_house_keeping = 1;
 
     for (int i = 0; i < n; i++) {
-      if ((events[i].events & EPOLLERR) ) {
+      if ((events[i].events & EPOLLERR)) {
         ERROR("Error in epoll: %i \n", errno);
         exit(1);
       } else if (config->server_socket == events[i].data.fd) {
