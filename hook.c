@@ -39,7 +39,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
   pid = fork();
   if(pid < 0) {
     // TODO: Include errno from fork
-    FATAL("hook( ... ): Failed to fork() for hook command execution.\n");
+    FATAL("hook( ... ): Failed to fork() for hook command execution (errno: %i).\n", pid);
     return;
   }
 
@@ -66,7 +66,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 
   if (err < 0) {
     // TODO: Logging from the child should be synchronized
-    FATAL("hook( ... ): Command could not be executed.\n");
+    FATAL("hook( ... ): Command could not be executed (errno: %i).\n", err);
     // TODO: Include errno from execl
   }
 }
