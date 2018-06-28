@@ -255,11 +255,11 @@ int dhcp_packet_send(int socket, dhcp_packet* packet) {
   memcpy(buffer + 8, &tmp16, 2);
   tmp16 = htons(packet->flags);
   memcpy(buffer + 10, &tmp16, 2);
-  memcpy(buffer + 12 , &packet->ciaddr, 4);
-  memcpy(buffer + 16 , &packet->yiaddr, 4);
-  memcpy(buffer + 20 , &packet->siaddr, 4);
-  memcpy(buffer + 24 , &packet->giaddr, 4);
-  memcpy(buffer + 28 , &packet->chaddr, 16);
+  memcpy(buffer + 12, &packet->ciaddr, 4);
+  memcpy(buffer + 16, &packet->yiaddr, 4);
+  memcpy(buffer + 20, &packet->siaddr, 4);
+  memcpy(buffer + 24, &packet->giaddr, 4);
+  memcpy(buffer + 28, &packet->chaddr, 16);
   memcpy(buffer + 44, &packet->sname, 64);
   memcpy(buffer + 108, &packet->file, 128);
 

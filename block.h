@@ -31,7 +31,7 @@ ddhcp_block* block_find_free(ddhcp_config* config);
  * Claim a block! A block is only claimable when it is free.
  * Returns a value greater 0 if something goes sideways.
  */
-int block_claim(int num_blocks , ddhcp_config* config);
+int block_claim(int num_blocks, ddhcp_config* config);
 
 /**
  * Sum the number of free leases in blocks you own.

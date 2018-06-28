@@ -63,7 +63,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhc
   return 2;
 }
 
-void _dhcp_release_lease(ddhcp_block* block , uint32_t lease_index) {
+void _dhcp_release_lease(ddhcp_block* block, uint32_t lease_index) {
   INFO("Releasing Lease %i in block %i\n", lease_index, block->index);
   dhcp_lease* lease = block->addresses + lease_index;
 
@@ -204,7 +204,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
 
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
-  _dhcp_default_options(DHCPOFFER,packet,discover,config);
+  _dhcp_default_options(DHCPOFFER, packet, discover, config);
 
   dhcp_packet_send(socket, packet);
 
@@ -331,7 +331,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
 
         // Store packet for later usage.
         // TODO Error handling
-        dhcp_packet_list_add(&config->dhcp_packet_cache,request);
+        dhcp_packet_list_add(&config->dhcp_packet_cache, request);
 
         send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
         free(packet);

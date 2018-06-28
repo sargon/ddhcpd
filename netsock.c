@@ -123,8 +123,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   struct ifreq ifr;
   int ret;
 
-  if ( state->disable_dhcp == 0 ) {
-    if ( netsock_openv4(interface_client, state) < 0 ) {
+  if (state->disable_dhcp == 0) {
+    if (netsock_openv4(interface_client, state) < 0) {
       return -1;
     }
   }
@@ -223,7 +223,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   }
 
   // Multicast Group Registration
-  
+
   memcpy(&mreq.ipv6mr_multiaddr, &in6addr_localmcast,
          sizeof(mreq.ipv6mr_multiaddr));
   mreq.ipv6mr_interface = scope_id;
@@ -240,7 +240,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
     goto err;
   }
 
-  // Broadcast Options for DHCP 
+  // Broadcast Options for DHCP
 
   ret = fcntl(sock_mc, F_GETFL, 0);
 
@@ -273,7 +273,7 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   state->mcast_socket = sock_mc;
   state->server_socket = sock_srv;
 
-  memcpy(&state->node_id,&hwaddr,sizeof(hwaddr));
+  memcpy(&state->node_id, &hwaddr, sizeof(hwaddr));
 
   return 0;
 err:
@@ -337,6 +337,7 @@ int netsock_openv4(char* interface_client, ddhcp_config* config) {
     close(sock);
     return -1;
   }
+
   config->client_socket = sock;
 
   return 0;

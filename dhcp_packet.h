@@ -48,10 +48,11 @@ enum dhcp_message_type {
  * Store a packet in the packet_list, create a copy of the packet.
  */
 int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
-  int8_t chaddr[16];
-  char sname[64];
-  char file[128];
-  uint8_t options_len;
+
+int8_t chaddr[16];
+char sname[64];
+char file[128];
+uint8_t options_len;
 
 /**
  * Search for a packet in the dhcp_packet_list checking chaddr and xid.
