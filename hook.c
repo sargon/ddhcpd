@@ -28,6 +28,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
     break;
 
   default:
+    break;
   }
 
   if(!action) {
