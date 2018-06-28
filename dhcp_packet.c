@@ -205,6 +205,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     switch ((uint8_t) option[0]) {
     case DHCP_CODE_END:
       exit = 1;
+      /* fall through */
 
     case DHCP_CODE_PAD:
       // JUMP padding and end

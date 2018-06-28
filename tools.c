@@ -71,11 +71,11 @@ char* hwaddr2c(uint8_t* hwaddr) {
   char* str = calloc(18, sizeof(char));
   char* istr = str;
 
-  for (int i = 0; i < 6; i++) {
-    sprintf(istr, "%02X:", (char) hwaddr[i]);
-    istr = istr + 2;
+  for (int i = 0; i < 5; i++) {
+    snprintf(istr, 4, "%02X:", hwaddr[i]);
+    istr = istr + 3;
   }
+  snprintf(istr, 3, "%02X", hwaddr[5]);
 
-  str[32] = '\0';
   return str;
 }
