@@ -69,13 +69,13 @@ dhcp_option* parse_option() {
 
 char* hwaddr2c(uint8_t* hwaddr) {
   char* str = calloc(18, sizeof(char));
-  char* istr = str;
-
-  for (int i = 0; i < 5; i++) {
-    snprintf(istr, 4, "%02X:", hwaddr[i]);
-    istr = istr + 3;
+  if(!str) {
+    FATAL("hwaddr2c(...): Failed to allocate buffer.\n");
+    return NULL;
   }
-  snprintf(istr, 3, "%02X", hwaddr[5]);
+
+  snprintf(str, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+    hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 
   return str;
 }
