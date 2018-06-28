@@ -28,6 +28,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
     break;
 
   default:
+    break;
   }
 
   if(!action) {
@@ -53,7 +54,6 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 
     // Arguments to pass
     "/bin/sh", //Be pedantic about executing /bin/sh
-    "-c", // read command from arguments
     "-e", // Terminate on error return
     "--", // Terminate argument parsing
     config->hook_command, // Our actual command to run
