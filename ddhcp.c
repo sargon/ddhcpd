@@ -106,7 +106,7 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
       // We need to contact him, for dhcp forwarding actions.
       memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
       memcpy(&blocks[block_index].node_id, &packet->node_id, sizeof(ddhcp_node_id));
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
       char ipv6_sender[INET6_ADDRSTRLEN];
       DEBUG("Register block to %s\n",
             inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
@@ -188,7 +188,7 @@ void ddhcp_dhcp_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, dd
 void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_renewlease(request, config)\n");
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(packet->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_renewlease( ... ): Request for xid: %u chaddr: %s\n", packet->renew_payload->xid, hwaddr);
   free(hwaddr);
@@ -221,7 +221,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
 void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_leaseack( ... ): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);
@@ -244,7 +244,7 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
 void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_leaseack( ... ): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);

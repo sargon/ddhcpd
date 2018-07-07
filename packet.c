@@ -300,7 +300,7 @@ int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest,
 
   memcpy(&dest_addr.sin6_addr, dest, sizeof(struct in6_addr));
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char ipv6_sender[INET6_ADDRSTRLEN];
 
   DEBUG("Send message to %s\n",

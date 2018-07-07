@@ -7,61 +7,54 @@
 
 #include <stdio.h>
 
-#define LOG_FATAL   0
-#define LOG_ERROR   5
-#define LOG_WARNING 10
-#define LOG_INFO    15
-#define LOG_DEBUG   20
+#define LOG_FATAL 0
+#define LOG_ERROR 1
+#define LOG_WARNING 2
+#define LOG_INFO 3
+#define LOG_DEBUG 4
 
-#ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_WARNING
+#define LOG_LEVEL_MAX LOG_DEBUG
+
+#ifndef LOG_LEVEL_LIMIT
+#define LOG_LEVEL_LIMIT 255
+#endif
+
+#ifndef LOG_LEVEL_DEFAULT
+#define LOG_LEVEL_DEFAULT LOG_WARNING
 #endif
 
 #define HEX_NODE_ID(x) ((uint8_t*) x)[0],((uint8_t*) x)[1],((uint8_t*) x)[2],((uint8_t*) x)[3],((uint8_t*) x)[4],((uint8_t*) x)[5],((uint8_t*) x)[6],((uint8_t*) x)[7]
 
-#define LOG(...) fprintf(stderr,__VA_ARGS__)
+void logger(int level, char* prefix, ...);
 
-#if LOG_LEVEL >= LOG_FATAL
-#define FATAL(...) do { \
-    fprintf(stderr,"FATAL: "); \
-    fprintf(stderr,__VA_ARGS__); \
-  } while(0)
+#define LOG(...) logger(-1, "",__VA_ARGS__)
+
+#if LOG_LEVEL_LIMIT >= LOG_FATAL
+#define FATAL(...) logger(LOG_FATAL, "FATAL: ", __VA_ARGS__)
 #else
 #define FATAL(...)
 #endif
 
-#if LOG_LEVEL >= LOG_ERROR
-#define ERROR(...) do { \
-    fprintf(stderr,"ERROR: "); \
-    fprintf(stderr,__VA_ARGS__); \
-  } while(0)
+#if LOG_LEVEL_LIMIT >= LOG_ERROR
+#define ERROR(...) logger(LOG_ERROR, "ERROR: ", __VA_ARGS__)
 #else
 #define ERROR(...)
 #endif
 
-#if LOG_LEVEL >= LOG_WARNING
-#define WARNING(...) do { \
-    fprintf(stderr,"WARNING: "); \
-    fprintf(stderr,__VA_ARGS__); \
-  } while(0)
+#if LOG_LEVEL_LIMIT >= LOG_WARNING
+#define WARNING(...) logger(LOG_WARNING, "WARNING: ", __VA_ARGS__)
 #else
 #define WARNING(...)
 #endif
 
-#if LOG_LEVEL >= LOG_INFO
-#define INFO(...) do { \
-    fprintf(stderr,"INFO: "); \
-    fprintf(stderr,__VA_ARGS__); \
-  } while(0)
+#if LOG_LEVEL_LIMIT >= LOG_INFO
+#define INFO(...) logger(LOG_INFO, "INFO: ", __VA_ARGS__)
 #else
 #define INFO(...)
 #endif
 
-#if LOG_LEVEL >= LOG_DEBUG
-#define DEBUG(...) do { \
-    fprintf(stderr,"DEBUG: "); \
-    fprintf(stderr,__VA_ARGS__); \
-  } while(0)
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+#define DEBUG(...) logger(LOG_DEBUG, "DEBUG: ", __VA_ARGS__)
 #else
 #define DEBUG(...)
 #endif

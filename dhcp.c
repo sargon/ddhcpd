@@ -12,7 +12,7 @@
 uint16_t DHCP_OFFER_TIMEOUT = 12;
 uint16_t DHCP_LEASE_SERVER_DELTA = 10;
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
 #define DEBUG_DHCP_LEASE(...) do { \
   DEBUG("DHCP LEASE [ state %i, xid %u, end %i ]\n",lease->state,lease->xid,lease->lease_end);\
 } while (0);
@@ -28,7 +28,7 @@ uint16_t DHCP_LEASE_SERVER_DELTA = 10;
  * And 2 on failure.
  */
 uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhcp_block** lease_block, uint32_t* lease_index) {
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   DEBUG("find_lease_from_address( %s, ...)\n", inet_ntoa(*addr));
 #endif
   ddhcp_block* blocks = config->blocks;
@@ -319,7 +319,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         memcpy(&payload.address, &requested_address, sizeof(struct in_addr));
         payload.xid = request->xid;
         payload.lease_seconds = 0;
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
         char* hwaddr = hwaddr2c(payload.chaddr);
         DEBUG("dhcp_hdl_request( ... ): Save request for xid: %u chaddr: %s\n", payload.xid, hwaddr);
         free(hwaddr);

@@ -12,7 +12,7 @@ struct sockaddr_in broadcast = {
 };
 
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
 void printf_dhcp(dhcp_packet* packet) {
   char* ciaddr_str = (char*) malloc(INET_ADDRSTRLEN);
   inet_ntop(AF_INET, &(packet->ciaddr.s_addr), ciaddr_str, INET_ADDRSTRLEN);
@@ -230,7 +230,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
 
   assert(i == options);
 
-#if LOG_LEVEL >= LOG_INFO
+#if LOG_LEVEL_LIMIT >= LOG_INFO
   printf_dhcp(packet);
 #endif
 
