@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
-  while ((c = getopt(argc, argv, "C:t:l:bdho:r:")) != -1) {
+  while ((c = getopt(argc, argv, "C:t:l:bdho:r:V:")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -68,6 +68,12 @@ int main(int argc, char** argv) {
       path = optarg;
       break;
 
+    case 'V':
+      msglen = 2;
+      buffer[0] = (char) DDHCPCTL_LOG_LEVEL_SET;
+      buffer[1] = (char) atoi(optarg);
+      break;
+
     default:
       printf("ARGC: %i\n", argc);
       show_usage = 1;
@@ -94,6 +100,7 @@ int main(int argc, char** argv) {
     printf("-d                     Show the current dhcp options store.\n");
     printf("-l                     Set the dhcp lease time.\n");
     printf("-o CODE:LEN:P1. .. .Pn Set DHCP Option with code,len and #len chars in decimal\n");
+    printf("-V LEVEL               Set log level\n");
     printf("-r CODE                Remove DHCP Option");
     printf("-C PATH                Path to control socket\n");
     exit(0);

@@ -3,6 +3,8 @@
 #include "block.h"
 #include "dhcp_options.h"
 
+extern int log_level;
+
 int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config) {
   // TODO Rethink command handling and command design
   DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
@@ -66,6 +68,17 @@ int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config
 
     uint8_t code = buffer[1];
     remove_option_in_store(&config->options, code);
+    return 0;
+
+  case DDHCPCTL_LOG_LEVEL_SET:
+    DEBUG("handle_command(...) -> set log level\n");
+
+    if (msglen < 2) {
+      DEBUG("handle_command(...) -> message not long enought\n");
+      return -2;
+    }
+
+    log_level = buffer[1];
     return 0;
 
   default:
