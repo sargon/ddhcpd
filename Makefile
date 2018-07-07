@@ -1,5 +1,6 @@
 OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o
 OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o hook.o
+HDRS=$(wildcard *.h)
 
 REVISION=$(shell git rev-list --first-parent HEAD --max-count=1)
 
@@ -43,10 +44,10 @@ all: ddhcpd ddhcpdctl
 version.h:
 	echo '#define REVISION "$(REVISION)"' > version.h
 
-ddhcpd: version.h ${OBJ} 
+ddhcpd: version.h ${OBJ} ${HDRS}
 	${CC} ${OBJ} ${CFLAGS} -o ddhcpd ${LFLAGS}
 
-ddhcpdctl: version.h ${OBJCTL}
+ddhcpdctl: version.h ${OBJCTL} ${HDRS}
 	${CC} ${OBJCTL} ${CFLAGS} -o ddhcpdctl ${LFLAGS}
 
 clean:
