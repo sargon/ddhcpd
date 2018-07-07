@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
       break;
 
     case 'r':
-      msglen = 1;
+      msglen = 2;
       buffer[0] = (char) DDHCPCTL_DHCP_OPTION_REMOVE;
       buffer[1] = (char) atoi(optarg);
       break;
