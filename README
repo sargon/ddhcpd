@@ -6,6 +6,11 @@ server is not available. DDHCP allows every realm to have its own server,
 while preserving roaming features for the client, by maintaining a common
 consens about lease state.
 
+The IPv4 address range is divided into many small blocks. Each node claims a
+number of spare blocks. Clients are assigned free addresses from those blocks if
+the node has enough addresses left to assign. There is a limit for how many free
+addresses a node has to hold. If this limit is exceeded, it reserves new blocks.
+
 The implementation is very flexible, meaning we do not prevent you from doing
 very stupid stuff, but also allow you maximal adaption.
 
@@ -79,7 +84,7 @@ You can setup a basic ddhcp network testing enviroment by calling
     # ./network-test net-init <number>
 
 to create a virtual network for <number> of ddhcp instances. You
-will need to have priviledges to create network namespaces. Short
+will need to have privileges to create network namespaces. Short
 use sudo and check the network-test script upfront.
 
 To start the (n-1)-th instance of ddhcp in your test environment
@@ -108,5 +113,3 @@ Gluon Packages
 For a maintained gluon package description see
 
   https://github.com/sargon/gluon-sargon
-
-
