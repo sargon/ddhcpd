@@ -80,7 +80,6 @@ void del_fd(int efd, int fd, uint32_t events) {
   event.events = events;
 
   int s = epoll_ctl(efd, EPOLL_CTL_DEL, fd, &event);
-  perror("epoll_ctl");
 
   if (s < 0) {
     int errsv = errno;
