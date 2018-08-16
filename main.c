@@ -27,6 +27,8 @@
 
 volatile int daemon_running = 0;
 
+extern int log_level;
+
 const int NET = 0;
 const int NET_LEN = 10;
 
@@ -157,7 +159,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:St:dvDhLb:N:o:s:H:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:N:o:s:H:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -250,6 +252,12 @@ int main(int argc, char** argv) {
       config->hook_command = optarg;
       break;
 
+    case 'V':
+      if (log_level < LOG_LEVEL_MAX) {
+        log_level++;
+      }
+      break;
+
     default:
       printf("ARGC: %i\n", argc);
       show_usage = 1;
@@ -275,7 +283,12 @@ int main(int argc, char** argv) {
     printf("-C CTRL_PATH           Path to control socket\n");
     printf("-H COMMAND             Hook to call on events\n");
     printf("-v                     Print build revision\n");
+    printf("-V                     Increase verbosity, can be specified multiple times\n");
     exit(0);
+  }
+
+  if (log_level > LOG_LEVEL_LIMIT) {
+    LOG("WARNING: Requested verbosity is higher than maximum supported by this build\n");
   }
 
   config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
@@ -369,7 +382,7 @@ int main(int argc, char** argv) {
       perror("epoll error:");
     }
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
 
     if (loop_timeout != config->loop_timeout) {
       DEBUG("Increase loop timeout from %i to %i\n", loop_timeout, config->loop_timeout);
@@ -389,7 +402,7 @@ int main(int argc, char** argv) {
         int len;
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
           char ipv6_sender[INET6_ADDRSTRLEN];
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
@@ -401,7 +414,7 @@ int main(int argc, char** argv) {
         int len;
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
           char ipv6_sender[INET6_ADDRSTRLEN];
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));

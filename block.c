@@ -194,14 +194,14 @@ int block_num_free_leases(ddhcp_config* config) {
   DEBUG("block_num_free_leases(blocks, config)\n");
   ddhcp_block* block = config->blocks;
   int free_leases = 0;
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
   int num_blocks = 0;
 #endif
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
       free_leases += dhcp_num_free(block);
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
       num_blocks++;
 #endif
     }
@@ -233,7 +233,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
     block++;
   }
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
 
   if (selected != NULL) {
     DEBUG("block_find_free_leases(blocks,config) -> Block %i selected\n", selected->index);
