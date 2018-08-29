@@ -84,6 +84,8 @@ int control_open(ddhcp_config* state) {
 
   strncpy(s_un.sun_path, state->control_path, sizeof(s_un.sun_path));
 
+  unlink(state->control_path);
+
   if (bind(ctl_sock, (struct sockaddr*)&s_un, sizeof(s_un)) < 0) {
     perror("can't bind control socket");
     goto err;
