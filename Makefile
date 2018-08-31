@@ -13,19 +13,47 @@ CFLAGS+= \
     -flto \
     -fno-strict-aliasing \
     -std=gnu11 \
-		-D_GNU_SOURCE \
-    -MD -MP
+    -D_GNU_SOURCE \
+    -MD -MP \
+    -masm=intel \
+    -Wduplicated-cond \
+    -Wduplicated-branches \
+    -Wlogical-op \
+    -Wrestrict \
+    -Wnull-dereference \
+    -Wdouble-promotion \
+    -Wshadow \
+    -Wformat=2 \
+    -Wfloat-equal \
+    -Wundef \
+    -Wpointer-arith \
+    -Wcast-align \
+    -Wstrict-overflow=5 \
+    -Wwrite-strings \
+    -Wswitch-default \
+    -Wswitch-enum \
+    -Wconversion \
+    -Wunreachable-code \
+    -Winit-self
+
+CXXFLAGS+= \
+    ${CFLAGS} \
+    -std=c++17 \
+    -Wuseless-cast \
+    -Weffc++
+
 LFLAGS+= \
     -flto \
     -lm
 
 ifeq ($(DEBUG),1)
 CFLAGS+= \
-    -g \
-    -fsanitize=address
+    -Og -g \
+    -fsanitize=address,signed-integer-overflow,undefined \
+
 LFLAGS+= \
-    -g \
-    -fsanitize=address
+    -Og -g \
+    -fsanitize=address,signed-integer-overflow,undefined
 else
 	CFLAGS+= \
 		-DNDEBUG
@@ -51,10 +79,16 @@ ddhcpdctl: version.h ${OBJCTL} ${HDRS}
 	${CC} ${OBJCTL} ${CFLAGS} -o ddhcpdctl ${LFLAGS}
 
 clean:
-	-rm -f ddhcpd ddhcpdctl ${OBJ} ${OBJCTL} *.d *.orig
+	-rm -f ddhcpd ddhcpdctl
+	-rm -f ${OBJ}
+	-rm -f ${OBJCTL}
+	-rm -f *.d
+	-rm -f *.orig
 
 style:
 	astyle --mode=c --options=none -s2 -f -j -k1 -W3 -p -U -H *.c *.h
 
 install:
 	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd
+
+-include *.d
