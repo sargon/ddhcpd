@@ -29,7 +29,7 @@ int ddhcp_block_init(ddhcp_config* config) {
   for (uint32_t index = 0; index < config->number_of_blocks; index++) {
     block->index = index;
     block->state = DDHCP_FREE;
-    addr_add(&config->prefix, &block->subnet, index * config->block_size);
+    addr_add(&config->prefix, &block->subnet, (int)(index * config->block_size));
     block->subnet_len = config->block_size;
     memset(&block->owner_address, 0, sizeof(struct in6_addr));
     block->timeout = now + config->block_timeout;
@@ -52,9 +52,9 @@ void ddhcp_block_free(ddhcp_config* config) {
   free(config->blocks);
 }
 
-void ddhcp_block_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_config* config) {
+void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
   struct ddhcp_mcast_packet packet;
-  int ret = ntoh_mcast_packet(buffer, len, &packet);
+  ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
   packet.sender = &sender;
 
   if (ret == 0) {
@@ -156,9 +156,9 @@ void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config
   }
 }
 
-void ddhcp_dhcp_process(uint8_t* buffer, int len, struct sockaddr_in6 sender, ddhcp_config* config) {
+void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
   struct ddhcp_mcast_packet packet;
-  int ret = ntoh_mcast_packet(buffer, len, &packet);
+  ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
   packet.sender = &sender;
 
   if (ret == 0) {

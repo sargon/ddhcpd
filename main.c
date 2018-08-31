@@ -53,9 +53,9 @@ void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping( blocks, config )\n");
   block_check_timeouts(config);
 
-  int spares = block_num_free_leases(config);
-  int spare_blocks = ceil((double) spares / (double) config->block_size);
-  int blocks_needed = config->spare_blocks_needed - spare_blocks;
+  uint32_t spares = block_num_free_leases(config);
+  uint32_t spare_blocks = (uint32_t)lrint(ceil((double) spares / (double) config->block_size));
+  uint32_t blocks_needed = config->spare_blocks_needed - spare_blocks;
 
   block_claim(blocks_needed, config);
   block_update_claims(blocks_needed, config);
@@ -95,7 +95,7 @@ uint32_t get_loop_timeout(ddhcp_config* config) {
   //Multiply by 500 to convert the timeout value given in seconds
   //into milliseconds AND dividing the value by two at the same time.
   //The integer overflow occuring for timeouts greater than 99.4 days is ignored here.
-  return floor(config->tentative_timeout * 500);
+  return (uint32_t)lrint(floor(config->tentative_timeout * 500));
 }
 
 typedef void (*sighandler_t)(int);
@@ -125,7 +125,7 @@ void handle_signal_terminate(int sig_nr) {
 
 int main(int argc, char** argv) {
 
-  srand(time(NULL));
+  srand((unsigned int)time(NULL));
 
   ddhcp_config* config = (ddhcp_config*) calloc(sizeof(ddhcp_config), 1);
   config->block_size = 32;
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
   config->block_timeout = 60;
   config->block_refresh_factor = 4;
   config->tentative_timeout = 15;
-  config->control_path = "/tmp/ddhcpd_ctl";
+  config->control_path = (char*)"/tmp/ddhcpd_ctl";
   config->disable_dhcp = 0;
 
   config->hook_command = NULL;
@@ -150,8 +150,8 @@ int main(int argc, char** argv) {
 
   INIT_LIST_HEAD(&config->dhcp_packet_cache);
 
-  char* interface = "server0";
-  char* interface_client = "client0";
+  char* interface = (char*)"server0";
+  char* interface_client = (char*)"client0";
 
   daemon_running = 2;
 
@@ -170,11 +170,11 @@ int main(int argc, char** argv) {
       break;
 
     case 'b':
-      config->block_size = 1 << atoi(optarg);
+      config->block_size = (uint8_t)(1 << atoi(optarg));
       break;
 
     case 't':
-      config->tentative_timeout = atoi(optarg);
+      config->tentative_timeout = (uint16_t)atoi(optarg);
       break;
 
     case 'd':
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
         cidr[0] = '\0';
         cidr++;
         inet_aton(optarg, &config->prefix);
-        config->prefix_len = atoi(cidr);
+        config->prefix_len = (uint8_t)atoi(cidr);
 
         if (config->prefix_len < 8) {
           ERROR("Are you the internet, cidr less than 8?!\n");
@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
       break;
 
     case 's':
-      config->spare_blocks_needed = atoi(optarg);
+      config->spare_blocks_needed = (uint8_t)atoi(optarg);
       break;
 
     case 'C':
@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
     LOG("WARNING: Requested verbosity is higher than maximum supported by this build\n");
   }
 
-  config->number_of_blocks = pow(2, (32 - config->prefix_len - ceil(log2(config->block_size))));
+  config->number_of_blocks = (uint32_t)lrint(pow(2, (32 - config->prefix_len - ceil(log2(config->block_size)))));
 
   if (config->disable_dhcp) {
     config->spare_blocks_needed = 0;
@@ -338,10 +338,10 @@ int main(int argc, char** argv) {
   }
 
   uint8_t* buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
-  int bytes = 0;
+  ssize_t bytes = 0;
 
   int efd;
-  int maxevents = 64;
+  size_t maxevents = 64;
   struct epoll_event* events;
 
   efd = epoll_create1(0);
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
 
-  uint8_t need_house_keeping;
+  int need_house_keeping;
   uint32_t loop_timeout = config->loop_timeout = get_loop_timeout(config);
 
   if (early_housekeeping) {
@@ -376,7 +376,7 @@ int main(int argc, char** argv) {
   socklen_t sender_len = sizeof sender;
 
   do {
-    int n = epoll_wait(efd, events, maxevents, loop_timeout);
+    int n = epoll_wait(efd, events, (int)maxevents, (int)loop_timeout);
 
     if (n < 0) {
       perror("epoll error:");
@@ -399,7 +399,7 @@ int main(int argc, char** argv) {
         exit(1);
       } else if (config->server_socket == events[i].data.fd) {
         // DDHCP Roamed DHCP Requests
-        int len;
+        ssize_t len;
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -411,7 +411,7 @@ int main(int argc, char** argv) {
         }
       } else if (config->mcast_socket == events[i].data.fd) {
         // DDHCP Block Handling
-        int len;
+        ssize_t len;
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -426,10 +426,10 @@ int main(int argc, char** argv) {
         need_house_keeping = 0;
       } else if (config->client_socket == events[i].data.fd) {
         // DHCP
-        int len;
+        ssize_t len;
 
         while ((len = read(config->client_socket, buffer, 1500)) > 0) {
-          need_house_keeping = need_house_keeping | dhcp_process(buffer, len, config);
+          need_house_keeping |= dhcp_process(buffer, len, config);
         }
       } else if (config->control_socket == events[i].data.fd) {
         // Handle new control socket connections

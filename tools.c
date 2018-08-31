@@ -12,7 +12,7 @@ void addr_add(struct in_addr* subnet, struct in_addr* result, int add) {
   struct in_addr addr;
   memcpy(&addr, subnet, sizeof(struct in_addr));
   addr.s_addr = ntohl(addr.s_addr);
-  addr.s_addr += add;
+  addr.s_addr += (in_addr_t)add;
   addr.s_addr = htonl(addr.s_addr);
   memcpy(result, &addr, sizeof(struct in_addr));
 }
@@ -39,13 +39,13 @@ dhcp_option* parse_option() {
 
   payload_s++[0] = '\0';
 
-  uint8_t len = atoi(len_s);
-  uint8_t code = atoi(optarg);
+  uint8_t len = (uint8_t)atoi(len_s);
+  uint8_t code = (uint8_t)atoi(optarg);
 
   dhcp_option* option = (dhcp_option*) malloc(sizeof(dhcp_option));
   option->code = code;
   option->len = len;
-  option->payload = (uint8_t*)  malloc(sizeof(uint8_t) * len);
+  option->payload = (uint8_t*)calloc(len, sizeof(uint8_t));
 
   for (int i = 0 ; i < len; i++) {
     char* next_payload_s = strchr(payload_s, '.');
@@ -59,7 +59,7 @@ dhcp_option* parse_option() {
       next_payload_s++[0] = '\0';
     }
 
-    uint8_t payload = atoi(payload_s);
+    uint8_t payload = (uint8_t)atoi(payload_s);
     option->payload[i] = payload;
     payload_s = next_payload_s;
   }

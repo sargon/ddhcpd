@@ -20,8 +20,8 @@
     buf = (typeof (buf))((char*)(buf) + sizeof(type));  \
   } while(0);
 
-int _packet_size(int command, int payload_count) {
-  int len = 0;
+ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
+  ssize_t len = 0;
 
   switch (command) {
   case DDHCP_MSG_UPDATECLAIM:
@@ -40,19 +40,19 @@ int _packet_size(int command, int payload_count) {
     break;
 
   default:
-    WARNING("_packet_size( ... ) -> Unknown command: %i/%i \n", command, payload_count);
+    WARNING("_packet_size( ... ) -> Unknown command: %i/%li\n", command, payload_count);
     return -1;
     break;
   }
 
   if (len == 0) {
-    ERROR("_packet_size(%i,%i) - calculated zero length!", command, payload_count);
+    ERROR("_packet_size(%i,%li) - calculated zero length!", command, payload_count);
   }
 
   return len;
 }
 
-struct ddhcp_mcast_packet* new_ddhcp_packet(int command, ddhcp_config* config) {
+struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* config) {
   struct ddhcp_mcast_packet* packet = (struct ddhcp_mcast_packet*) calloc(sizeof(struct ddhcp_mcast_packet), 1);
   // TODO Check we actually got the memory
   memcpy(&packet->node_id, config->node_id, 8);
@@ -66,7 +66,7 @@ struct ddhcp_mcast_packet* new_ddhcp_packet(int command, ddhcp_config* config) {
   return packet;
 }
 
-int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packet) {
+ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packet* packet) {
 
   // Header
   copy_buf_to_var_inc(buffer, ddhcp_node_id, packet->node_id);
@@ -84,10 +84,10 @@ int ntoh_mcast_packet(uint8_t* buffer, int len, struct ddhcp_mcast_packet* packe
   // count of payload entries
   copy_buf_to_var_inc(buffer, uint8_t, packet->count);
 
-  int should_len = _packet_size(packet->command, packet->count);
+  ssize_t should_len = _packet_size(packet->command, packet->count);
 
   if (should_len != len) {
-    WARNING("Calculated length differ from packet len: %i/%i", len, should_len);
+    WARNING("Calculated length differ from packet len: %li/%li", len, should_len);
     return 1;
   }
 
@@ -201,7 +201,7 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
       tmp16 = htons(payload->timeout);
       copy_var_to_buf_inc(buffer, uint16_t, tmp16);
 
-      tmp8 = payload->reserved;
+      tmp8 = (uint8_t)payload->reserved;
       copy_var_to_buf_inc(buffer, uint8_t, tmp8);
 
       payload++;
@@ -241,8 +241,8 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
   return 0;
 }
 
-int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
-  int len = _packet_size(packet->command, packet->count);
+ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
+  size_t len = (size_t)_packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);
 
@@ -281,9 +281,9 @@ int send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, u
   return 0;
 }
 
-int send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
+ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
   DEBUG("send_packet_direct(packet,%i)\n", multicast_socket);
-  int len = _packet_size(packet->command, packet->count);
+  size_t len = (size_t)_packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);
 

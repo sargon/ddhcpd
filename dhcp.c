@@ -126,17 +126,17 @@ void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* r
 
 }
 
-int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config) {
+int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
   // TODO Error Handling
-  struct dhcp_packet dhcp_packet;
-  int ret = ntoh_dhcp_packet(&dhcp_packet, buffer, len);
+  struct dhcp_packet dhcp_packet_buf;
+  ssize_t ret = ntoh_dhcp_packet(&dhcp_packet_buf, buffer, len);
 
   if (ret == 0) {
-    int message_type = dhcp_packet_message_type(&dhcp_packet);
+    int message_type = dhcp_packet_message_type(&dhcp_packet_buf);
 
     switch (message_type) {
     case DHCPDISCOVER:
-      ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet, config);
+      ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet_buf, config);
 
       if (ret == 1) {
         INFO("we need to inquire new blocks\n");
@@ -146,11 +146,11 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config) {
       break;
 
     case DHCPREQUEST:
-      dhcp_hdl_request(config->client_socket, &dhcp_packet, config);
+      dhcp_hdl_request(config->client_socket, &dhcp_packet_buf, config);
       break;
 
     case DHCPRELEASE:
-      dhcp_hdl_release(&dhcp_packet, config);
+      dhcp_hdl_release(&dhcp_packet_buf, config);
       break;
 
     default:
@@ -158,11 +158,11 @@ int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config) {
       break;
     }
 
-    if (dhcp_packet.options_len > 0) {
-      free(dhcp_packet.options);
+    if (dhcp_packet_buf.options_len > 0) {
+      free(dhcp_packet_buf.options);
     }
   } else {
-    WARNING("Malformed packet!? errcode: %i\n", ret);
+    WARNING("Malformed packet!? errcode: %li\n", ret);
   }
 
   return 0;
@@ -200,7 +200,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
   lease->state = OFFERED;
   lease->lease_end = now + DHCP_OFFER_TIMEOUT;
 
-  addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
+  addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
 
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
@@ -469,7 +469,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   lease->state = LEASED;
   lease->lease_end = now + find_in_option_store_address_lease_time(&config->options)  + DHCP_LEASE_SERVER_DELTA;
 
-  addr_add(&lease_block->subnet, &packet->yiaddr, lease_index);
+  addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
   DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
 
   _dhcp_default_options(DHCPACK, packet, request, config);
@@ -497,8 +497,8 @@ int dhcp_has_free(struct ddhcp_block* block) {
   return 0;
 }
 
-int dhcp_num_free(struct ddhcp_block* block) {
-  int num = 0;
+uint32_t dhcp_num_free(struct ddhcp_block* block) {
+  uint32_t num = 0;
   dhcp_lease* lease = block->addresses;
 
   for (unsigned int i = 0 ; i < block->subnet_len ; i++) {
@@ -512,8 +512,8 @@ int dhcp_num_free(struct ddhcp_block* block) {
   return num;
 }
 
-int dhcp_num_offered(struct ddhcp_block* block) {
-  int num = 0;
+uint32_t dhcp_num_offered(struct ddhcp_block* block) {
+  uint32_t num = 0;
   dhcp_lease* lease = block->addresses;
 
   for (unsigned int i = 0 ; i < block->subnet_len ; i++) {

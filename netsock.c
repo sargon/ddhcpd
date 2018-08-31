@@ -154,8 +154,8 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
     goto err;
   }
 
-  uint32_t scope_id = ifr.ifr_ifindex;
-  state->mcast_scope_id = ifr.ifr_ifindex;
+  uint32_t scope_id = (uint32_t)ifr.ifr_ifindex;
+  state->mcast_scope_id = (uint32_t)ifr.ifr_ifindex;
 
   if (ioctl(sock_srv, SIOCGIFHWADDR, &ifr) == -1) {
     perror("can't get MAC address");
@@ -200,14 +200,14 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   if (setsockopt(sock_mc, SOL_SOCKET, SO_BINDTODEVICE,
                  interface,
-                 strlen(interface) + 1)) {
+                 (socklen_t)strlen(interface) + 1)) {
     perror("can't bind to multicast device");
     goto err;
   }
 
   if (setsockopt(sock_srv, SOL_SOCKET, SO_BINDTODEVICE,
                  interface,
-                 strlen(interface) + 1)) {
+                 (socklen_t)strlen(interface) + 1)) {
     perror("can't bind to server device");
     goto err;
   }
@@ -306,7 +306,7 @@ int netsock_openv4(char* interface_client, ddhcp_config* config) {
   memcpy(&sin.sin_addr, &address_client, sizeof(sin.sin_addr));
 
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_client,
-                 strlen(interface_client) + 1)) {
+                 (socklen_t)strlen(interface_client) + 1)) {
     perror("can't bind to broadcast device");
     close(sock);
     return -1;

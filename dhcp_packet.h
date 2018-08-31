@@ -98,8 +98,8 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
  * make pointer to the buffer inside of the dhcp_packet structure. Do not free
  * the buffer before the last operation on that struture!
  */
-int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len);
-int dhcp_packet_send(int socket, dhcp_packet* packet);
+ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len);
+ssize_t dhcp_packet_send(int socket, dhcp_packet* packet);
 
 uint8_t dhcp_packet_message_type(dhcp_packet* packet);
 #endif

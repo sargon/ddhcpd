@@ -10,7 +10,7 @@
 /**
  * DHCP Process Packet
  */
-int dhcp_process(uint8_t* buffer, int len, ddhcp_config* config);
+int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config);
 
 /**
  * DHCP Discover
@@ -55,12 +55,12 @@ int dhcp_has_free(struct ddhcp_block* block);
  * DHCP num Leases Available
  * Enumerate the free leases in a block
  */
-int dhcp_num_free(struct ddhcp_block* block);
+uint32_t dhcp_num_free(struct ddhcp_block* block);
 
 /**
  * Number of leases offered to clients.
  */
-int dhcp_num_offered(struct ddhcp_block* block);
+uint32_t dhcp_num_offered(struct ddhcp_block* block);
 
 /**
  * Find first free lease in lease block and return its index.

@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     show_usage = 1;
   }
 
-  char* path = "/tmp/ddhcpd_ctl";
+  char* path = (char*)"/tmp/ddhcpd_ctl";
 
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
@@ -36,13 +36,13 @@ int main(int argc, char** argv) {
     case 'b':
       //show blocks
       msglen = 1;
-      buffer[0] = (char) DDHCPCTL_BLOCK_SHOW;
+      buffer[0] = (uint8_t) DDHCPCTL_BLOCK_SHOW;
       break;
 
     case 'd':
       // show dhcp
       msglen = 1;
-      buffer[0] = (char) DDHCPCTL_DHCP_OPTIONS_SHOW;
+      buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTIONS_SHOW;
       break;
 
     case 'o':
@@ -51,17 +51,17 @@ int main(int argc, char** argv) {
 
     case 'l':
       msglen = 7;
-      buffer[0] = (char) DDHCPCTL_DHCP_OPTION_SET;
-      buffer[1] = (char) 51;
-      buffer[2] = (char) 4;
-      uint32_t leasetime = htonl(atol(optarg));
+      buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTION_SET;
+      buffer[1] = (uint8_t) 51;
+      buffer[2] = (uint8_t) 4;
+      uint32_t leasetime = htonl((uint32_t)atol(optarg));
       memcpy(buffer + 3, (uint8_t*) &leasetime, sizeof(uint32_t));
       break;
 
     case 'r':
       msglen = 2;
-      buffer[0] = (char) DDHCPCTL_DHCP_OPTION_REMOVE;
-      buffer[1] = (char) atoi(optarg);
+      buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTION_REMOVE;
+      buffer[1] = (uint8_t) atoi(optarg);
       break;
 
     case 'C':
@@ -84,10 +84,10 @@ int main(int argc, char** argv) {
   // Check if a dhcp option code should be set and if all parameters
   // for that are given.
   if (option != NULL) {
-    msglen = 3 + option->len;
-    buffer[0] = (char) 3;
-    buffer[1] = (char) option->code;
-    buffer[2] = (char) option->len;
+    msglen = 3u + option->len;
+    buffer[0] = (uint8_t) 3;
+    buffer[1] = (uint8_t) option->code;
+    buffer[2] = (uint8_t) option->len;
     memcpy(buffer + 3, option->payload, sizeof(option));
     free(option);
   }
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     perror("Cant't set stuff:");
   }
 
-  size_t bw = send(ctl_sock, buffer, msglen, 0);
+  ssize_t bw = send(ctl_sock, buffer, msglen, 0);
 
   if (bw < msglen) {
     printf("Wrote %i / %u bytes to control socket", (int) bw, msglen);
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  size_t br = 0;
+  ssize_t br;
 
   while ((br = recv(ctl_sock, (char*) buffer, sizeof(buffer), 0))) {
     buffer[br] = '\0';

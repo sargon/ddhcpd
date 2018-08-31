@@ -31,12 +31,12 @@ ddhcp_block* block_find_free(ddhcp_config* config);
  * Claim a block! A block is only claimable when it is free.
  * Returns a value greater 0 if something goes sideways.
  */
-int block_claim(int num_blocks, ddhcp_config* config);
+int block_claim(uint32_t num_blocks, ddhcp_config* config);
 
 /**
  * Sum the number of free leases in blocks you own.
  */
-int block_num_free_leases(ddhcp_config* config);
+uint32_t block_num_free_leases(ddhcp_config* config);
 
 /**
  * Find and return claimed block with free leases. Try to
@@ -52,7 +52,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config);
  *  Due to fragmented timeouts this packet may send 2 times more packets
  *  than optimal. TODO fixthis
  */
-void block_update_claims(int blocks_needed, ddhcp_config* config);
+void block_update_claims(uint32_t blocks_needed, ddhcp_config* config);
 
 /**
  * Check the timeout of all blocks, and mark timed out once as FREE.

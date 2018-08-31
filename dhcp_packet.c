@@ -11,7 +11,6 @@ struct sockaddr_in broadcast = {
   .sin_addr = {INADDR_BROADCAST},
 };
 
-
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 void printf_dhcp(dhcp_packet* packet) {
   char* ciaddr_str = (char*) malloc(INET_ADDRSTRLEN);
@@ -71,9 +70,8 @@ void printf_dhcp(dhcp_packet* packet) {
 #define printf_dhcp(packet) {}
 # endif
 
-
-int _dhcp_packet_len(dhcp_packet* packet) {
-  int len = 240 + 1;
+size_t _dhcp_packet_len(dhcp_packet* packet) {
+  size_t len = 240 + 1;
   dhcp_option* option = packet->options;
 
   for (int i = 0; i < packet->options_len; i++) {
@@ -84,7 +82,7 @@ int _dhcp_packet_len(dhcp_packet* packet) {
       break;
 
     default:
-      len += 2 + option->len;
+      len += 2 + (size_t)option->len;
       break;
     }
 
@@ -94,7 +92,7 @@ int _dhcp_packet_len(dhcp_packet* packet) {
   return len;
 }
 
-int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
+ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
 
   uint16_t tmp16;
   uint32_t tmp32;
@@ -103,7 +101,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     return -1;
   }
 
-  printf("LEN:%i\n", len);
+  printf("LEN:%li\n", len);
 
   // TODO Use macros to read from the buffer
 
@@ -138,7 +136,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
   uint8_t* option = buffer + 236 + 4;
 
   // Count options
-  int options = 0;
+  size_t options = 0;
   int exit = 0;
   int dhcp_message_type = 0;
   int dhcp_request_list = 0;
@@ -193,8 +191,8 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     DEBUG("Message contains no dhcp request list - broken client?\n");
   }
 
-  packet->options_len = options;
-  packet->options = (dhcp_option*) malloc(sizeof(dhcp_option) * options);
+  packet->options_len = (uint8_t)options;
+  packet->options = (dhcp_option*) calloc(options, sizeof(dhcp_option));
 
   option = buffer + 236 + 4;
 
@@ -205,7 +203,8 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
     switch ((uint8_t) option[0]) {
     case DHCP_CODE_END:
       exit = 1;
-      /* fall through */
+
+    /* fall through */
 
     case DHCP_CODE_PAD:
       // JUMP padding and end
@@ -237,7 +236,7 @@ int ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, int len) {
   return 0;
 }
 
-int dhcp_packet_send(int socket, dhcp_packet* packet) {
+ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   DEBUG("dhcp_packet_send(%i, dhcp_packet)\n", socket);
   uint16_t tmp16;
   uint32_t tmp32;
@@ -295,11 +294,11 @@ int dhcp_packet_send(int socket, dhcp_packet* packet) {
   buffer[_dhcp_packet_len(packet) - 1] = 255;
   assert(obuf + 1 == buffer + _dhcp_packet_len(packet));
   // Network send
-  printf("Message LEN: %i\n", _dhcp_packet_len(packet));
+  printf("Message LEN: %li\n", _dhcp_packet_len(packet));
 
   broadcast.sin_port = htons(68);
 
-  int ret = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
+  ssize_t ret = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
 
   if (ret < 0) {
     perror("sendto");
@@ -350,7 +349,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   return 0;
 }
 
-dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr) {
+dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* _chaddr) {
   DEBUG("dhcp_packet_list_find(list,xid:%u,chaddr)\n", xid);
   struct list_head* pos, *q;
 

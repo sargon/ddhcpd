@@ -157,13 +157,13 @@ void free_option_store(dhcp_option_list* store) {
 
 dhcp_option* remove_option_from_store(dhcp_option_list* store, uint8_t code);
 
-int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
+uint8_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
   int num_found_options = 0;
 
   uint8_t* requested = NULL;
-  int8_t max_options = find_option_parameter_request_list(options, len, &requested);
+  int max_options = find_option_parameter_request_list(options, len, &requested);
 
-  *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option), max_options + additional);
+  *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option), (size_t)(max_options + additional));
 
   if (! max_options) {
     return additional;
@@ -180,7 +180,7 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
     }
   }
 
-  return num_found_options + additional;
+  return (uint8_t)(num_found_options + additional);
 }
 
 void dhcp_options_show(int fd, ddhcp_config* config) {
@@ -211,10 +211,10 @@ void dhcp_options_init(ddhcp_config* config) {
     option->code = DHCP_CODE_SUBNET_MASK;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
-    option->payload[0] = 256 - (256 >> min(max(pl -  0, 0), 8));
-    option->payload[1] = 256 - (256 >> min(max(pl -  8, 0), 8));
-    option->payload[2] = 256 - (256 >> min(max(pl - 16, 0), 8));
-    option->payload[3] = 256 - (256 >> min(max(pl - 24, 0), 8));
+    option->payload[0] = (uint8_t)(256 - (256 >> min(max(pl -  0, 0), 8)));
+    option->payload[1] = (uint8_t)(256 - (256 >> min(max(pl -  8, 0), 8)));
+    option->payload[2] = (uint8_t)(256 - (256 >> min(max(pl - 16, 0), 8)));
+    option->payload[3] = (uint8_t)(256 - (256 >> min(max(pl - 24, 0), 8)));
 
     set_option_in_store(&config->options, option);
   }
@@ -237,10 +237,10 @@ void dhcp_options_init(ddhcp_config* config) {
     option->code = DHCP_CODE_BROADCAST_ADDRESS;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
-    option->payload[0] = (((uint8_t*) &config->prefix.s_addr)[0]) | ((1 << min(max( 8 - pl, 0), 8)) - 1);
-    option->payload[1] = (((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1);
-    option->payload[2] = (((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1);
-    option->payload[3] = (((uint8_t*) &config->prefix.s_addr)[3]) | ((1 << min(max(32 - pl, 0), 8)) - 1);
+    option->payload[0] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[0]) | ((1 << min(max(8 - pl, 0), 8)) - 1));
+    option->payload[1] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1));
+    option->payload[2] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1));
+    option->payload[3] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[3]) | ((1 << min(max(32 - pl, 0), 8)) - 1));
 
     set_option_in_store(&config->options, option);
   }

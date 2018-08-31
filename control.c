@@ -5,7 +5,7 @@
 
 extern int log_level;
 
-int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config) {
+int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config) {
   // TODO Rethink command handling and command design
   DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
 

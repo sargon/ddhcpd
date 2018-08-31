@@ -66,10 +66,10 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   DEBUG("block_find_free(...): found %i free blocks\n", num_free_blocks);
 
   ddhcp_block* random_free = NULL;
-  int r = -1;
+  uint32_t r = ~0u;
 
   if (num_free_blocks > 0) {
-    r = rand() % num_free_blocks;
+    r = (uint32_t)rand() % num_free_blocks;
   } else {
     DEBUG("block_find_free(...) -> no free block found\n");
     return NULL;
@@ -93,7 +93,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   return random_free;
 }
 
-int block_claim(int num_blocks, ddhcp_config* config) {
+int block_claim(uint32_t num_blocks, ddhcp_config* config) {
   DEBUG("block_claim(blocks, %i, config)\n", num_blocks);
 
   // Handle blocks already in claiming prozess
@@ -122,11 +122,11 @@ int block_claim(int num_blocks, ddhcp_config* config) {
   }
 
   // Do we still need more, then lets find some.
-  if ((unsigned int) num_blocks > config->claiming_blocks_amount) {
+  if (num_blocks > config->claiming_blocks_amount) {
     // find num_blocks - config->claiming_blocks_amount free blocks
-    int needed_blocks = num_blocks - config->claiming_blocks_amount;
+    uint32_t needed_blocks = num_blocks - config->claiming_blocks_amount;
 
-    for (int i = 0 ; i < needed_blocks ; i++) {
+    for (uint32_t i = 0; i < needed_blocks; i++) {
       ddhcp_block* block = block_find_free(config);
 
       if (block != NULL) {
@@ -178,12 +178,12 @@ int block_claim(int num_blocks, ddhcp_config* config) {
   return 0;
 }
 
-int block_num_free_leases(ddhcp_config* config) {
+uint32_t block_num_free_leases(ddhcp_config* config) {
   DEBUG("block_num_free_leases(blocks, config)\n");
   ddhcp_block* block = config->blocks;
-  int free_leases = 0;
+  uint32_t free_leases = 0;
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
-  int num_blocks = 0;
+  uint32_t num_blocks = 0;
 #endif
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
@@ -197,7 +197,7 @@ int block_num_free_leases(ddhcp_config* config) {
     block++;
   }
 
-  DEBUG("block_num_free_leases(...)-> Found %i free dhcp leases in OUR (%i) blocks\n", free_leases, num_blocks);
+  DEBUG("block_num_free_leases(...)-> Found %lu free dhcp leases in OUR (%lu) blocks\n", free_leases, num_blocks);
   return free_leases;
 }
 
@@ -205,7 +205,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   DEBUG("block_find_free_leases(blocks,config)\n");
   ddhcp_block* block = config->blocks;
   ddhcp_block* selected = NULL;
-  uint32_t selected_free_leases = config->block_size + 1;
+  uint32_t selected_free_leases = (uint32_t)config->block_size + 1;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
@@ -233,18 +233,18 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   return selected;
 }
 
-void block_update_claims(int blocks_needed, ddhcp_config* config) {
+void block_update_claims(uint32_t blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(blocks, %i, config)\n", blocks_needed);
   unsigned int our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  int timeout_half = floor((double) config->block_timeout * config->block_refresh_factor / (config->block_refresh_factor + 1));
-  int blocks_needed_tmp = blocks_needed;
+  long int timeout_half = lrint(floor((double) config->block_timeout * config->block_refresh_factor / (config->block_refresh_factor + 1)));
+  uint32_t blocks_needed_tmp = blocks_needed;
 
   // TODO Use a linked list instead of processing the block list twice.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
-      if (blocks_needed_tmp < 0 && dhcp_num_free(block) == config->block_size) {
+      if (dhcp_num_free(block) == config->block_size) {
         DEBUG("block_update_claims(...): block %i no longer needed\n", block->index);
         blocks_needed_tmp--;
         block_free(block);
@@ -263,7 +263,7 @@ void block_update_claims(int blocks_needed, ddhcp_config* config) {
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
 
-  packet->count = our_blocks;
+  packet->count = (uint8_t)our_blocks;
 
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
 

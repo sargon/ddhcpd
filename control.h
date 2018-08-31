@@ -11,6 +11,6 @@ enum {
   DDHCPCTL_LOG_LEVEL_SET,
 };
 
-int handle_command(int socket, uint8_t* buffer, int msglen, ddhcp_config* config);
+int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config);
 
 #endif

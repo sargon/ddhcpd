@@ -44,7 +44,7 @@ uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len);
  *
  * Caller must handle memory deallocation.
  */
-int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil);
+uint8_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil);
 
 /**
  * Search and Retrun a option in an option store. Return null otherwise.
