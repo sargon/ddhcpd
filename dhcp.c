@@ -446,7 +446,11 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
 
   packet->options_len = 1;
   packet->options = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
-  // TODO Error handling
+  if (packet->options == NULL) {
+    DEBUG("dhcp_discover(...) -> memory allocation failure\n");
+    free(packet);
+    return 1;
+  }
 
   set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]) {
     DHCPNAK
