@@ -48,10 +48,20 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
     }
 
     dhcp_option* option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+    if (option == NULL) {
+      WARNING("handle_command(...) -> Failed to allocate memory for dhcp option\n");
+      return -1;
+    }
+
     option->code = buffer[1];
     option->len = buffer[2];
     printf("%i:%i\n", buffer[1], buffer[2]);
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), option->len);
+    if (option->payload == NULL) {
+      WARNING("handle_command(...) -> Failed to allocate memory for dhcp option payload\n");
+      free(option);
+      return -1;
+    }
 
     memcpy(option->payload, buffer + 3, option->len);
 
