@@ -115,6 +115,10 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_UPDATECLAIM:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
+    if (payload == NULL) {
+      WARNING("Failed to allocate packet payload\n");
+      return -ENOMEM;
+    }
 
     for (int i = 0; i < packet->count; i++) {
       copy_buf_to_var_inc(buffer, uint32_t, tmp32);
@@ -135,6 +139,10 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_INQUIRE:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
+    if (payload == NULL) {
+      WARNING("Failed to allocate packet payload\n");
+      return -ENOMEM;
+    }
 
     for (int i = 0; i < packet->count; i++) {
       copy_buf_to_var_inc(buffer, uint32_t, tmp32);
@@ -151,6 +159,11 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_LEASENAK:
   case DDHCP_MSG_RELEASE:
     packet->renew_payload = (struct ddhcp_renew_payload*) calloc(sizeof(struct ddhcp_renew_payload), 1);
+    if (packet->renew_payload == NULL) {
+      WARNING("Failed to allocate packet payload\n");
+      return -ENOMEM;
+    }
+
     copy_buf_to_var_inc(buffer, uint32_t, tmp32);
     packet->renew_payload->address = ntohl(tmp32);
     copy_buf_to_var_inc(buffer, uint32_t, tmp32);
