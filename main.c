@@ -127,28 +127,28 @@ int main(int argc, char** argv) {
 
   srand((unsigned int)time(NULL));
 
-  ddhcp_config* config = (ddhcp_config*) calloc(sizeof(ddhcp_config), 1);
-  config->block_size = 32;
-  config->claiming_blocks_amount = 0;
+  ddhcp_config config;
+  config.block_size = 32;
+  config.claiming_blocks_amount = 0;
 
-  inet_aton("10.0.0.0", &config->prefix);
-  config->prefix_len = 24;
-  config->spare_blocks_needed = 1;
-  config->block_timeout = 60;
-  config->block_refresh_factor = 4;
-  config->tentative_timeout = 15;
-  config->control_path = (char*)"/tmp/ddhcpd_ctl";
-  config->disable_dhcp = 0;
+  inet_aton("10.0.0.0", &config.prefix);
+  config.prefix_len = 24;
+  config.spare_blocks_needed = 1;
+  config.block_timeout = 60;
+  config.block_refresh_factor = 4;
+  config.tentative_timeout = 15;
+  config.control_path = (char*)"/tmp/ddhcpd_ctl";
+  config.disable_dhcp = 0;
 
-  config->hook_command = NULL;
+  config.hook_command = NULL;
 
   // DHCP
-  config->dhcp_port = 67;
-  INIT_LIST_HEAD(&config->options);
+  config.dhcp_port = 67;
+  INIT_LIST_HEAD(&config.options);
 
-  INIT_LIST_HEAD(&config->claiming_blocks);
+  INIT_LIST_HEAD(&config.claiming_blocks);
 
-  INIT_LIST_HEAD(&config->dhcp_packet_cache);
+  INIT_LIST_HEAD(&config.dhcp_packet_cache);
 
   char* interface = (char*)"server0";
   char* interface_client = (char*)"client0";
@@ -170,11 +170,11 @@ int main(int argc, char** argv) {
       break;
 
     case 'b':
-      config->block_size = (uint8_t)(1 << atoi(optarg));
+      config.block_size = (uint8_t)(1 << atoi(optarg));
       break;
 
     case 't':
-      config->tentative_timeout = (uint16_t)atoi(optarg);
+      config.tentative_timeout = (uint16_t)atoi(optarg);
       break;
 
     case 'd':
@@ -217,10 +217,10 @@ int main(int argc, char** argv) {
 
         cidr[0] = '\0';
         cidr++;
-        inet_aton(optarg, &config->prefix);
-        config->prefix_len = (uint8_t)atoi(cidr);
+        inet_aton(optarg, &config.prefix);
+        config.prefix_len = (uint8_t)atoi(cidr);
 
-        if (config->prefix_len < 8) {
+        if (config.prefix_len < 8) {
           ERROR("Are you the internet, cidr less than 8?!\n");
           exit(1);
         }
@@ -229,27 +229,27 @@ int main(int argc, char** argv) {
       break;
 
     case 'S':
-      config->disable_dhcp = 1;
+      config.disable_dhcp = 1;
       break;
 
     case 'o':
       do {
         dhcp_option* option = parse_option();
-        set_option_in_store(&config->options, option);
+        set_option_in_store(&config.options, option);
       } while (0);
 
       break;
 
     case 's':
-      config->spare_blocks_needed = (uint8_t)atoi(optarg);
+      config.spare_blocks_needed = (uint8_t)atoi(optarg);
       break;
 
     case 'C':
-      config->control_path = optarg;
+      config.control_path = optarg;
       break;
 
     case 'H':
-      config->hook_command = optarg;
+      config.hook_command = optarg;
       break;
 
     case 'V':
@@ -291,19 +291,19 @@ int main(int argc, char** argv) {
     LOG("WARNING: Requested verbosity is higher than maximum supported by this build\n");
   }
 
-  config->number_of_blocks = (uint32_t)(pow(2u, (32u - config->prefix_len - ceil(log2(config->block_size)))));
+  config.number_of_blocks = (uint32_t)pow(2u, (32u - config.prefix_len - ceil(log2(config.block_size))));
 
-  if (config->disable_dhcp) {
-    config->spare_blocks_needed = 0;
+  if (config.disable_dhcp) {
+    config.spare_blocks_needed = 0;
   }
 
-  INFO("CONFIG: network=%s/%i\n", inet_ntoa(config->prefix), config->prefix_len);
-  INFO("CONFIG: block_size=%i\n", config->block_size);
-  INFO("CONFIG: #blocks=%i\n", config->number_of_blocks);
-  INFO("CONFIG: #spare_blocks=%i\n", config->spare_blocks_needed);
-  INFO("CONFIG: timeout=%i\n", config->block_timeout);
-  INFO("CONFIG: refresh_factor=%i\n", config->block_refresh_factor);
-  INFO("CONFIG: tentative_timeout=%i\n", config->tentative_timeout);
+  INFO("CONFIG: network=%s/%i\n", inet_ntoa(config.prefix), config.prefix_len);
+  INFO("CONFIG: block_size=%i\n", config.block_size);
+  INFO("CONFIG: #blocks=%i\n", config.number_of_blocks);
+  INFO("CONFIG: #spare_blocks=%i\n", config.spare_blocks_needed);
+  INFO("CONFIG: timeout=%i\n", config.block_timeout);
+  INFO("CONFIG: refresh_factor=%i\n", config.block_refresh_factor);
+  INFO("CONFIG: tentative_timeout=%i\n", config.tentative_timeout);
   INFO("CONFIG: client_interface=%s\n", interface_client);
   INFO("CONFIG: group_interface=%s\n", interface);
 
@@ -324,16 +324,16 @@ int main(int argc, char** argv) {
   }
 
   // init block stucture
-  ddhcp_block_init(config);
-  dhcp_options_init(config);
+  ddhcp_block_init(&config);
+  dhcp_options_init(&config);
   hook_init();
 
   // init network and event loops
-  if (netsock_open(interface, interface_client, config) == -1) {
+  if (netsock_open(interface, interface_client, &config) == -1) {
     return 1;
   }
 
-  if (control_open(config) == -1) {
+  if (control_open(&config) == -1) {
     return 1;
   }
 
@@ -351,25 +351,25 @@ int main(int argc, char** argv) {
     abort();
   }
 
-  add_fd(efd, config->mcast_socket, EPOLLIN | EPOLLET);
-  add_fd(efd, config->server_socket, EPOLLIN | EPOLLET);
-  add_fd(efd, config->control_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config.mcast_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config.server_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config.control_socket, EPOLLIN | EPOLLET);
 
-  if (config->disable_dhcp == 0) {
-    add_fd(efd, config->client_socket, EPOLLIN | EPOLLET);
+  if (config.disable_dhcp == 0) {
+    add_fd(efd, config.client_socket, EPOLLIN | EPOLLET);
   }
 
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
 
   int need_house_keeping;
-  uint32_t loop_timeout = config->loop_timeout = get_loop_timeout(config);
+  uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
 
   if (early_housekeeping) {
     loop_timeout = 0;
   }
 
-  INFO("loop timeout: %i msecs\n", get_loop_timeout(config));
+  INFO("loop timeout: %i msecs\n", get_loop_timeout(&config));
 
   // TODO wait loop_timeout before first time housekeeping
   struct sockaddr_in6 sender;
@@ -384,20 +384,20 @@ int main(int argc, char** argv) {
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 
-    if (loop_timeout != config->loop_timeout) {
-      DEBUG("Increase loop timeout from %i to %i\n", loop_timeout, config->loop_timeout);
+    if (loop_timeout != config.loop_timeout) {
+      DEBUG("Increase loop timeout from %i to %i\n", loop_timeout, config.loop_timeout);
     }
 
 #endif
 
-    loop_timeout = config->loop_timeout;
+    loop_timeout = config.loop_timeout;
     need_house_keeping = 1;
 
     for (int i = 0; i < n; i++) {
       if ((events[i].events & EPOLLERR)) {
         ERROR("Error in epoll: %i \n", errno);
         exit(1);
-      } else if (config->server_socket == events[i].data.fd) {
+      } else if (config.server_socket == events[i].data.fd) {
         // DDHCP Roamed DHCP Requests
         ssize_t len;
 
@@ -407,9 +407,9 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_dhcp_process(buffer, len, sender, config);
+          ddhcp_dhcp_process(buffer, len, sender, &config);
         }
-      } else if (config->mcast_socket == events[i].data.fd) {
+      } else if (config.mcast_socket == events[i].data.fd) {
         // DDHCP Block Handling
         ssize_t len;
 
@@ -419,31 +419,31 @@ int main(int argc, char** argv) {
           DEBUG("Receive message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-          ddhcp_block_process(buffer, len, sender, config);
+          ddhcp_block_process(buffer, len, sender, &config);
         }
 
-        house_keeping(config);
+        house_keeping(&config);
         need_house_keeping = 0;
-      } else if (config->client_socket == events[i].data.fd) {
+      } else if (config.client_socket == events[i].data.fd) {
         // DHCP
         ssize_t len;
 
-        while ((len = read(config->client_socket, buffer, 1500)) > 0) {
-          need_house_keeping |= dhcp_process(buffer, len, config);
+        while ((len = read(config.client_socket, buffer, 1500)) > 0) {
+          need_house_keeping |= dhcp_process(buffer, len, &config);
         }
-      } else if (config->control_socket == events[i].data.fd) {
+      } else if (config.control_socket == events[i].data.fd) {
         // Handle new control socket connections
         struct sockaddr_un client_fd;
         unsigned int len = sizeof(client_fd);
-        config->client_control_socket = accept(config->control_socket, (struct sockaddr*) &client_fd, &len);
-        //set_nonblocking(config->client_control_socket);
-        add_fd(efd, config->client_control_socket, EPOLLIN | EPOLLET);
+        config.client_control_socket = accept(config.control_socket, (struct sockaddr*) &client_fd, &len);
+        //set_nonblocking(config.client_control_socket);
+        add_fd(efd, config.client_control_socket, EPOLLIN | EPOLLET);
         DEBUG("ControlSocket: new connections\n");
       } else if (events[i].events & EPOLLIN) {
         // Handle commands comming over a control_socket
         bytes = read(events[i].data.fd, buffer, 1500);
 
-        if (handle_command(events[i].data.fd, buffer, bytes, config) < 0) {
+        if (handle_command(events[i].data.fd, buffer, bytes, &config) < 0) {
           ERROR("Malformed command\n");
         }
 
@@ -456,7 +456,7 @@ int main(int argc, char** argv) {
     }
 
     if (need_house_keeping) {
-      house_keeping(config);
+      house_keeping(&config);
     }
   } while (daemon_running);
 
@@ -464,17 +464,16 @@ int main(int argc, char** argv) {
   free(events);
   free(buffer);
 
-  ddhcp_block_free(config);
+  ddhcp_block_free(&config);
 
-  free_option_store(&config->options);
-  dhcp_packet_list_free(&config->dhcp_packet_cache);
+  free_option_store(&config.options);
+  dhcp_packet_list_free(&config.dhcp_packet_cache);
 
-  close(config->mcast_socket);
-  close(config->client_socket);
-  close(config->control_socket);
+  close(config.mcast_socket);
+  close(config.client_socket);
+  close(config.control_socket);
 
-  remove(config->control_path);
+  remove(config.control_path);
 
-  free(config);
   return 0;
 }
