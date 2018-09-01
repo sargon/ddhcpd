@@ -50,15 +50,13 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   DEBUG("block_find_free(blocks,config)\n");
   ddhcp_block* block = config->blocks;
 
-  ddhcp_block_list free_blocks, *tmp;
-  INIT_LIST_HEAD(&free_blocks.list);
+  ddhcp_block_list free_blocks;
+  INIT_LIST_HEAD(&free_blocks);
   uint32_t num_free_blocks = 0;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_FREE) {
-      tmp = (ddhcp_block_list*) malloc(sizeof(ddhcp_block_list));
-      tmp->block = block;
-      list_add_tail((&tmp->list), &(free_blocks.list));
+      list_add_tail((&block->tmp_list), &free_blocks);
       num_free_blocks++;
     }
 
@@ -79,14 +77,13 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
 
   struct list_head* pos, *q;
 
-  list_for_each_safe(pos, q, &free_blocks.list) {
-    tmp = list_entry(pos, ddhcp_block_list, list);
-    block = tmp->block;
+  list_for_each_safe(pos, q, &free_blocks) {
+    block = list_entry(pos, ddhcp_block, tmp_list);
     list_del(pos);
-    free(tmp);
 
     if (r == 0) {
       random_free = block;
+      break;
     }
 
     r--;
@@ -103,9 +100,8 @@ int block_claim(int num_blocks, ddhcp_config* config) {
   struct list_head* pos, *q;
   time_t now = time(NULL);
 
-  list_for_each_safe(pos, q, &(config->claiming_blocks).list) {
-    ddhcp_block_list* tmp = list_entry(pos, ddhcp_block_list, list);
-    ddhcp_block* block = tmp->block;
+  list_for_each_safe(pos, q, &config->claiming_blocks) {
+    ddhcp_block* block = list_entry(pos, ddhcp_block, claim_list);
 
     if (block->claiming_counts == 3) {
       block_own(block, config);
@@ -118,12 +114,10 @@ int block_claim(int num_blocks, ddhcp_config* config) {
       INFO("Block %i claimed after 3 claims.\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
-      free(tmp);
     } else if (block->state != DDHCP_CLAIMING) {
       DEBUG("block_claim(...): block %i is no longer marked as claiming\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
-      free(tmp);
     }
   }
 
@@ -136,15 +130,10 @@ int block_claim(int num_blocks, ddhcp_config* config) {
       ddhcp_block* block = block_find_free(config);
 
       if (block != NULL) {
-        ddhcp_block_list* list = (ddhcp_block_list*) malloc(sizeof(ddhcp_block_list));
-
-        // TODO Error Handling
-
         block->state = DDHCP_CLAIMING;
         block->claiming_counts = 0;
         block->timeout = now + config->tentative_timeout;
-        list->block = block;
-        list_add_tail(&(list->list), &(config->claiming_blocks.list));
+        list_add_tail(&(block->claim_list), &config->claiming_blocks);
         config->claiming_blocks_amount++;
       } else {
         // We are short on free blocks in the network.
@@ -173,9 +162,8 @@ int block_claim(int num_blocks, ddhcp_config* config) {
   // TODO Check we actually got the memory
 
   int index = 0;
-  ddhcp_block_list*  tmp;
-  list_for_each_entry(tmp, &(config->claiming_blocks).list, list) {
-    ddhcp_block* block = tmp->block;
+  ddhcp_block* block;
+  list_for_each_entry(block, &config->claiming_blocks, claim_list) {
     block->claiming_counts++;
     packet->payload[index].block_index = block->index;
     packet->payload[index].timeout = 0;
@@ -326,20 +314,6 @@ void block_check_timeouts(ddhcp_config* config) {
     }
 
     block++;
-  }
-}
-
-void block_free_claims(ddhcp_config* config) {
-  if (list_empty(&config->claiming_blocks.list)) {
-    return;
-  }
-
-  struct list_head* pos, *q;
-
-  list_for_each_safe(pos, q, &(config->claiming_blocks).list) {
-    ddhcp_block_list* tmp = list_entry(pos, ddhcp_block_list, list);
-    list_del(pos);
-    free(tmp);
   }
 }
 

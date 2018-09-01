@@ -63,7 +63,8 @@ void block_check_timeouts(ddhcp_config* config);
 /**
  * Free block claim list structure.
  */
-void block_free_claims(ddhcp_config* config);
+#define block_free_claims(config) \
+  INIT_LIST_HEAD(&(config)->claiming_blocks);
 
 /**
  * Show Block Status
