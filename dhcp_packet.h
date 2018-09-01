@@ -6,6 +6,9 @@
 #include <netinet/in.h>
 #include "types.h"
 
+// List of dhcp_packet
+typedef struct list_head dhcp_packet_list;
+
 struct dhcp_packet {
   uint8_t op;
   uint8_t htype;
@@ -24,14 +27,10 @@ struct dhcp_packet {
   struct in_addr siaddr;
   struct in_addr giaddr;
   struct dhcp_option* options;
+
+  dhcp_packet_list packet_list;
 };
 typedef struct dhcp_packet dhcp_packet;
-
-struct dhcp_packet_list {
-  struct dhcp_packet* packet;
-  struct list_head list;
-};
-typedef struct dhcp_packet_list dhcp_packet_list;
 
 enum dhcp_message_type {
   DHCPDISCOVER  = 1,

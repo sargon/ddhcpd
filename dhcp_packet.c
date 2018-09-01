@@ -337,46 +337,34 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
 int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   time_t now = time(NULL);
   // Save dhcp packet, for further actions, later.
-  dhcp_packet_list* tmp = calloc(1, sizeof(dhcp_packet_list));
-
-  if (tmp == NULL) {
-    ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
-    return 1;
-  }
-
   dhcp_packet* copy = calloc(1, sizeof(dhcp_packet));
 
   if (copy == NULL) {
-    free(tmp);
     ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
     return 1;
   }
 
   dhcp_packet_copy(copy, packet);
-  tmp->packet = copy;
-  tmp->packet->timeout = now + 120;
-  list_add_tail((&tmp->list), &(list->list));
+  copy->timeout = now + 120;
+  list_add_tail(&copy->packet_list, list);
   return 0;
 }
 
 dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr) {
   DEBUG("dhcp_packet_list_find(list,xid:%u,chaddr)\n", xid);
   struct list_head* pos, *q;
-  dhcp_packet_list* tmp;
 
-  list_for_each_safe(pos, q, &list->list) {
-    tmp = list_entry(pos, dhcp_packet_list, list);
+  list_for_each_safe(pos, q, list) {
+    dhcp_packet* packet = list_entry(pos, dhcp_packet, packet_list);
 
-    if (tmp->packet->xid == xid) {
-      if (memcmp(tmp->packet->chaddr, chaddr, 16) == 0) {
+    if (packet->xid == xid) {
+      if (memcmp(packet->chaddr, chaddr, 16) == 0) {
         DEBUG("dhcp_packet_list_find( ... ) -> packet found\n");
         list_del(pos);
-        dhcp_packet* packet = tmp->packet;
-        free(tmp);
         return packet;
       }
     } else {
-      DEBUG("dhcp_packet_list_find( ... ): Packet (%u)\n", tmp->packet->xid);
+      DEBUG("dhcp_packet_list_find( ... ): Packet (%u)\n", packet->xid);
     }
   }
   DEBUG("dhcp_packet_list_find( ... ) -> No matching packet found\n");
@@ -386,15 +374,12 @@ dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t
 void dhcp_packet_list_free(dhcp_packet_list* list) {
   DEBUG("dhcp_packet_list_free(list)\n");
   struct list_head* pos, *q;
-  dhcp_packet_list* tmp;
 
-  list_for_each_safe(pos, q, &list->list) {
-    tmp = list_entry(pos, dhcp_packet_list, list);
-    dhcp_packet* packet = tmp->packet;
+  list_for_each_safe(pos, q, list) {
+    dhcp_packet* packet = list_entry(pos, dhcp_packet, packet_list);
     list_del(pos);
     dhcp_packet_free(packet, 1);
     free(packet);
-    free(tmp);
   }
 }
 
@@ -415,17 +400,14 @@ uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
 void dhcp_packet_list_timeout(dhcp_packet_list* list) {
   DEBUG("dhcp_packet_list_timeout(list)\n");
   struct list_head* pos, *q;
-  dhcp_packet_list* tmp;
   time_t now = time(NULL);
 
-  list_for_each_safe(pos, q, &list->list) {
-    tmp = list_entry(pos, dhcp_packet_list, list);
+  list_for_each_safe(pos, q, list) {
+    dhcp_packet* packet = list_entry(pos, dhcp_packet, packet_list);
 
-    if (tmp->packet->timeout < now) {
-      dhcp_packet* packet = tmp->packet;
+    if (packet->timeout < now) {
       list_del(pos);
       dhcp_packet_free(packet, 1);
-      free(tmp);
       DEBUG("dhcp_packet_list_timeout( ... ): drop packet from cache\n");
     }
   }

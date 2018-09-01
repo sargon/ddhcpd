@@ -113,7 +113,7 @@ struct ddhcp_config {
   ddhcp_block_list claiming_blocks;
 
   // DHCP packets for later use.
-  struct dhcp_packet_list dhcp_packet_cache;
+  dhcp_packet_list dhcp_packet_cache;
 
   // DHCP Options
   dhcp_option_list options;

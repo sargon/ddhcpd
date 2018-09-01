@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 
   INIT_LIST_HEAD(&config->claiming_blocks);
 
-  INIT_LIST_HEAD(&(config->dhcp_packet_cache).list);
+  INIT_LIST_HEAD(&config->dhcp_packet_cache);
 
   char* interface = "server0";
   char* interface_client = "client0";
