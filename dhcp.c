@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <string.h>
 
 #include "block.h"
@@ -327,6 +328,11 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
 
         // Send packet
         ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);
+        if (packet == NULL) {
+          WARNING("dhcp_hdl_request( ... ): Warning: Failed to allocate memory for ddhcpd mcast packet\n");
+          return -ENOMEM;
+        }
+
         packet->renew_payload = &payload;
 
         // Store packet for later usage.

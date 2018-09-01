@@ -211,6 +211,11 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
     return;
   }
 
+  if (answer == NULL) {
+    WARNING("ddhcp_dhcp_renewlease( ... ) -> Failed to allocate memory for ddhcpd mcast packet.\n");
+    return;
+  }
+
   answer->renew_payload = packet->renew_payload;
 
   send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
