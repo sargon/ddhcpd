@@ -77,12 +77,9 @@ uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len) {
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
   DEBUG("find_in_option_store( store, code: %i)\n", code);
 
-  dhcp_option* option = NULL;
-  dhcp_option_list* tmp;
+  dhcp_option* option;
 
-  list_for_each_entry(tmp, &options->list, list) {
-    option = tmp->option;
-
+  list_for_each_entry(option, options, option_list) {
     if (option->code == code) {
       DEBUG("find_in_option_store(...) -> %i\n", code);
       return option;
@@ -125,52 +122,36 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
   } else {
     DEBUG("set_in_option_store(...) -> append option\n");
 
-    dhcp_option_list* tmp;
-    tmp = (dhcp_option_list*) malloc(sizeof(dhcp_option_list));
-    tmp->option = option;
-
-    list_add_tail((&tmp->list), &(store->list));
+    list_add_tail(&option->option_list, store);
 
     return option;
   }
 }
 
+void free_option(struct dhcp_option* option) {
+  if (option->payload) {
+    free(option->payload);
+  }
+
+  free(option);
+}
+
 void remove_option_in_store(dhcp_option_list* store, uint8_t code) {
-  struct list_head* pos, *q;
-  dhcp_option_list* tmp;
+  dhcp_option* option = find_in_option_store(store, code);
 
-  list_for_each_safe(pos, q, &store->list) {
-    tmp = list_entry(pos, dhcp_option_list, list);
-    dhcp_option* option = tmp->option;
-
-    if (option->code == code) {
-      list_del(pos);
-
-      if (option->payload) {
-        free(option->payload);
-      }
-
-      free(option);
-      free(tmp);
-    }
+  if (option != NULL) {
+    list_del(&option->option_list);
+    free_option(option);
   }
 }
 
 void free_option_store(dhcp_option_list* store) {
   struct list_head* pos, *q;
-  dhcp_option_list* tmp;
 
-  list_for_each_safe(pos, q, &store->list) {
-    tmp = list_entry(pos, dhcp_option_list, list);
-    dhcp_option* option = tmp->option;
+  list_for_each_safe(pos, q, store) {
+    dhcp_option* option = list_entry(pos, dhcp_option, option_list);
     list_del(pos);
-
-    if (option->payload) {
-      free(option->payload);
-    }
-
-    free(option);
-    free(tmp);
+    free_option(option);
   }
 }
 
@@ -203,16 +184,13 @@ int fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_sto
 }
 
 void dhcp_options_show(int fd, ddhcp_config* config) {
-  struct list_head* pos, *q;
-  dhcp_option_list* tmp;
+  struct dhcp_option* option;
   dhcp_option_list* store = &config->options;
 
   dprintf(fd, "DHCP Lease Time: %u\n\n", find_in_option_store_address_lease_time(&config->options));
   dprintf(fd, "DHCP Disabled: %u\n", config->disable_dhcp);
   dprintf(fd, "DHCP Option Store\ncode\tlen\tpayload\n");
-  list_for_each_safe(pos, q, &store->list) {
-    tmp = list_entry(pos, dhcp_option_list, list);
-    dhcp_option* option = tmp->option;
+  list_for_each_entry(option, store, option_list) {
     dprintf(fd, "%i\t%i\t", option->code, option->len);
 
     for (int i = 0; i < option->len; i++) {

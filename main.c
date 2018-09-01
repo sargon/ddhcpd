@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
 
   // DHCP
   config->dhcp_port = 67;
-  INIT_LIST_HEAD(&(config->options).list);
+  INIT_LIST_HEAD(&config->options);
 
   INIT_LIST_HEAD(&config->claiming_blocks);
 
