@@ -57,7 +57,7 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code);
 uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options);
 
 /**
- * Is a option defined in a dhcp_option_list
+ * Is a option defined in a option store
  */
 #define has_in_option_store(options, code) (find_in_option_store(options, code) != NULL)
 
@@ -77,7 +77,7 @@ void remove_option_in_store(dhcp_option_list* store, uint8_t code);
 void free_option_store(dhcp_option_list* store);
 
 /**
- * Print the inventory of a dhcp_option_list into given file descriptor.
+ * Print the inventory of a option store into given file descriptor.
  */
 void dhcp_options_show(int fd, ddhcp_config* config);
 

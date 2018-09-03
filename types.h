@@ -26,6 +26,9 @@ enum ddhcp_block_state {
   DDHCP_BLOCKED
 };
 
+// List of ddhcp_block
+typedef struct list_head ddhcp_block_list;
+
 struct ddhcp_block {
   uint32_t index;
   enum ddhcp_block_state state;
@@ -37,14 +40,11 @@ struct ddhcp_block {
   time_t timeout;
   // Only iff state is equal to CLAIMED lease_block is not equal to NULL.
   struct dhcp_lease* addresses;
+
+  ddhcp_block_list tmp_list;
+  ddhcp_block_list claim_list;
 };
 typedef struct ddhcp_block ddhcp_block;
-
-struct ddhcp_block_list {
-  struct ddhcp_block* block;
-  struct list_head list;
-};
-typedef struct ddhcp_block_list ddhcp_block_list;
 
 // DHCP structures
 
@@ -62,18 +62,17 @@ struct dhcp_lease {
 };
 typedef struct dhcp_lease dhcp_lease;
 
+// List of dhcp_option
+typedef struct list_head dhcp_option_list;
+
 struct dhcp_option {
   uint8_t code;
   uint8_t len;
   uint8_t* payload;
+
+  dhcp_option_list option_list;
 };
 typedef struct dhcp_option dhcp_option;
-
-struct dhcp_option_list {
-  struct dhcp_option* option;
-  struct list_head list;
-};
-typedef struct dhcp_option_list dhcp_option_list;
 
 enum dhcp_option_code {
   // RFC 2132
@@ -114,7 +113,7 @@ struct ddhcp_config {
   ddhcp_block_list claiming_blocks;
 
   // DHCP packets for later use.
-  struct dhcp_packet_list dhcp_packet_cache;
+  dhcp_packet_list dhcp_packet_cache;
 
   // DHCP Options
   dhcp_option_list options;
