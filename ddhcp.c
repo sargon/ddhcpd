@@ -234,10 +234,10 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   } else {
     // Process packet
     dhcp_rhdl_ack(config->client_socket, packet, config);
+    dhcp_packet_free(packet, 1);
+    free(packet);
   }
 
-  dhcp_packet_free(packet, 1);
-  free(packet);
   free(request->renew_payload);
 }
 
@@ -257,10 +257,10 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   } else {
     // Process packet
     dhcp_nack(config->client_socket, packet);
+    dhcp_packet_free(packet, 1);
+    free(packet);
   }
 
-  dhcp_packet_free(packet, 1);
-  free(packet);
   free(request->renew_payload);
 }
 
