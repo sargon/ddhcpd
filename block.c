@@ -124,7 +124,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   // Do we still need more, then lets find some.
   if (num_blocks > config->claiming_blocks_amount) {
     // find num_blocks - config->claiming_blocks_amount free blocks
-    uint32_t needed_blocks = num_blocks - config->claiming_blocks_amount;
+    uint32_t needed_blocks = (uint32_t) num_blocks - config->claiming_blocks_amount;
 
     for (uint32_t i = 0; i < needed_blocks; i++) {
       ddhcp_block* block = block_find_free(config);
@@ -238,7 +238,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  uint32_t timeout_half = config->block_timeout * config->block_refresh_factor / (config->block_refresh_factor + 1ul);
+  uint32_t timeout_half = ((uint32_t)config->block_timeout * (uint32_t)config->block_refresh_factor) / (config->block_refresh_factor + 1u);
 
   // TODO Use a linked list instead of processing the block list twice.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
