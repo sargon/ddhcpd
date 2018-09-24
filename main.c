@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
     LOG("WARNING: Requested verbosity is higher than maximum supported by this build\n");
   }
 
-  config->number_of_blocks = (uint32_t)lrint(pow(2, (32 - config->prefix_len - ceil(log2(config->block_size)))));
+  config->number_of_blocks = (uint32_t)(pow(2u, (32u - config->prefix_len - ceil(log2(config->block_size)))));
 
   if (config->disable_dhcp) {
     config->spare_blocks_needed = 0;
