@@ -108,7 +108,7 @@ struct ddhcp_config {
   // Global Stuff
   time_t next_wakeup;
   uint32_t loop_timeout;
-  unsigned int claiming_blocks_amount;
+  uint8_t claiming_blocks_amount;
   ddhcp_block* blocks;
   ddhcp_block_list claiming_blocks;
 
