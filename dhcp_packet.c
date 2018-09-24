@@ -349,7 +349,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   return 0;
 }
 
-dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* _chaddr) {
+dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr) {
   DEBUG("dhcp_packet_list_find(list,xid:%u,chaddr)\n", xid);
   struct list_head* pos, *q;
 
