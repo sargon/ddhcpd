@@ -158,7 +158,7 @@ void free_option_store(dhcp_option_list* store) {
 dhcp_option* remove_option_from_store(dhcp_option_list* store, uint8_t code);
 
 uint8_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
-  int num_found_options = 0;
+  uint8_t num_found_options = 0;
 
   uint8_t* requested = NULL;
   int max_options = find_option_parameter_request_list(options, len, &requested);
