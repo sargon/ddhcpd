@@ -6,8 +6,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void hook(uint8_t type, struct in_addr* address, uint8_t* _chaddr, ddhcp_config* config) {
-  DEBUG("hook(%i,%s,%s,config)\n", type, inet_ntoa(*address), hwaddr2c(_chaddr));
+void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
+  DEBUG("hook(%i,%s,%s,config)\n", type, inet_ntoa(*address), hwaddr2c(chaddr));
 
   if (!config->hook_command) {
     DEBUG("hook( ... ): No hook command set");
@@ -60,7 +60,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* _chaddr, ddhcp_config*
     config->hook_command, // Our actual command to run
     action, // The action we notify about
     inet_ntoa(*address), // The affected IP address
-    hwaddr2c(_chaddr), // The affected MAC address
+    hwaddr2c(chaddr), // The affected MAC address
     (char*) NULL // End of command line
   );
 
