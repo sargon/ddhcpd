@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
 
     case 'V':
       msglen = 2;
-      buffer[0] = (char) DDHCPCTL_LOG_LEVEL_SET;
-      buffer[1] = (char) atoi(optarg);
+      buffer[0] = (uint8_t) DDHCPCTL_LOG_LEVEL_SET;
+      buffer[1] = (uint8_t) atoi(optarg);
       break;
 
     default:
