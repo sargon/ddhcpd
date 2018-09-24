@@ -12,7 +12,7 @@ CFLAGS+= \
     -Werror \
     -flto \
     -fno-strict-aliasing \
-    -std=gnu11 \
+    -std=c11 \
     -D_GNU_SOURCE \
     -MD -MP \
     -masm=intel \
@@ -38,7 +38,7 @@ CFLAGS+= \
 
 CXXFLAGS+= \
     ${CFLAGS} \
-    -std=c++17 \
+    -std=c++11 \
     -Wuseless-cast \
     -Weffc++
 
