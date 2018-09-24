@@ -93,7 +93,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   return random_free;
 }
 
-int block_claim(uint32_t num_blocks, ddhcp_config* config) {
+int block_claim(int32_t num_blocks, ddhcp_config* config) {
   DEBUG("block_claim(blocks, %i, config)\n", num_blocks);
 
   // Handle blocks already in claiming prozess
@@ -233,21 +233,20 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   return selected;
 }
 
-void block_update_claims(uint32_t blocks_needed, ddhcp_config* config) {
+void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(blocks, %i, config)\n", blocks_needed);
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
   uint32_t timeout_half = config->block_timeout * config->block_refresh_factor / (config->block_refresh_factor + 1ul);
-  uint32_t blocks_needed_tmp = blocks_needed;
 
   // TODO Use a linked list instead of processing the block list twice.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
-      if (dhcp_num_free(block) == config->block_size) {
+      if (blocks_needed < 0 && dhcp_num_free(block) == config->block_size) {
         DEBUG("block_update_claims(...): block %i no longer needed\n", block->index);
-        blocks_needed_tmp--;
         block_free(block);
+        blocks_needed++;
       } else {
         our_blocks++;
       }

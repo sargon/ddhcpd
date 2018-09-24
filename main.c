@@ -54,8 +54,8 @@ void house_keeping(ddhcp_config* config) {
   block_check_timeouts(config);
 
   uint32_t spares = block_num_free_leases(config);
-  uint32_t spare_blocks = (uint32_t)lrint(ceil((double) spares / (double) config->block_size));
-  uint32_t blocks_needed = config->spare_blocks_needed - spare_blocks;
+  uint32_t spare_blocks = spares / config->block_size;
+  int32_t blocks_needed = (uint32_t)config->spare_blocks_needed - spare_blocks;
 
   block_claim(blocks_needed, config);
   block_update_claims(blocks_needed, config);
