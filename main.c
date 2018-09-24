@@ -95,7 +95,7 @@ uint32_t get_loop_timeout(ddhcp_config* config) {
   //Multiply by 500 to convert the timeout value given in seconds
   //into milliseconds AND dividing the value by two at the same time.
   //The integer overflow occuring for timeouts greater than 99.4 days is ignored here.
-  return (uint32_t)lrint(floor(config->tentative_timeout * 500));
+  return config->tentative_timeout * 500u;
 }
 
 typedef void (*sighandler_t)(int);
