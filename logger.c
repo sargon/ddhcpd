@@ -11,7 +11,7 @@ void logger(int level, const char *prefix, ...) {
 
     fprintf(stderr, "%s", prefix);
     va_start(args, prefix);
-    fmt = va_arg(args, typeof(fmt));
+    fmt = va_arg(args, __typeof__(fmt));
     vfprintf(stderr, fmt, args);
     va_end(args);
   }

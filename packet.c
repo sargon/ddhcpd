@@ -10,14 +10,14 @@
   do {                                                  \
     type* tmp = &(var);                                 \
     memcpy(tmp, (buf), sizeof(type));                   \
-    buf = (typeof (buf))((char*)(buf) + sizeof(type));  \
+    buf = (__typeof__ (buf))((char*)(buf) + sizeof(type));  \
   } while(0);
 
 #define copy_var_to_buf_inc(buf, type, var)             \
   do {                                                  \
     type* tmp = &(var);                                 \
     memcpy((buf), tmp, sizeof(type));                   \
-    buf = (typeof (buf))((char*)(buf) + sizeof(type));  \
+    buf = (__typeof__ (buf))((char*)(buf) + sizeof(type));  \
   } while(0);
 
 ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
