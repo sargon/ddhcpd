@@ -235,7 +235,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 
 void block_update_claims(uint32_t blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(blocks, %i, config)\n", blocks_needed);
-  unsigned int our_blocks = 0;
+  uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
   uint32_t timeout_half = config->block_timeout * config->block_refresh_factor / (config->block_refresh_factor + 1ul);
@@ -262,14 +262,15 @@ void block_update_claims(uint32_t blocks_needed, ddhcp_config* config) {
   }
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
-
+  
+  // TODO We need to split packets if our_blocks > max_uint8_t
   packet->count = (uint8_t)our_blocks;
 
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
 
   // TODO Check we actually got the memory
 
-  int index = 0;
+  uint32_t index = 0;
 
   block = config->blocks;
 
