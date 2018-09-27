@@ -13,19 +13,10 @@ struct sockaddr_in broadcast = {
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 void printf_dhcp(dhcp_packet* packet) {
-  char* ciaddr_str = (char*) malloc(INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(packet->ciaddr.s_addr), ciaddr_str, INET_ADDRSTRLEN);
+  char tmpstr[INET_ADDRSTRLEN];
 
-  char* yiaddr_str = (char*) malloc(INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(packet->yiaddr.s_addr), yiaddr_str, INET_ADDRSTRLEN);
-
-  char* giaddr_str = (char*) malloc(INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(packet->giaddr.s_addr), giaddr_str, INET_ADDRSTRLEN);
-
-  char* siaddr_str = (char*) malloc(INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(packet->siaddr.s_addr), siaddr_str, INET_ADDRSTRLEN);
-
-  DEBUG("BOOTP [ op %i, htype %i, hlen %i, hops %i, xid %lu, secs %i, flags %i, ciaddr %s, yiaddr %s, siaddr %s, giaddr %s, sname: %s, file: %s ]\n"
+  inet_ntop(AF_INET, &(packet->ciaddr.s_addr), tmpstr, INET_ADDRSTRLEN);
+  DEBUG("BOOTP [ op %i, htype %i, hlen %i, hops %i, xid %lu, secs %i, flags %i, ciaddr %s, "
         , packet->op
         , packet->htype
         , packet->hlen
@@ -33,18 +24,21 @@ void printf_dhcp(dhcp_packet* packet) {
         , (unsigned long) packet->xid
         , packet->secs
         , packet->flags
-        , ciaddr_str
-        , yiaddr_str
-        , siaddr_str
-        , giaddr_str
+        , tmpstr
+       );
+
+  inet_ntop(AF_INET, &(packet->yiaddr.s_addr), tmpstr, INET_ADDRSTRLEN);
+  DEBUG("yiaddr %s, ", tmpstr);
+
+  inet_ntop(AF_INET, &(packet->siaddr.s_addr), tmpstr, INET_ADDRSTRLEN);
+  DEBUG("siaddr %s, ", tmpstr);
+
+  inet_ntop(AF_INET, &(packet->giaddr.s_addr), tmpstr, INET_ADDRSTRLEN);
+  DEBUG("giaddr %s, sname: %s, file: %s ]\n"
+        , tmpstr
         , packet->sname
         , packet->file
        );
-
-  free(ciaddr_str);
-  free(yiaddr_str);
-  free(giaddr_str);
-  free(siaddr_str);
 
   dhcp_option* option = packet->options;
 
