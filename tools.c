@@ -43,10 +43,18 @@ dhcp_option* parse_option() {
   uint8_t code = (uint8_t)atoi(optarg);
 
   dhcp_option* option = (dhcp_option*) malloc(sizeof(dhcp_option));
+  if(!option) {
+    ERROR("Failed to allocate memory for dhcp option '%s'\n", optarg);
+    exit(1);
+  }
   option->code = code;
   option->len = len;
   option->payload = (uint8_t*)calloc(len, sizeof(uint8_t));
-
+  if(!option->payload) {
+    ERROR("Failed to allocate memory for dhcp option payload '%s'\n", optarg);
+    free(option);
+    exit(1);
+  }
   for (int i = 0 ; i < len; i++) {
     char* next_payload_s = strchr(payload_s, '.');
 
