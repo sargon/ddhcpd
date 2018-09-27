@@ -107,13 +107,17 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
 
 uint8_t _ddo[1] = { 0 };
 
-void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config) {
+int16_t _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config) {
+  int16_t num_options;
   // TODO We need a more extendable way to build up options
   // TODO Proper error handling
 
   // Fill options list with requested options, allocate memory and reserve for additonal
   // dhcp options.
-  packet->options_len = fill_options(request->options, request->options_len, &config->options, 3, &packet->options) ;
+  if((num_options = fill_options(request->options, request->options_len, &config->options, 3, &packet->options)) < 0) {
+    return num_options;
+  }
+  packet->options_len = (uint8_t)num_options;
 
   // DHCP Message Type
   _ddo[0] = msg_type;
@@ -125,6 +129,7 @@ void _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* r
   // DHCP Server identifier
   set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
 
+  return 0;
 }
 
 int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
@@ -205,7 +210,11 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
 
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
-  _dhcp_default_options(DHCPOFFER, packet, discover, config);
+  if(_dhcp_default_options(DHCPOFFER, packet, discover, config)) {
+    DEBUG("dhcp_discover(...) -> option memory allocation failure");
+    free(packet);
+    return 1;
+  }
 
   dhcp_packet_send(socket, packet);
 
@@ -482,7 +491,11 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
   DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
 
-  _dhcp_default_options(DHCPACK, packet, request, config);
+  if(_dhcp_default_options(DHCPACK, packet, request, config)) {
+    DEBUG("dhcp_request(...) -> option memory allocation failure\n");
+    free(packet);
+    return 1;
+  }
 
   dhcp_packet_send(socket, packet);
 

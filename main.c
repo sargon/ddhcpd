@@ -325,7 +325,10 @@ int main(int argc, char** argv) {
 
   // init block stucture
   ddhcp_block_init(&config);
-  dhcp_options_init(&config);
+  if(dhcp_options_init(&config)) {
+    FATAL("Failed to allocate memory for option store\n");
+    abort();
+  }
   hook_init();
 
   // init network and event loops

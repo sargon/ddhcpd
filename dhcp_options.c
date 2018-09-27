@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <errno.h>
+
 #include "dhcp_options.h"
 #include "list.h"
 #include "logger.h"
@@ -157,13 +159,16 @@ void free_option_store(dhcp_option_list* store) {
 
 dhcp_option* remove_option_from_store(dhcp_option_list* store, uint8_t code);
 
-uint8_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
+int16_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option_store, uint8_t additional, dhcp_option** fullfil) {
   uint8_t num_found_options = 0;
 
   uint8_t* requested = NULL;
   int max_options = find_option_parameter_request_list(options, len, &requested);
 
   *fullfil = (dhcp_option*) calloc(sizeof(dhcp_option), (size_t)(max_options + additional));
+  if(!*fullfil) {
+    return -ENOMEM;
+  }
 
   if (! max_options) {
     return additional;
@@ -180,7 +185,7 @@ uint8_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option
     }
   }
 
-  return (uint8_t)(num_found_options + additional);
+  return (int16_t)(num_found_options + additional);
 }
 
 void dhcp_options_show(int fd, ddhcp_config* config) {
@@ -201,16 +206,23 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
   }
 }
 
-void dhcp_options_init(ddhcp_config* config) {
+int dhcp_options_init(ddhcp_config* config) {
   dhcp_option* option;
   uint8_t pl = config->prefix_len;
 
   if (! has_in_option_store(&config->options, DHCP_CODE_SUBNET_MASK)) {
     // subnet mask
     option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+    if(!option) {
+      return -ENOMEM;
+    }
     option->code = DHCP_CODE_SUBNET_MASK;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    if(!option->payload) {
+      free(option);
+      return -ENOMEM;
+    }
     option->payload[0] = (uint8_t)(256 - (256 >> min(max(pl -  0, 0), 8)));
     option->payload[1] = (uint8_t)(256 - (256 >> min(max(pl -  8, 0), 8)));
     option->payload[2] = (uint8_t)(256 - (256 >> min(max(pl - 16, 0), 8)));
@@ -221,9 +233,16 @@ void dhcp_options_init(ddhcp_config* config) {
 
   if (! has_in_option_store(&config->options, DHCP_CODE_TIME_OFFSET)) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    if(!option) {
+      return -ENOMEM;
+    }
     option->code = DHCP_CODE_TIME_OFFSET;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    if(!option->payload) {
+      free(option);
+      return -ENOMEM;
+    }
     option->payload[0] = 0;
     option->payload[1] = 0;
     option->payload[2] = 0;
@@ -234,9 +253,16 @@ void dhcp_options_init(ddhcp_config* config) {
 
   if (! has_in_option_store(&config->options, DHCP_CODE_BROADCAST_ADDRESS)) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    if(!option) {
+      return -ENOMEM;
+    }
     option->code = DHCP_CODE_BROADCAST_ADDRESS;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    if(!option->payload) {
+      free(option);
+      return -ENOMEM;
+    }
     option->payload[0] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[0]) | ((1 << min(max(8 - pl, 0), 8)) - 1));
     option->payload[1] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[1]) | ((1 << min(max(16 - pl, 0), 8)) - 1));
     option->payload[2] = (uint8_t)((((uint8_t*) &config->prefix.s_addr)[2]) | ((1 << min(max(24 - pl, 0), 8)) - 1));
@@ -247,9 +273,16 @@ void dhcp_options_init(ddhcp_config* config) {
 
   if (! has_in_option_store(&config->options, DHCP_CODE_ADDRESS_LEASE_TIME)) {
     option = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+    if(!option) {
+      return -ENOMEM;
+    }
     option->code = DHCP_CODE_ADDRESS_LEASE_TIME;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    if(!option->payload) {
+      free(option);
+      return -ENOMEM;
+    }
     // 300 ms ~ 5min
     option->payload[0] = 0x00;
     option->payload[1] = 0x00;
@@ -261,9 +294,16 @@ void dhcp_options_init(ddhcp_config* config) {
 
   if (! has_in_option_store(&config->options, DHCP_CODE_SERVER_IDENTIFIER)) {
     option = (dhcp_option*) malloc(sizeof(dhcp_option));
+    if(!option) {
+      return -ENOMEM;
+    }
     option->code = DHCP_CODE_SERVER_IDENTIFIER;
     option->len = 4;
     option->payload = (uint8_t*) calloc(sizeof(uint8_t), 4);
+    if(!option->payload) {
+      free(option);
+      return -ENOMEM;
+    }
     // TODO Check interface for address
     memcpy(option->payload, &config->prefix.s_addr, 4);
     //option->payload[0] = 10;
@@ -273,5 +313,5 @@ void dhcp_options_init(ddhcp_config* config) {
 
     set_option_in_store(&config->options, option);
   }
-
+  return 0;
 }
