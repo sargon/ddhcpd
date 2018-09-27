@@ -96,7 +96,11 @@ uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options) {
 
   if (lease_time_opt) {
     uint32_t buf = 0;
-    memcpy(&buf, lease_time_opt->payload, 4);
+    if(!lease_time_opt->payload || lease_time_opt->len < sizeof(buf)) {
+      WARNING("find_in_option_store(...): requested option had insufficient or no payload data specified.");
+      return 0;
+    }
+    memcpy(&buf, lease_time_opt->payload, sizeof(buf));
     return ntohl(buf);
   }
 
