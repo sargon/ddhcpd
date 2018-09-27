@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     buffer[0] = (uint8_t) 3;
     buffer[1] = (uint8_t) option->code;
     buffer[2] = (uint8_t) option->len;
-    memcpy(buffer + 3, option->payload, sizeof(option));
+    memcpy(buffer + 3, option->payload, option->len);
     free(option);
   }
 
