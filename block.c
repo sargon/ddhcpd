@@ -374,10 +374,10 @@ void block_show_status(int fd, ddhcp_config* config) {
 
     node_id[16] = '\0';
 
-    char leases[10];
+    char leases[16];
 
     if (block->addresses != NULL) {
-      sprintf(leases, "%u/%u", offered_leases, config->block_size - free_leases - offered_leases);
+      snprintf(leases, sizeof(leases), "%u/%u", offered_leases, config->block_size - free_leases - offered_leases);
     } else {
       leases[0] = '-';
       leases[1] = '\0';
