@@ -271,12 +271,17 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
+  if (packet == NULL) {
+    WARNING("block_update_claims(...)-> Failed to allocate ddhcpd mcast packet.\n");
+    return;
+  }
   
   // TODO We need to split packets if our_blocks > max_uint8_t
   packet->count = (uint8_t)our_blocks;
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
-  if (packet == NULL) {
-    WARNING("block_update_claims(...)-> Failed to allocate ddhcpd mcast packet.\n");
+  if(!packet->payload) {
+    WARNING("block_update_claims(...)-> Failed to allocate ddhcpd packet payload.\n");
+    free(packet);
     return;
   }
 
