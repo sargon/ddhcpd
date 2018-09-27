@@ -67,7 +67,7 @@ dhcp_option* parse_option() {
       next_payload_s++[0] = '\0';
     }
 
-    uint8_t payload = (uint8_t)atoi(payload_s);
+    uint8_t payload = (uint8_t)strtoul(payload_s, NULL, 0);
     option->payload[i] = payload;
     payload_s = next_payload_s;
   }
