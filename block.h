@@ -22,7 +22,7 @@ int block_own(ddhcp_block* block, ddhcp_config* config);
 void block_free(ddhcp_block* block);
 
 /**
- * Find a free block and return it or otherwise null.
+ * Find a free block and return it or otherwise NULL.
  * A block is called free, when no other node claims it.
  */
 ddhcp_block* block_find_free(ddhcp_config* config);
