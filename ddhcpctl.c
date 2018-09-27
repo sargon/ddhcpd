@@ -26,6 +26,10 @@ int main(int argc, char** argv) {
 
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
+  if(!buffer) {
+    fprintf(stderr, "Failed to allocate message buffer\n");
+    exit(1);
+  }
 
   while ((c = getopt(argc, argv, "C:t:l:bdho:r:V:")) != -1) {
     switch (c) {
