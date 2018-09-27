@@ -208,7 +208,7 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
 
 int dhcp_options_init(ddhcp_config* config) {
   dhcp_option* option;
-  uint8_t pl = config->prefix_len;
+  int8_t pl = (int8_t)config->prefix_len;
 
   if (! has_in_option_store(&config->options, DHCP_CODE_SUBNET_MASK)) {
     // subnet mask
@@ -223,10 +223,10 @@ int dhcp_options_init(ddhcp_config* config) {
       free(option);
       return -ENOMEM;
     }
-    option->payload[0] = (uint8_t)(256 - (256 >> min(max(pl -  0, 0), 8)));
-    option->payload[1] = (uint8_t)(256 - (256 >> min(max(pl -  8, 0), 8)));
-    option->payload[2] = (uint8_t)(256 - (256 >> min(max(pl - 16, 0), 8)));
-    option->payload[3] = (uint8_t)(256 - (256 >> min(max(pl - 24, 0), 8)));
+    option->payload[0] = (uint8_t)(256 - (256 >> min(max((int8_t)(pl -  0), 0), 8)));
+    option->payload[1] = (uint8_t)(256 - (256 >> min(max((int8_t)(pl -  8), 0), 8)));
+    option->payload[2] = (uint8_t)(256 - (256 >> min(max((int8_t)(pl - 16), 0), 8)));
+    option->payload[3] = (uint8_t)(256 - (256 >> min(max((int8_t)(pl - 24), 0), 8)));
 
     set_option_in_store(&config->options, option);
   }
