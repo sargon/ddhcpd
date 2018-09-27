@@ -338,6 +338,10 @@ int main(int argc, char** argv) {
   }
 
   uint8_t* buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
+  if(!buffer) {
+    FATAL("Failed to allocate network buffer\n");
+    abort();
+  }
   ssize_t bytes = 0;
 
   int efd;
