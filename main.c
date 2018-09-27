@@ -365,6 +365,10 @@ int main(int argc, char** argv) {
 
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
+  if(!events) {
+    FATAL("Failed to allocate event buffer\n");
+    abort();
+  }
 
   int need_house_keeping;
   uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
