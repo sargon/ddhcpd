@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
 
   ssize_t br;
 
-  while ((br = recv(ctl_sock, (char*) buffer, sizeof(buffer), 0))) {
+  while ((br = recv(ctl_sock, (char*) buffer, BUFSIZE_MAX, 0))) {
     buffer[br] = '\0';
     printf("%s", (char*) buffer);
   }
