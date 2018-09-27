@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
       buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTION_SET;
       buffer[1] = (uint8_t) 51;
       buffer[2] = (uint8_t) 4;
-      uint32_t leasetime = htonl((uint32_t)atol(optarg));
+      uint32_t leasetime = htonl((uint32_t)strtoul(optarg, NULL, 0));
       memcpy(buffer + 3, (uint8_t*) &leasetime, sizeof(uint32_t));
       break;
 
@@ -110,15 +110,13 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  struct sockaddr_un s_un;
-
   if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
     perror("can't create socket:");
     free(buffer);
     return (-1);
   }
 
-  memset(&s_un, 0, sizeof(struct sockaddr_un));
+  struct sockaddr_un s_un = { 0 };
   s_un.sun_family = AF_UNIX;
 
 
@@ -131,8 +129,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  int ret;
-  ret = fcntl(ctl_sock, F_GETFL, 0);
+  int ret = fcntl(ctl_sock, F_GETFL, 0);
 
   if (ret < 0) {
     perror("Cant't set stuff:");
