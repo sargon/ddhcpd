@@ -256,7 +256,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
 
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
-  struct in_addr requested_address;
+  struct in_addr requested_address = {0};
 
   uint8_t* address = find_option_requested_address(request->options, request->options_len);
 
@@ -264,7 +264,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
     memcpy(&requested_address, address, sizeof(struct in_addr));
   } else if (request->ciaddr.s_addr != INADDR_ANY) {
     memcpy(&requested_address, &request->ciaddr.s_addr, sizeof(struct in_addr));
-  }
+  } 
 
   if (find_lease_from_address(&requested_address, config, &lease_block, &lease_index) != 1) {
     DEBUG("dhcp_rhdl_ack( ... ) -> lease not found\n");
