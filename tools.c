@@ -58,12 +58,12 @@ dhcp_option* parse_option() {
   for (int i = 0 ; i < len; i++) {
     char* next_payload_s = strchr(payload_s, '.');
 
-    if (next_payload_s == NULL && i < len - 1) {
+    if (!next_payload_s && (i + 1 < len)) {
       ERROR("Malformed dhcp option '%s' to few payload\n", optarg);
       exit(1);
     }
 
-    if (i < len - 1) {
+    if (i + 1 < len) {
       next_payload_s++[0] = '\0';
     }
 
