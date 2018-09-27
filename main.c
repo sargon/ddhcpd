@@ -256,6 +256,7 @@ int main(int argc, char** argv) {
       if (log_level < LOG_LEVEL_MAX) {
         log_level++;
       }
+
       break;
 
     default:
@@ -325,10 +326,12 @@ int main(int argc, char** argv) {
 
   // init block stucture
   ddhcp_block_init(&config);
-  if(dhcp_options_init(&config)) {
+
+  if (dhcp_options_init(&config)) {
     FATAL("Failed to allocate memory for option store\n");
     abort();
   }
+
   hook_init();
 
   // init network and event loops
@@ -341,10 +344,12 @@ int main(int argc, char** argv) {
   }
 
   uint8_t* buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
-  if(!buffer) {
+
+  if (!buffer) {
     FATAL("Failed to allocate network buffer\n");
     abort();
   }
+
   ssize_t bytes = 0;
 
   int efd;
@@ -368,7 +373,8 @@ int main(int argc, char** argv) {
 
   /* Buffer where events are returned */
   events = calloc(maxevents, sizeof(struct epoll_event));
-  if(!events) {
+
+  if (!events) {
     FATAL("Failed to allocate event buffer\n");
     abort();
   }

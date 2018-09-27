@@ -157,6 +157,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_INQUIRE, config);
+
   if (!packet) {
     WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet.\n");
     return -ENOMEM;
@@ -165,6 +166,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   packet->count = config->claiming_blocks_amount;
 
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), config->claiming_blocks_amount);
+
   if (!packet->payload) {
     free(packet);
     WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet payload.\n");
@@ -271,15 +273,17 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
+
   if (!packet) {
     WARNING("block_update_claims(...)-> Failed to allocate ddhcpd mcast packet.\n");
     return;
   }
-  
+
   // TODO We need to split packets if our_blocks > max_uint8_t
   packet->count = (uint8_t)our_blocks;
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
-  if(!packet->payload) {
+
+  if (!packet->payload) {
     WARNING("block_update_claims(...)-> Failed to allocate ddhcpd packet payload.\n");
     free(packet);
     return;

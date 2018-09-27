@@ -68,6 +68,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
     // TODO: Logging from the child should be synchronized
     FATAL("hook( ... ): Command could not be executed (errno: %i).\n", err);
   }
+
   exit(1);
 }
 

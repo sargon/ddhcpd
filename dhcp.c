@@ -114,9 +114,10 @@ int16_t _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet
 
   // Fill options list with requested options, allocate memory and reserve for additonal
   // dhcp options.
-  if((num_options = fill_options(request->options, request->options_len, &config->options, 3, &packet->options)) < 0) {
+  if ((num_options = fill_options(request->options, request->options_len, &config->options, 3, &packet->options)) < 0) {
     return num_options;
   }
+
   packet->options_len = (uint8_t)num_options;
 
   // DHCP Message Type
@@ -210,7 +211,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
 
   DEBUG("dhcp_discover(...) offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
-  if(_dhcp_default_options(DHCPOFFER, packet, discover, config)) {
+  if (_dhcp_default_options(DHCPOFFER, packet, discover, config)) {
     DEBUG("dhcp_discover(...) -> option memory allocation failure");
     free(packet);
     return 1;
@@ -264,7 +265,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
     memcpy(&requested_address, address, sizeof(struct in_addr));
   } else if (request->ciaddr.s_addr != INADDR_ANY) {
     memcpy(&requested_address, &request->ciaddr.s_addr, sizeof(struct in_addr));
-  } 
+  }
 
   if (find_lease_from_address(&requested_address, config, &lease_block, &lease_index) != 1) {
     DEBUG("dhcp_rhdl_ack( ... ) -> lease not found\n");
@@ -337,6 +338,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
 
         // Send packet
         ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);
+
         if (!packet) {
           WARNING("dhcp_hdl_request( ... ): Warning: Failed to allocate memory for ddhcpd mcast packet\n");
           return -ENOMEM;
@@ -455,6 +457,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
 
   packet->options_len = 1;
   packet->options = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
+
   if (!packet->options) {
     DEBUG("dhcp_discover(...) -> memory allocation failure\n");
     free(packet);
@@ -491,7 +494,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
   DEBUG("dhcp_ack(...) offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
 
-  if(_dhcp_default_options(DHCPACK, packet, request, config)) {
+  if (_dhcp_default_options(DHCPACK, packet, request, config)) {
     DEBUG("dhcp_request(...) -> option memory allocation failure\n");
     free(packet);
     return 1;

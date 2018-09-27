@@ -26,7 +26,8 @@ int main(int argc, char** argv) {
 
 #define BUFSIZE_MAX 1500
   uint8_t* buffer = (uint8_t*) calloc(sizeof(uint8_t), BUFSIZE_MAX);
-  if(!buffer) {
+
+  if (!buffer) {
     fprintf(stderr, "Failed to allocate message buffer\n");
     exit(1);
   }
@@ -117,6 +118,7 @@ int main(int argc, char** argv) {
   }
 
   struct sockaddr_un s_un = { 0 };
+
   s_un.sun_family = AF_UNIX;
 
 
