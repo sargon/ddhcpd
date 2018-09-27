@@ -187,7 +187,8 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
 
   packet->options_len = (uint8_t)options;
   packet->options = (dhcp_option*) calloc(options, sizeof(dhcp_option));
-  if(!packet->options) {
+
+  if (!packet->options) {
     return -ENOMEM;
   }
 
@@ -239,7 +240,8 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   uint32_t tmp32;
 
   uint8_t* buffer = calloc(sizeof(char), _dhcp_packet_len(packet));
-  if(!buffer) {
+
+  if (!buffer) {
     return -ENOMEM;
   }
 
@@ -325,10 +327,12 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
 
   for (; src_option < src->options + src->options_len; src_option++) {
     uint8_t* dest_payload = (uint8_t*) calloc(src_option->len, sizeof(uint8_t));
-    if(!dest_payload) {
+
+    if (!dest_payload) {
       err = -ENOMEM;
       goto fail_options;
     }
+
     memcpy(dest_payload, src_option->payload, src_option->len);
     dest_option->code = src_option->code;
     dest_option->len = src_option->len;
@@ -339,9 +343,11 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
   return 0;
 
 fail_options:
-  while(dest_option-- > dest->options) {
+
+  while (dest_option-- > dest->options) {
     free(dest_option->payload);
   }
+
   free(dest->options);
   return err;
 }

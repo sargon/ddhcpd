@@ -54,9 +54,11 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
 
 struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* config) {
   struct ddhcp_mcast_packet* packet = (struct ddhcp_mcast_packet*) calloc(sizeof(struct ddhcp_mcast_packet), 1);
+
   if (!packet) {
     return NULL;
   }
+
   memcpy(&packet->node_id, config->node_id, 8);
   memcpy(&packet->prefix, &config->prefix, sizeof(struct in_addr));
 
@@ -115,6 +117,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_UPDATECLAIM:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
+
     if (payload == NULL) {
       WARNING("Failed to allocate packet payload\n");
       return -ENOMEM;
@@ -139,6 +142,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_INQUIRE:
     packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), packet->count);
     payload = packet->payload;
+
     if (payload == NULL) {
       WARNING("Failed to allocate packet payload\n");
       return -ENOMEM;
@@ -159,6 +163,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   case DDHCP_MSG_LEASENAK:
   case DDHCP_MSG_RELEASE:
     packet->renew_payload = (struct ddhcp_renew_payload*) calloc(sizeof(struct ddhcp_renew_payload), 1);
+
     if (packet->renew_payload == NULL) {
       WARNING("Failed to allocate packet payload\n");
       return -ENOMEM;
