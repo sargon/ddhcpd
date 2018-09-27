@@ -339,7 +339,7 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
   return 0;
 
 fail_options:
-  while(dest_option-- > dest->options) {
+  while(--dest_option >= dest->options) {
     free(dest_option->payload);
   }
   free(dest->options);
