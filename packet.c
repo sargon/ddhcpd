@@ -54,7 +54,7 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
 
 struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* config) {
   struct ddhcp_mcast_packet* packet = (struct ddhcp_mcast_packet*) calloc(sizeof(struct ddhcp_mcast_packet), 1);
-  if (packet == NULL) {
+  if (!packet) {
     return NULL;
   }
   memcpy(&packet->node_id, config->node_id, 8);

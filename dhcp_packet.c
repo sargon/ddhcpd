@@ -316,7 +316,7 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
   memcpy(dest, src, sizeof(struct dhcp_packet));
   dest->options = (struct dhcp_option*) calloc(src->options_len, sizeof(struct dhcp_option));
 
-  if (dest->options == NULL) {
+  if (!dest->options) {
     return 1;
   }
 
@@ -351,7 +351,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   // Save dhcp packet, for further actions, later.
   dhcp_packet* copy = calloc(1, sizeof(dhcp_packet));
 
-  if (copy == NULL) {
+  if (!copy) {
     ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
     return 1;
   }

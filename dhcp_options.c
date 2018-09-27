@@ -45,7 +45,7 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
 int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code) {
   dhcp_option* option = find_in_option_store(store, code);
 
-  if (option == NULL) {
+  if (!option) {
     DEBUG("set_option_from_store( ... ) -> Option %u not found in store\n", code);
     return 1;
   }
@@ -94,7 +94,7 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
 uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options) {
   dhcp_option* lease_time_opt = find_in_option_store(options, DHCP_CODE_ADDRESS_LEASE_TIME);
 
-  if (lease_time_opt != NULL) {
+  if (lease_time_opt) {
     uint32_t buf = 0;
     memcpy(&buf, lease_time_opt->payload, 4);
     return ntohl(buf);
@@ -108,7 +108,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
 
   dhcp_option* current = find_in_option_store(store, option->code);
 
-  if (current != NULL) {
+  if (current) {
     DEBUG("set_in_option_store(...) -> replace option\n");
 
     // Replacing current with new option
@@ -141,7 +141,7 @@ void free_option(struct dhcp_option* option) {
 void remove_option_in_store(dhcp_option_list* store, uint8_t code) {
   dhcp_option* option = find_in_option_store(store, code);
 
-  if (option != NULL) {
+  if (option) {
     list_del(&option->option_list);
     free_option(option);
   }
@@ -179,7 +179,7 @@ int16_t fill_options(dhcp_option* options, uint8_t len, dhcp_option_list* option
     // LOOP thought option_store
     dhcp_option* option = find_in_option_store(option_store, code);
 
-    if (option != NULL) {
+    if (option) {
       memcpy(*fullfil + num_found_options, option, sizeof(dhcp_option));
       num_found_options++;
     }

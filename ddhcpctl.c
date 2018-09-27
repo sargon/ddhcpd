@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 
   // Check if a dhcp option code should be set and if all parameters
   // for that are given.
-  if (option != NULL) {
+  if (option) {
     msglen = 3u + option->len;
     buffer[0] = (uint8_t) 3;
     buffer[1] = (uint8_t) option->code;

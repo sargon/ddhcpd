@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
         size_t optlen = strlen(optarg);
         char* cidr = strchr(optarg, '/');
 
-        if (cidr == NULL) {
+        if (!cidr) {
           ERROR("Malformed network '%s'\n", optarg);
           exit(1);
         }

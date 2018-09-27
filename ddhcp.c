@@ -15,7 +15,7 @@ int ddhcp_block_init(ddhcp_config* config) {
   DEBUG("ddhcp_block_init(config)\n");
   config->blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
 
-  if (config->blocks == NULL) {
+  if (!config->blocks) {
     FATAL("ddhcp_block_init(...)-> Can't allocate memory for block structure\n");
     return 1;
   }
@@ -211,7 +211,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
     return;
   }
 
-  if (answer == NULL) {
+  if (!answer) {
     WARNING("ddhcp_dhcp_renewlease( ... ) -> Failed to allocate memory for ddhcpd mcast packet.\n");
     return;
   }
@@ -233,7 +233,7 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
 #endif
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
-  if (packet == NULL) {
+  if (!packet) {
     // Ignore packet
     DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
   } else {
@@ -256,7 +256,7 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
 #endif
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
-  if (packet == NULL) {
+  if (!packet) {
     // Ignore packet
     DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
   } else {

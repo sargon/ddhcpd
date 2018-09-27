@@ -10,7 +10,7 @@ int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
 
-  if (block->addresses == NULL) {
+  if (!block->addresses) {
     return 1;
   }
 
@@ -130,7 +130,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
     for (uint32_t i = 0; i < needed_blocks; i++) {
       ddhcp_block* block = block_find_free(config);
 
-      if (block != NULL) {
+      if (block) {
         block->state = DDHCP_CLAIMING;
         block->claiming_counts = 0;
         block->timeout = now + config->tentative_timeout;
@@ -157,7 +157,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   // Send claim message for all blocks in claiming process.
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_INQUIRE, config);
-  if (packet == NULL) {
+  if (!packet) {
     WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet.\n");
     return -ENOMEM;
   }
@@ -165,7 +165,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   packet->count = config->claiming_blocks_amount;
 
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), config->claiming_blocks_amount);
-  if (packet->payload == NULL) {
+  if (!packet->payload) {
     free(packet);
     WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet payload.\n");
     return -ENOMEM;
@@ -233,7 +233,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 
-  if (selected != NULL) {
+  if (selected) {
     DEBUG("block_find_free_leases(blocks,config) -> Block %i selected\n", selected->index);
   } else {
     DEBUG("block_find_free_leases(blocks,config) -> No block found!\n");
@@ -271,7 +271,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
-  if (packet == NULL) {
+  if (!packet) {
     WARNING("block_update_claims(...)-> Failed to allocate ddhcpd mcast packet.\n");
     return;
   }
@@ -321,7 +321,7 @@ void block_check_timeouts(ddhcp_config* config) {
 
     if (block->state == DDHCP_OURS) {
       dhcp_check_timeouts(block);
-    } else if (block->addresses != NULL) {
+    } else if (block->addresses) {
       int free_leases = dhcp_check_timeouts(block);
 
       if (free_leases == block->subnet_len) {
@@ -363,7 +363,7 @@ void block_show_status(int fd, ddhcp_config* config) {
     uint32_t free_leases = 0;
     uint32_t offered_leases = 0;
 
-    if (block->addresses != NULL) {
+    if (block->addresses) {
       free_leases = dhcp_num_free(block);
       offered_leases = dhcp_num_offered(block);
     }
@@ -376,7 +376,7 @@ void block_show_status(int fd, ddhcp_config* config) {
 
     char leases[16];
 
-    if (block->addresses != NULL) {
+    if (block->addresses) {
       snprintf(leases, sizeof(leases), "%u/%u", offered_leases, config->block_size - free_leases - offered_leases);
     } else {
       leases[0] = '-';
