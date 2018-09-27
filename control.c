@@ -42,7 +42,7 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
       return -2;
     }
 
-    if (buffer[2] + 3ul > msglen) {
+    if (buffer[2] + 3ul > (size_t) msglen) {
       DEBUG("handle_command(...) -> message not long enought\n");
       return -2;
     }

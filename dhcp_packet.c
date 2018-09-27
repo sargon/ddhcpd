@@ -194,7 +194,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
   option = buffer + 236 + 4;
 
   exit = 0;
-  int i = 0;
+  uint8_t i = 0;
 
   while (option < buffer + len && exit == 0) {
     switch ((uint8_t) option[0]) {
