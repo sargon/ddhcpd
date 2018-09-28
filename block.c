@@ -397,11 +397,7 @@ void block_show_status(int fd, ddhcp_config* config) {
       leases[1] = '\0';
     }
 
-    time_t timeout = 0;
-
-    if (block->timeout > now) {
-      timeout = block->timeout - now;
-    }
+    time_t timeout = block->timeout - now;
 
     if (timeout > 0) {
       num_reserved_blocks++;
