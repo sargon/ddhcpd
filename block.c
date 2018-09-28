@@ -274,7 +274,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  uint32_t timeout_half = ((uint32_t)config->block_timeout * (uint32_t)config->block_refresh_factor) / (config->block_refresh_factor + 1u);
+  int32_t timeout_half = (int32_t)(config->block_timeout * (int32_t)(config->block_refresh_factor) / (config->block_refresh_factor + 1));
 
   // TODO Use a linked list instead of processing the block list twice.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
