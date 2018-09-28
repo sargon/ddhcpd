@@ -95,7 +95,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
     return -1;
   }
 
-  printf("LEN:%li\n", len);
+  printf("LEN:%zi\n", len);
 
   // TODO Use macros to read from the buffer
 
@@ -297,7 +297,7 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   buffer[_dhcp_packet_len(packet) - 1] = 255;
   assert(obuf + 1 == buffer + _dhcp_packet_len(packet));
   // Network send
-  printf("Message LEN: %li\n", _dhcp_packet_len(packet));
+  printf("Message LEN: %zu\n", _dhcp_packet_len(packet));
 
   broadcast.sin_port = htons(68);
 
