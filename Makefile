@@ -40,7 +40,6 @@ ifeq ($(DEBUG),1)
 CFLAGS+= \
     -Og -g \
     -fsanitize=address,signed-integer-overflow,undefined \
-    -masm=intel \
     -Wduplicated-cond \
     -Wduplicated-branches \
     -Wrestrict \
@@ -55,8 +54,9 @@ LFLAGS+= \
     -Og -g \
     -fsanitize=address,signed-integer-overflow,undefined
 else
-	CFLAGS+= \
-		-DNDEBUG
+CFLAGS+= \
+    -Os -s \
+    -DNDEBUG
 endif
 
 prefix?=/usr
