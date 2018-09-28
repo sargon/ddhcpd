@@ -139,4 +139,11 @@ struct ddhcp_config {
 };
 typedef struct ddhcp_config ddhcp_config;
 
+union in_addr_storage {
+  struct in_addr in_addr;
+  struct in6_addr in6_addr;
+};
+
+typedef union in_addr_storage in_addr_storage;
+
 #endif

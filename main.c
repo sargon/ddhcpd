@@ -32,13 +32,21 @@ extern int log_level;
 const int NET = 0;
 const int NET_LEN = 10;
 
-void* get_in_addr(struct sockaddr* sa)
+in_addr_storage get_in_addr(struct sockaddr* sa)
 {
+  struct sockaddr_in in;
+  struct sockaddr_in6 in6;
+  in_addr_storage in_store = { 0 };
   if (sa->sa_family == AF_INET) {
-    return &(((struct sockaddr_in*)sa)->sin_addr);
+    memcpy(&in, sa, sizeof(in));
+    in_store.in_addr = in.sin_addr;
   }
 
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
+  if (sa->sa_family == AF_INET6) {
+    memcpy(&in6, sa, sizeof(in6));
+    in_store.in6_addr = in6.sin6_addr;
+  }
+  return in_store;
 }
 
 /**
@@ -419,9 +427,10 @@ int main(int argc, char** argv) {
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
+          in_addr_storage in_addr;
           char ipv6_sender[INET6_ADDRSTRLEN];
-          DEBUG("Received message from %s\n",
-                inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+          in_addr = get_in_addr((struct sockaddr*)&sender);
+          DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
           ddhcp_dhcp_process(buffer, len, sender, &config);
         }
@@ -431,9 +440,10 @@ int main(int argc, char** argv) {
 
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
+          in_addr_storage in_addr;
           char ipv6_sender[INET6_ADDRSTRLEN];
-          DEBUG("Received message from %s\n",
-                inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
+          in_addr = get_in_addr((struct sockaddr*)&sender);
+          DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
           ddhcp_block_process(buffer, len, sender, &config);
         }
