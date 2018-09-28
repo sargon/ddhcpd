@@ -15,24 +15,16 @@ CFLAGS+= \
     -std=c11 \
     -D_GNU_SOURCE \
     -MD -MP \
-    -masm=intel \
-    -Wduplicated-cond \
-    -Wduplicated-branches \
     -Wlogical-op \
-    -Wrestrict \
-    -Wnull-dereference \
     -Wdouble-promotion \
     -Wshadow \
     -Wformat=2 \
     -Wfloat-equal \
     -Wundef \
     -Wpointer-arith \
-    -Wcast-align \
-    -Wstrict-overflow=5 \
     -Wwrite-strings \
     -Wswitch-default \
     -Wswitch-enum \
-    -Wconversion \
     -Wunreachable-code \
     -Winit-self
 
@@ -50,15 +42,14 @@ ifeq ($(DEBUG),1)
 CFLAGS+= \
     -Og -g \
     -fsanitize=address,signed-integer-overflow,undefined \
+    -masm=intel \
     -Wduplicated-cond \
     -Wduplicated-branches \
-    -Wrestrict \
     -Wnull-dereference \
-    -Wcast-align \
-    -Wpointer-arith \
     -Wstrict-overflow=5 \
-    -Werror \
-    -Wextra
+    -Wrestrict \
+    -Wconversion \
+    -Wcast-align
 
 LFLAGS+= \
     -Og -g \
