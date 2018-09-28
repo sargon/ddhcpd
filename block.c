@@ -95,7 +95,12 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
     r--;
   }
 
-  DEBUG("block_find_free(...)-> block %i\n", random_free->index);
+  if(random_free) {
+    DEBUG("block_find_free(...)-> block %i\n", random_free->index);
+  } else {
+    WARNING("block_find_free(...)-> no free block found\n");
+  }
+
   return random_free;
 }
 
