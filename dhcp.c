@@ -66,7 +66,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhc
 }
 
 void _dhcp_release_lease(ddhcp_block* block, uint32_t lease_index) {
-  INFO("dhcp_release_lease(...): Releasing Lease %i in block %i\n", lease_index, block->index);
+  INFO("dhcp_release_lease(...): Releasing lease %i in block %i\n", lease_index, block->index);
   dhcp_lease* lease = block->addresses + lease_index;
 
   // TODO Should we really reset the chaddr or xid, RFC says we
@@ -83,7 +83,7 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
   dhcp_packet* packet = (dhcp_packet*) calloc(sizeof(dhcp_packet), 1);
 
   if (!packet) {
-    DEBUG("build_initial_packet(...): packet memory allocation failed\n");
+    WARNING("build_initial_packet(...): packet memory allocation failed\n");
     return NULL;
   }
 
@@ -162,7 +162,7 @@ int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
       break;
 
     default:
-      WARNING("dhcp_process(...): Unknown DHCP message of type: %i\n", message_type);
+      WARNING("dhcp_process(...): Unknown DHCP message of type %i\n", message_type);
       break;
     }
 
@@ -198,7 +198,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
   dhcp_packet* packet = build_initial_packet(discover);
 
   if (!packet) {
-    DEBUG("dhcp_hdl_discover(...): packet memory allocation failed\n");
+    WARNING("dhcp_hdl_discover(...): packet memory allocation failed\n");
     return 1;
   }
 
@@ -213,7 +213,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
   DEBUG("dhcp_hdl_discover(...): offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
   if (_dhcp_default_options(DHCPOFFER, packet, discover, config)) {
-    DEBUG("dhcp_hdl_discover(...): option memory allocation failed\n");
+    WARNING("dhcp_hdl_discover(...): option memory allocation failed\n");
     free(packet);
     return 1;
   }
@@ -454,7 +454,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
   dhcp_packet* packet = build_initial_packet(from_client);
 
   if (!packet) {
-    DEBUG("dhcp_nack(...): packet memory allocation failed\n");
+    WARNING("dhcp_nack(...): packet memory allocation failed\n");
     return 1;
   }
 
@@ -462,7 +462,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
   packet->options = (dhcp_option*) calloc(sizeof(dhcp_option), 1);
 
   if (!packet->options) {
-    DEBUG("dhcp_nack(...): option memory allocation failed\n");
+    WARNING("dhcp_nack(...): option memory allocation failed\n");
     free(packet);
     return 1;
   }
@@ -484,7 +484,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   dhcp_lease* lease = lease_block->addresses + lease_index;
 
   if (!packet) {
-    DEBUG("dhcp_ack(...): packed memory allocation failed\n");
+    WARNING("dhcp_ack(...): packed memory allocation failed\n");
     return 1;
   }
 
@@ -497,7 +497,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
 
   if (_dhcp_default_options(DHCPACK, packet, request, config)) {
-    DEBUG("dhcp_ack(...): option memory allocation failed\n");
+    WARNING("dhcp_ack(...): option memory allocation failed\n");
     free(packet);
     return 1;
   }

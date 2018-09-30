@@ -38,7 +38,7 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
     DEBUG("handle_command(...): set dhcp option\n");
 
     if (msglen < 3) {
-      DEBUG("handle_command(...): message not long enought\n");
+      DEBUG("handle_command(...): message not long enough\n");
       return -2;
     }
 

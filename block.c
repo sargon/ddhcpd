@@ -108,7 +108,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
 }
 
 int block_claim(int32_t num_blocks, ddhcp_config* config) {
-  DEBUG("block_claim(blocks, %i, config)\n", num_blocks);
+  DEBUG("block_claim(blocks, count:%i, config)\n", num_blocks);
 
   // Handle blocks already in claiming prozess
   struct list_head* pos, *q;
@@ -151,7 +151,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
         config->claiming_blocks_amount++;
       } else {
         // We are short on free blocks in the network.
-        WARNING("Warning: Network has no free blocks left!\n");
+        WARNING("block_claim(...): Network has no free blocks left!\n");
         // TODO In a future version we could start to forward DHCP requests
         //      to other servers.
       }
@@ -224,7 +224,7 @@ uint32_t block_num_free_leases(ddhcp_config* config) {
     block++;
   }
 
-  DEBUG("block_num_free_leases(...): Found %lu free dhcp leases in OUR (%lu) blocks\n", free_leases, num_blocks);
+  DEBUG("block_num_free_leases(...): Found %lu free DHCP leases in OUR (%lu) blocks\n", free_leases, num_blocks);
   return free_leases;
 }
 
@@ -252,9 +252,9 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   if (selected) {
-    DEBUG("block_find_free_leases(blocks,config): Block %i selected\n", selected->index);
+    DEBUG("block_find_free_leases(...): Block %i selected\n", selected->index);
   } else {
-    DEBUG("block_find_free_leases(blocks,config): No block found!\n");
+    DEBUG("block_find_free_leases(...): No block found!\n");
   }
 #endif
 
@@ -262,7 +262,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 }
 
 void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
-  DEBUG("block_update_claims(blocks, %i, config)\n", blocks_needed);
+  DEBUG("block_update_claims(blocks, needed:%i, config)\n", blocks_needed);
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
@@ -272,7 +272,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
       if (blocks_needed < 0 && dhcp_num_free(block) == config->block_size) {
-        DEBUG("block_update_claims(...): block %i no longer needed\n", block->index);
+        DEBUG("block_update_claims(...): block %i is no longer needed.\n", block->index);
         block_free(block);
         blocks_needed++;
       } else {
@@ -284,7 +284,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   if (our_blocks == 0) {
-    DEBUG("block_update_claims(...): No blocks need claim update.\n");
+    DEBUG("block_update_claims(...): No blocks need claim updates.\n");
     return;
   }
 
@@ -338,7 +338,7 @@ void block_check_timeouts(ddhcp_config* config) {
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE) {
-      INFO("block_check_timeouts(blocks,config): Block %i FREE through timeout.\n", block->index);
+      INFO("block_check_timeouts(...): Block %i FREE through timeout.\n", block->index);
       block_free(block);
     }
 

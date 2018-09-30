@@ -82,7 +82,7 @@ dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
 
   list_for_each_entry(option, options, option_list) {
     if (option->code == code) {
-      DEBUG("find_in_option_store(...) -> %i\n", code);
+      DEBUG("find_in_option_store(...): Found option with code %i\n", code);
       return option;
     }
   }
@@ -127,7 +127,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
 
     return current;
   } else {
-    DEBUG("set_in_option_store(...): append option\n");
+    DEBUG("set_in_option_store(...): inserting option\n");
 
     list_add_tail(&option->option_list, store);
 
