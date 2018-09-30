@@ -480,8 +480,9 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
 
 int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_t lease_index, ddhcp_config* config) {
   time_t now = time(NULL);
-  dhcp_packet* packet = build_initial_packet(request);
   dhcp_lease* lease = lease_block->addresses + lease_index;
+
+  dhcp_packet* packet = build_initial_packet(request);
 
   if (!packet) {
     WARNING("dhcp_ack(...): packed memory allocation failed\n");
