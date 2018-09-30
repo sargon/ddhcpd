@@ -6,13 +6,13 @@
 extern int log_level;
 
 int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config) {
-  // TODO Rethink command handling and command design
-  DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
-
   if (msglen == 0) {
     DEBUG("handle_command(...): zero length command received\n");
     return -2;
   }
+
+  // TODO Rethink command handling and command design
+  DEBUG("handle_command(socket, cmd:%u, len:%i, blocks, config)\n", buffer[0], msglen);
 
   switch (buffer[0]) {
   case DDHCPCTL_BLOCK_SHOW:
