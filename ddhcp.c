@@ -120,7 +120,7 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
 }
 
 void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  DEBUG("ddhcp_block_process_inquire(blocks,packet,config)\n");
+  DEBUG("ddhcp_block_process_inquire(packet,config)\n");
 
   assert(packet->command == 2);
   time_t now = time(NULL);

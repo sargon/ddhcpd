@@ -236,7 +236,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
 }
 
 ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
-  DEBUG("dhcp_packet_send(%i, dhcp_packet)\n", socket);
+  DEBUG("dhcp_packet_send(socket:%i, dhcp_packet)\n", socket);
   uint16_t tmp16;
   uint32_t tmp32;
 

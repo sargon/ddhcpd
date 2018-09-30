@@ -302,7 +302,7 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
 }
 
 ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
-  DEBUG("send_packet_direct(packet,%i)\n", multicast_socket);
+  DEBUG("send_packet_direct(packet,dest,mcsocket:%i,scope:%u)\n", multicast_socket, scope_id);
   size_t len = (size_t)_packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);

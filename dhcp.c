@@ -78,7 +78,7 @@ void _dhcp_release_lease(ddhcp_block* block, uint32_t lease_index) {
 }
 
 dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
-  DEBUG("build_initial_packet(from_client, packet)\n");
+  DEBUG("build_initial_packet(from_client)\n");
 
   dhcp_packet* packet = (dhcp_packet*) calloc(sizeof(dhcp_packet), 1);
 
@@ -177,7 +177,7 @@ int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
 }
 
 int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
-  DEBUG("dhcp_hdl_discover( %i, packet, blocks, config)\n", socket);
+  DEBUG("dhcp_hdl_discover(socket:%i, packet, config)\n", socket);
 
   time_t now = time(NULL);
   ddhcp_block* lease_block = block_find_free_leases(config);
@@ -227,7 +227,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
 }
 
 int dhcp_rhdl_request(uint32_t* address, ddhcp_config* config) {
-  DEBUG("dhcp_rhdl_request(address,blocks,config)\n");
+  DEBUG("dhcp_rhdl_request(address,config)\n");
 
   time_t now = time(NULL);
   ddhcp_block* lease_block = NULL;
@@ -277,7 +277,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
 }
 
 int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* config) {
-  DEBUG("dhcp_hdl_request( %i, dhcp_packet, blocks, config)\n", socket);
+  DEBUG("dhcp_hdl_request(socket:%i, dhcp_packet, config)\n", socket);
 
   // search the lease we may have offered
 
@@ -416,7 +416,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
 }
 
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
-  DEBUG("dhcp_hdl_release(dhcp_packet, blocks, config)\n");
+  DEBUG("dhcp_hdl_release(dhcp_packet,config)\n");
 
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;

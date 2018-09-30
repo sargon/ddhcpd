@@ -64,7 +64,7 @@ void block_free(ddhcp_block* block) {
 }
 
 ddhcp_block* block_find_free(ddhcp_config* config) {
-  DEBUG("block_find_free(blocks,config)\n");
+  DEBUG("block_find_free(config)\n");
   ddhcp_block* block = config->blocks;
 
   ddhcp_block_list free_blocks;
@@ -116,7 +116,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
 }
 
 int block_claim(int32_t num_blocks, ddhcp_config* config) {
-  DEBUG("block_claim(blocks, count:%i, config)\n", num_blocks);
+  DEBUG("block_claim(count:%i, config)\n", num_blocks);
 
   // Handle blocks already in claiming prozess
   struct list_head* pos, *q;
@@ -213,7 +213,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 }
 
 uint32_t block_num_free_leases(ddhcp_config* config) {
-  DEBUG("block_num_free_leases(blocks,config)\n");
+  DEBUG("block_num_free_leases(config)\n");
 
   ddhcp_block* block = config->blocks;
   uint32_t free_leases = 0;
@@ -237,7 +237,7 @@ uint32_t block_num_free_leases(ddhcp_config* config) {
 }
 
 ddhcp_block* block_find_free_leases(ddhcp_config* config) {
-  DEBUG("block_find_free_leases(blocks,config)\n");
+  DEBUG("block_find_free_leases(config)\n");
 
   ddhcp_block* block = config->blocks;
   ddhcp_block* selected = NULL;
@@ -270,7 +270,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 }
 
 void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
-  DEBUG("block_update_claims(blocks, needed:%i, config)\n", blocks_needed);
+  DEBUG("block_update_claims(needed:%i, config)\n", blocks_needed);
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
@@ -340,7 +340,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
 }
 
 void block_check_timeouts(ddhcp_config* config) {
-  DEBUG("block_check_timeouts(blocks,config)\n");
+  DEBUG("block_check_timeouts(config)\n");
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
 
