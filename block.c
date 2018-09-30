@@ -8,6 +8,10 @@
 
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
+  if(!block) {
+    return 1;
+  }
+
   // Do not allocate memory and initialise, when the block is already allocated
   if (block->addresses) {
     return 0;
