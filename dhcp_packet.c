@@ -189,6 +189,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
   packet->options = (dhcp_option*) calloc(options, sizeof(dhcp_option));
 
   if (!packet->options) {
+    WARNING("ntoh_dhcp_packet(...): option memory allocation failed.\n");
     return -ENOMEM;
   }
 

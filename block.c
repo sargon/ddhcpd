@@ -9,6 +9,7 @@
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
   if(!block) {
+    WARNING("block_alloc(...): No block given to initialize\n");
     return 1;
   }
 
@@ -19,6 +20,7 @@ int block_alloc(ddhcp_block* block) {
 
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
   if (!block->addresses) {
+    WARNING("block_alloc(...): Failed to allocate memory for lease management on block %i\n", block->index);
     return 1;
   }
 
@@ -31,7 +33,13 @@ int block_alloc(ddhcp_block* block) {
 }
 
 int block_own(ddhcp_block* block, ddhcp_config* config) {
+  if(!block) {
+    WARNING("block_own(...): No block given to own\n");
+    return 1;
+  }
+
   if (block_alloc(block)) {
+    WARNING("block_own(...): Failed to initialize block %i for owning\n", block->index);
     return 1;
   }
 
