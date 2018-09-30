@@ -252,6 +252,7 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
     tmp32 = htonl(packet->renew_payload->lease_seconds);
     copy_var_to_buf_inc(buffer, uint32_t, tmp32);
     memcpy(buffer, &packet->renew_payload->chaddr, 16);
+    break;
 
   default:
 
