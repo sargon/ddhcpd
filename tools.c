@@ -24,7 +24,7 @@ dhcp_option* parse_option() {
   char* len_s = strchr(optarg, ':');
 
   if (!len_s) {
-    ERROR("Malformed dhcp option '%s'\n", optarg);
+    ERROR("parse_option(...): Malformed dhcp option '%s'\n", optarg);
     exit(1);
   }
 
@@ -33,7 +33,7 @@ dhcp_option* parse_option() {
   char* payload_s = strchr(len_s, ':');
 
   if (!payload_s) {
-    ERROR("Malformed dhcp option '%s'\n", optarg);
+    ERROR("parse_option(...): Malformed dhcp option '%s'\n", optarg);
     exit(1);
   }
 
@@ -45,7 +45,7 @@ dhcp_option* parse_option() {
   dhcp_option* option = (dhcp_option*) malloc(sizeof(dhcp_option));
 
   if (!option) {
-    ERROR("Failed to allocate memory for dhcp option '%s'\n", optarg);
+    ERROR("parse_option(...): Failed to allocate memory for dhcp option '%s'\n", optarg);
     exit(1);
   }
 
@@ -54,7 +54,7 @@ dhcp_option* parse_option() {
   option->payload = (uint8_t*)calloc(len, sizeof(uint8_t));
 
   if (!option->payload) {
-    ERROR("Failed to allocate memory for dhcp option payload '%s'\n", optarg);
+    ERROR("parse_option(...): Failed to allocate memory for dhcp option payload '%s'\n", optarg);
     free(option);
     exit(1);
   }
@@ -63,7 +63,7 @@ dhcp_option* parse_option() {
     char* next_payload_s = strchr(payload_s, '.');
 
     if (!next_payload_s && (i + 1 < len)) {
-      ERROR("Malformed dhcp option '%s' to few payload\n", optarg);
+      ERROR("parse_option(...): Malformed dhcp option '%s': too little payload\n", optarg);
       exit(1);
     }
 

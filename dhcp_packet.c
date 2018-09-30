@@ -162,13 +162,13 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
     }
 
     if (option + 1 > buffer + len) {
-      WARNING("DHCP options ended improperly, possible broken client.\n");
+      WARNING("ntoh_dhcp_packet(...): DHCP options ended improperly, possible broken client.\n");
       return -4;
     }
 
     if (option + option[1] + 2 > buffer + len) {
       // Error: Malformed dhcp options
-      WARNING("DHCP options smaller than len of last option suggest, possible broken client.\n");
+      WARNING("ntoh_dhcp_packet(...): DHCP options smaller than len of last option suggests, possible broken client.\n");
       return -5;
     } else {
       option += (uint8_t) option[1] + 2;
@@ -177,12 +177,12 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
   }
 
   if (dhcp_message_type != 1) {
-    INFO("Message contains no message type - invalid!\n");
+    INFO("ntoh_dhcp_packet(...): Message contains no message type - invalid!\n");
     return -6;
   }
 
   if (dhcp_request_list != 1) {
-    DEBUG("Message contains no dhcp request list - broken client?\n");
+    DEBUG("ntoh_dhcp_packet(...): Message contains no DHCP request list - broken client?\n");
   }
 
   packet->options_len = (uint8_t)options;
@@ -358,7 +358,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   dhcp_packet* copy = calloc(1, sizeof(dhcp_packet));
 
   if (!copy) {
-    ERROR("dhcp_packet_list_add( ... ) -> Unable to allocate memory");
+    ERROR("dhcp_packet_list_add(...): Unable to allocate memory\n");
     return 1;
   }
 
@@ -377,15 +377,15 @@ dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t
 
     if (packet->xid == xid) {
       if (memcmp(packet->chaddr, chaddr, 16) == 0) {
-        DEBUG("dhcp_packet_list_find( ... ) -> packet found\n");
+        DEBUG("dhcp_packet_list_find(...): packet found\n");
         list_del(pos);
         return packet;
       }
     } else {
-      DEBUG("dhcp_packet_list_find( ... ): Packet (%u)\n", packet->xid);
+      DEBUG("dhcp_packet_list_find(...): Packet (%u)\n", packet->xid);
     }
   }
-  DEBUG("dhcp_packet_list_find( ... ) -> No matching packet found\n");
+  DEBUG("dhcp_packet_list_find(...): No matching packet found\n");
   return NULL;
 }
 
@@ -426,7 +426,7 @@ void dhcp_packet_list_timeout(dhcp_packet_list* list) {
     if (packet->timeout < now) {
       list_del(pos);
       dhcp_packet_free(packet, 1);
-      DEBUG("dhcp_packet_list_timeout( ... ): drop packet from cache\n");
+      DEBUG("dhcp_packet_list_timeout(...): drop packet from cache\n");
     }
   }
 }

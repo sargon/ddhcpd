@@ -10,7 +10,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
   DEBUG("hook(%i,%s,%s,config)\n", type, inet_ntoa(*address), hwaddr2c(chaddr));
 
   if (!config->hook_command) {
-    DEBUG("hook( ... ): No hook command set");
+    DEBUG("hook(...): No hook command set\n");
     return;
   }
 
@@ -32,7 +32,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
   }
 
   if (!action) {
-    DEBUG("hook: unknown hook type: %i\n", type);
+    DEBUG("hook(...): unknown hook type: %i\n", type);
     return;
   }
 
@@ -40,7 +40,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 
   if (pid < 0) {
     // TODO: Include errno from fork
-    FATAL("hook( ... ): Failed to fork() for hook command execution (errno: %i).\n", pid);
+    FATAL("hook(...): Failed to fork() for hook command execution (errno: %i).\n", pid);
     return;
   }
 
@@ -66,7 +66,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 
   if (err < 0) {
     // TODO: Logging from the child should be synchronized
-    FATAL("hook( ... ): Command could not be executed (errno: %i).\n", err);
+    FATAL("hook(...): Command could not be executed (errno: %i).\n", err);
   }
 
   exit(1);
@@ -75,7 +75,7 @@ void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* 
 void cleanup_process_table(int signum)
 {
   UNUSED(signum);
-  DEBUG("signal: %i\n", signum);
+  DEBUG("cleanup_process_table(...): Got signal %i\n", signum);
   wait(NULL);
 }
 

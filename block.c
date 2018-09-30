@@ -50,7 +50,7 @@ void block_free(ddhcp_block* block) {
   }
 
   if (block->addresses) {
-    DEBUG("Free DHCP leases for Block %i\n", block->index);
+    DEBUG("block_free(%i): Freeing DHCP leases\n", block->index);
     free(block->addresses);
     block->addresses = NULL;
   }
@@ -81,7 +81,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   if (num_free_blocks > 0) {
     r = (uint32_t)rand() % num_free_blocks;
   } else {
-    DEBUG("block_find_free(...) -> no free block found\n");
+    DEBUG("block_find_free(...): no free block found\n");
     return NULL;
   }
 
@@ -100,9 +100,9 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   }
 
   if(random_free) {
-    DEBUG("block_find_free(...)-> block %i\n", random_free->index);
+    DEBUG("block_find_free(...): found block %i\n", random_free->index);
   } else {
-    WARNING("block_find_free(...)-> no free block found\n");
+    WARNING("block_find_free(...): no free block found\n");
   }
 
   return random_free;
@@ -126,11 +126,11 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
       //Reduce number of blocks we need to claim
       num_blocks--;
 
-      INFO("Block %i claimed after 3 claims.\n", block->index);
+      INFO("block_claim(...): block %i claimed after 3 claims.\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
     } else if (block->state != DDHCP_CLAIMING) {
-      DEBUG("block_claim(...): block %i is no longer marked as claiming\n", block->index);
+      DEBUG("block_claim(...): block %i is no longer marked for claiming\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
     }
@@ -165,7 +165,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   //      of blocks for which we had less claim announcements.
 
   if (config->claiming_blocks_amount < 1) {
-    DEBUG("block_claim(...)-> No blocks need claiming.\n");
+    DEBUG("block_claim(...): No blocks need claiming.\n");
     return 0;
   }
 
@@ -173,7 +173,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_INQUIRE, config);
 
   if (!packet) {
-    WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet.\n");
+    WARNING("block_claim(...): Failed to allocate ddhcpd mcast packet.\n");
     return -ENOMEM;
   }
 
@@ -183,7 +183,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   if (!packet->payload) {
     free(packet);
-    WARNING("block_claim(...)-> Failed to allocate ddhcpd mcast packet payload.\n");
+    WARNING("block_claim(...): Failed to allocate ddhcpd mcast packet payload.\n");
     return -ENOMEM;
   }
 
@@ -205,7 +205,8 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 }
 
 uint32_t block_num_free_leases(ddhcp_config* config) {
-  DEBUG("block_num_free_leases(blocks, config)\n");
+  DEBUG("block_num_free_leases(blocks,config)\n");
+
   ddhcp_block* block = config->blocks;
   uint32_t free_leases = 0;
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -223,7 +224,7 @@ uint32_t block_num_free_leases(ddhcp_config* config) {
     block++;
   }
 
-  DEBUG("block_num_free_leases(...)-> Found %lu free dhcp leases in OUR (%lu) blocks\n", free_leases, num_blocks);
+  DEBUG("block_num_free_leases(...): Found %lu free dhcp leases in OUR (%lu) blocks\n", free_leases, num_blocks);
   return free_leases;
 }
 
@@ -248,11 +249,10 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   }
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
-
   if (selected) {
-    DEBUG("block_find_free_leases(blocks,config) -> Block %i selected\n", selected->index);
+    DEBUG("block_find_free_leases(blocks,config): Block %i selected\n", selected->index);
   } else {
-    DEBUG("block_find_free_leases(blocks,config) -> No block found!\n");
+    DEBUG("block_find_free_leases(blocks,config): No block found!\n");
   }
 
 #endif
@@ -282,14 +282,14 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   if (our_blocks == 0) {
-    DEBUG("block_update_claims(...)-> No blocks need claim update.\n");
+    DEBUG("block_update_claims(...): No blocks need claim update.\n");
     return;
   }
 
   struct ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_UPDATECLAIM, config);
 
   if (!packet) {
-    WARNING("block_update_claims(...)-> Failed to allocate ddhcpd mcast packet.\n");
+    WARNING("block_update_claims(...): Failed to allocate ddhcpd mcast packet.\n");
     return;
   }
 
@@ -298,7 +298,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
 
   if (!packet->payload) {
-    WARNING("block_update_claims(...)-> Failed to allocate ddhcpd packet payload.\n");
+    WARNING("block_update_claims(...): Failed to allocate ddhcpd packet payload.\n");
     free(packet);
     return;
   }
@@ -327,13 +327,13 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
 }
 
 void block_check_timeouts(ddhcp_config* config) {
-  DEBUG("block_check_timeouts(blocks, config)\n");
+  DEBUG("block_check_timeouts(blocks,config)\n");
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->timeout < now && block->state != DDHCP_BLOCKED && block->state != DDHCP_FREE) {
-      INFO("Block %i FREE throught timeout.\n", block->index);
+      INFO("block_check_timeouts(blocks,config): Block %i FREE through timeout.\n", block->index);
       block_free(block);
     }
 

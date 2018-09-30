@@ -40,13 +40,13 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
     break;
 
   default:
-    WARNING("_packet_size( ... ) -> Unknown command: %i/%li\n", command, payload_count);
+    WARNING("_packet_size(...): Unknown command: %i/%li\n", command, payload_count);
     return -1;
     break;
   }
 
   if (len == 0) {
-    ERROR("_packet_size(%i,%li) - calculated zero length!", command, payload_count);
+    ERROR("_packet_size(%i,%li): calculated zero length!", command, payload_count);
   }
 
   return len;
@@ -91,7 +91,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   ssize_t should_len = _packet_size(packet->command, packet->count);
 
   if (should_len != len) {
-    WARNING("Calculated length differ from packet len: %li/%li", len, should_len);
+    WARNING("ntoh_mcast_packet(...): Calculated length differs from packet length: Got %li, expected %li", len, should_len);
     return 1;
   }
 
@@ -119,7 +119,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
     payload = packet->payload;
 
     if (payload == NULL) {
-      WARNING("Failed to allocate packet payload\n");
+      WARNING("ntoh_mcast_packet(...): Failed to allocate packet payload\n");
       return -ENOMEM;
     }
 
@@ -144,7 +144,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
     payload = packet->payload;
 
     if (payload == NULL) {
-      WARNING("Failed to allocate packet payload\n");
+      WARNING("ntoh_mcast_packet(...): Failed to allocate packet payload\n");
       return -ENOMEM;
     }
 
@@ -165,7 +165,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
     packet->renew_payload = (struct ddhcp_renew_payload*) calloc(sizeof(struct ddhcp_renew_payload), 1);
 
     if (packet->renew_payload == NULL) {
-      WARNING("Failed to allocate packet payload\n");
+      WARNING("ntoh_mcast_packet(...): Failed to allocate packet payload\n");
       return -ENOMEM;
     }
 
@@ -179,7 +179,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
     break;
 
   default:
-    ERROR("noth_mcast_packet(...) -> Unknown packet type\n");
+    ERROR("noth_mcast_packet(...): Unknown packet type\n");
     return 2;
     break;
   }
@@ -308,7 +308,7 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
   char* buffer = (char*) calloc(1, len);
 
   if (buffer == NULL) {
-    ERROR("send_packet_direct( ... ) -> Failure\n");
+    ERROR("send_packet_direct(...): Failed to allocate send buffer\n");
     return 1;
   }
 
@@ -323,7 +323,7 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char ipv6_sender[INET6_ADDRSTRLEN];
 
-  DEBUG("Send message to %s\n",
+  DEBUG("Sending message to %s\n",
         inet_ntop(AF_INET6, dest, ipv6_sender, INET6_ADDRSTRLEN));
 
 #endif

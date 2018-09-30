@@ -21,7 +21,7 @@ dhcp_option* find_option(dhcp_option* options, uint8_t len, uint8_t code) {
 }
 
 int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_len, uint8_t* payload) {
-  DEBUG("set_option( options, len:%i, code:%i, payload_len:%i, payload)\n", len, code, payload_len);
+  DEBUG("set_option(options, len:%i, code:%i, payload_len:%i, payload)\n", len, code, payload_len);
 
   for (int i = len - 1; i >= 0; i--) {
     DEBUG("set_option(...) %i\n", i);
@@ -32,13 +32,13 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
       option->len = payload_len;
       option->payload = payload;
 
-      DEBUG("set_option(...) -> set option at %i \n", i);
+      DEBUG("set_option(...): set option at %i\n", i);
 
       return 0;
     }
   }
 
-  DEBUG("set_option(...) -> failed\n");
+  DEBUG("set_option(...): failed\n");
   return 1;
 }
 
@@ -46,7 +46,7 @@ int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t
   dhcp_option* option = find_in_option_store(store, code);
 
   if (!option) {
-    DEBUG("set_option_from_store( ... ) -> Option %u not found in store\n", code);
+    DEBUG("set_option_from_store(...): Option %u not found in store\n", code);
     return 1;
   }
 
@@ -62,7 +62,7 @@ int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_
 
   int optlen = option ? option->len : 0;
 
-  DEBUG("find_option_parameter_request_list(...) -> %i\n", optlen);
+  DEBUG("find_option_parameter_request_list(...): Length %i\n", optlen);
 
   return optlen;
 }
@@ -71,13 +71,13 @@ int find_option_parameter_request_list(dhcp_option* options, uint8_t len, uint8_
 uint8_t* find_option_requested_address(dhcp_option* options, uint8_t len) {
   dhcp_option* option = find_option(options, len, DHCP_CODE_REQUESTED_ADDRESS);
 
-  DEBUG("find_option_requested_address(...) -> address %s\n", option ? "found" : "not found");
+  DEBUG("find_option_requested_address(...): address %s\n", option ? "found" : "not found");
 
   return option ? option->payload : NULL;
 }
 
 dhcp_option* find_in_option_store(dhcp_option_list* options, uint8_t code) {
-  DEBUG("find_in_option_store( store, code: %i)\n", code);
+  DEBUG("find_in_option_store(store, code:%i)\n", code);
 
   dhcp_option* option;
 
@@ -110,12 +110,12 @@ uint32_t find_in_option_store_address_lease_time(dhcp_option_list* options) {
 }
 
 dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
-  DEBUG("set_in_option_store( store, code/len: %i/%i)\n", option->code, option->len);
+  DEBUG("set_in_option_store(store, code:%i, len%i)\n", option->code, option->len);
 
   dhcp_option* current = find_in_option_store(store, option->code);
 
   if (current) {
-    DEBUG("set_in_option_store(...) -> replace option\n");
+    DEBUG("set_in_option_store(...): replace option\n");
 
     // Replacing current with new option
 
@@ -128,7 +128,7 @@ dhcp_option* set_option_in_store(dhcp_option_list* store, dhcp_option* option) {
 
     return current;
   } else {
-    DEBUG("set_in_option_store(...) -> append option\n");
+    DEBUG("set_in_option_store(...): append option\n");
 
     list_add_tail(&option->option_list, store);
 

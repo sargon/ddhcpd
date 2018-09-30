@@ -6,17 +6,17 @@
 #include "tools.h"
 
 int ddhcp_block_init(ddhcp_config* config) {
+  DEBUG("ddhcp_block_init(config)\n");
 
   if (config->number_of_blocks < 1) {
-    FATAL("ddhcp_block_init(...)-> Need at least 1 blocks to be configured\n");
+    FATAL("ddhcp_block_init(...): Need at least 1 block to be configured\n");
     return 1;
   }
 
-  DEBUG("ddhcp_block_init(config)\n");
   config->blocks = (struct ddhcp_block*) calloc(sizeof(struct ddhcp_block), config->number_of_blocks);
 
   if (!config->blocks) {
-    FATAL("ddhcp_block_init(...)-> Can't allocate memory for block structure\n");
+    FATAL("ddhcp_block_init(...): Can't allocate memory for block structure\n");
     return 1;
   }
 
@@ -73,13 +73,14 @@ void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sende
 
     free(packet.payload);
   } else {
-    DEBUG("epoll_ret: %i\n", ret);
+    DEBUG("ddhcp_block_process(...): epoll returned status %i\n", ret);
   }
 
 }
 
 void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  DEBUG("ddhcp_block_process_claims(packet, config )\n");
+  DEBUG("ddhcp_block_process_claims(packet,config)\n");
+
   assert(packet->command == 1);
   time_t now = time(NULL);
 
@@ -108,16 +109,17 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
       memcpy(&blocks[block_index].node_id, &packet->node_id, sizeof(ddhcp_node_id));
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
       char ipv6_sender[INET6_ADDRSTRLEN];
-      DEBUG("Register block to %s\n",
+      DEBUG("ddhcp_block_process_claims(...): Register block to %s\n",
             inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
-      INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with ttl: %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
+      INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with TTL %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
 }
 
 void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  DEBUG("ddhcp_block_process_inquire( blocks, packet, config )\n");
+  DEBUG("ddhcp_block_process_inquire(blocks,packet,config)\n");
+
   assert(packet->command == 2);
   time_t now = time(NULL);
   ddhcp_block* blocks = config->blocks;
@@ -134,22 +136,22 @@ void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config
 
     if (blocks[tmp->block_index].state == DDHCP_OURS) {
       // Update Claims
-      INFO("ddhcp_block_process_inquire(...): block %i is ours notify network", tmp->block_index);
+      INFO("ddhcp_block_process_inquire(...): block %i is ours, notify network\n", tmp->block_index);
       blocks[tmp->block_index].timeout = 0;
       block_update_claims(0, config);
     } else if (blocks[tmp->block_index].state == DDHCP_CLAIMING) {
-      INFO("ddhcp_block_process_inquire(...): we are interested in block %i also\n", tmp->block_index);
+      INFO("ddhcp_block_process_inquire(...): we are furthermore interested in block %i\n", tmp->block_index);
 
       // QUESTION Why do we need multiple states for the same process?
       if (NODE_ID_CMP(packet->node_id, config->node_id) > 0) {
-        INFO("ddhcp_block_process_inquire(...): .. but other node wins.\n");
+        INFO("ddhcp_block_process_inquire(...): ... but other node wins.\n");
         blocks[tmp->block_index].state = DDHCP_TENTATIVE;
         blocks[tmp->block_index].timeout = now + config->tentative_timeout;
       }
 
       // otherwise keep inquiring, the other node should see our inquires and step back.
     } else {
-      INFO("ddhcp_block_process_inquire(...): set block %i to tentative \n", tmp->block_index);
+      INFO("ddhcp_block_process_inquire(...): set block %i to tentative\n", tmp->block_index);
       blocks[tmp->block_index].state = DDHCP_TENTATIVE;
       blocks[tmp->block_index].timeout = now + config->tentative_timeout;
     }
@@ -186,11 +188,11 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
 }
 
 void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
-  DEBUG("ddhcp_dhcp_renewlease(request, config)\n");
+  DEBUG("ddhcp_dhcp_renewlease(request,config)\n");
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(packet->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_renewlease( ... ): Request for xid: %u chaddr: %s\n", packet->renew_payload->xid, hwaddr);
+  DEBUG("ddhcp_dhcp_renewlease(...): Request for xid: %u chaddr: %s\n", packet->renew_payload->xid, hwaddr);
   free(hwaddr);
 #endif
 
@@ -199,20 +201,20 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
   ddhcp_mcast_packet* answer = NULL;
 
   if (ret == 0) {
-    DEBUG("ddhcp_dhcp_renewlease( ... ): %i ACK\n", ret);
+    DEBUG("ddhcp_dhcp_renewlease(...): %i ACK\n", ret);
     answer = new_ddhcp_packet(DDHCP_MSG_LEASEACK, config);
   } else if (ret == 1) {
-    DEBUG("ddhcp_dhcp_renewlease( ... ): %i NAK\n", ret);
+    DEBUG("ddhcp_dhcp_renewlease(...): %i NAK\n", ret);
     answer = new_ddhcp_packet(DDHCP_MSG_LEASENAK, config);
     // TODO Can we hand over the block?
   } else {
     // Unexpected behaviour
-    WARNING("ddhcp_dhcp_renewlease( ... ) -> Unexpected return value from dhcp_rhdl_request.");
+    WARNING("ddhcp_dhcp_renewlease(...): Unexpected return value from dhcp_rhdl_request.");
     return;
   }
 
   if (!answer) {
-    WARNING("ddhcp_dhcp_renewlease( ... ) -> Failed to allocate memory for ddhcpd mcast packet.\n");
+    WARNING("ddhcp_dhcp_renewlease(...): Failed to allocate memory for ddhcpd mcast packet.\n");
     return;
   }
 
@@ -228,14 +230,14 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_leaseack( ... ): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
+  DEBUG("ddhcp_dhcp_leaseack(...): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);
 #endif
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
   if (!packet) {
     // Ignore packet
-    DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
+    DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
     dhcp_rhdl_ack(config->client_socket, packet, config);
@@ -251,14 +253,14 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_leaseack( ... ): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
+  DEBUG("ddhcp_dhcp_leaseack(...): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);
 #endif
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
   if (!packet) {
     // Ignore packet
-    DEBUG("ddhcp_dhcp_leaseack( ... ) -> No matching packet found, ignore message\n");
+    DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
     dhcp_nack(config->client_socket, packet);

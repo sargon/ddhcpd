@@ -50,7 +50,7 @@ void* get_in_addr(struct sockaddr* sa)
  * + Update our claims.
  */
 void house_keeping(ddhcp_config* config) {
-  DEBUG("house_keeping( blocks, config )\n");
+  DEBUG("house_keeping(blocks,config)\n");
   block_check_timeouts(config);
 
   uint32_t spares = block_num_free_leases(config);
@@ -61,7 +61,7 @@ void house_keeping(ddhcp_config* config) {
   block_update_claims(blocks_needed, config);
 
   dhcp_packet_list_timeout(&config->dhcp_packet_cache);
-  DEBUG("house_keeping( ... ) finish\n\n");
+  DEBUG("house_keeping(...) finish\n\n");
 }
 
 void add_fd(int efd, int fd, uint32_t events) {
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
         config.prefix_len = (uint8_t)atoi(cidr);
 
         if (config.prefix_len < 8) {
-          ERROR("Are you the internet, cidr less than 8?!\n");
+          ERROR("Are you the internet? CIDR less than 8 seems strange.\n");
           exit(1);
         }
       } while (0);
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
           char ipv6_sender[INET6_ADDRSTRLEN];
-          DEBUG("Receive message from %s\n",
+          DEBUG("Received message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
           ddhcp_dhcp_process(buffer, len, sender, &config);
@@ -433,7 +433,7 @@ int main(int argc, char** argv) {
         while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
           char ipv6_sender[INET6_ADDRSTRLEN];
-          DEBUG("Receive message from %s\n",
+          DEBUG("Received message from %s\n",
                 inet_ntop(AF_INET6, get_in_addr((struct sockaddr*)&sender), ipv6_sender, INET6_ADDRSTRLEN));
 #endif
           ddhcp_block_process(buffer, len, sender, &config);
@@ -461,7 +461,7 @@ int main(int argc, char** argv) {
         bytes = read(events[i].data.fd, buffer, 1500);
 
         if (handle_command(events[i].data.fd, buffer, bytes, &config) < 0) {
-          ERROR("Malformed command\n");
+          ERROR("Malformed command on control socket.\n");
         }
 
         del_fd(efd, events[i].data.fd, 0);

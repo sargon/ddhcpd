@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
   }
 
   if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
-    perror("can't create socket:");
+    perror("can't create socket");
     free(buffer);
     return (-1);
   }
@@ -134,14 +134,14 @@ int main(int argc, char** argv) {
   int ret = fcntl(ctl_sock, F_GETFL, 0);
 
   if (ret < 0) {
-    perror("Cant't set stuff:");
+    perror("Cant't set stuff");
   }
 
   ssize_t bw = send(ctl_sock, buffer, msglen, 0);
 
   if (bw < msglen) {
-    printf("Wrote %i / %u bytes to control socket", (int) bw, msglen);
-    perror("send error:");
+    printf("Wrote %i / %u bytes to control socket\n", (int) bw, msglen);
+    perror("send error");
     return -1;
   }
 
