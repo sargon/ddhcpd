@@ -107,11 +107,13 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
       // We need to contact him, for dhcp forwarding actions.
       memcpy(&blocks[block_index].owner_address, &packet->sender->sin6_addr, sizeof(struct in6_addr));
       memcpy(&blocks[block_index].node_id, &packet->node_id, sizeof(ddhcp_node_id));
+
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
       char ipv6_sender[INET6_ADDRSTRLEN];
       DEBUG("ddhcp_block_process_claims(...): Register block to %s\n",
             inet_ntop(AF_INET6, &blocks[block_index].owner_address, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
+
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims block %i with TTL %i\n", HEX_NODE_ID(packet->node_id), block_index, claim->timeout);
     }
   }
