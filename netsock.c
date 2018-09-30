@@ -105,8 +105,8 @@ int control_open(ddhcp_config* state) {
   }
 
   state->control_socket = ctl_sock;
-
   return 0;
+
 err:
   close(ctl_sock);
   return -1;

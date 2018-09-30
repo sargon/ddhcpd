@@ -99,4 +99,3 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
 
   return -1;
 }
-

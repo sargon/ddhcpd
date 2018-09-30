@@ -202,6 +202,7 @@ void dhcp_options_show(int fd, ddhcp_config* config) {
   dprintf(fd, "DHCP Lease Time: %u\n\n", find_in_option_store_address_lease_time(&config->options));
   dprintf(fd, "DHCP Disabled: %u\n", config->disable_dhcp);
   dprintf(fd, "DHCP Option Store\ncode\tlen\tpayload\n");
+
   list_for_each_entry(option, store, option_list) {
     dprintf(fd, "%i\t%i\t", option->code, option->len);
 

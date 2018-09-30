@@ -32,6 +32,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhc
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   DEBUG("find_lease_from_address(%s, ...)\n", inet_ntoa(*addr));
 #endif
+
   ddhcp_block* blocks = config->blocks;
   uint32_t address = (uint32_t) addr->s_addr;
 
@@ -328,6 +329,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         memcpy(&payload.address, &requested_address, sizeof(struct in_addr));
         payload.xid = request->xid;
         payload.lease_seconds = 0;
+
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
         char* hwaddr = hwaddr2c(payload.chaddr);
         DEBUG("dhcp_hdl_request(...): Save request for xid: %u chaddr: %s\n", payload.xid, hwaddr);
@@ -413,12 +415,13 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
 
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
   DEBUG("dhcp_hdl_release(dhcp_packet, blocks, config)\n");
+
   ddhcp_block* lease_block = NULL;
   uint32_t lease_index = 0;
+
   struct in_addr addr;
   memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
   uint8_t found = find_lease_from_address(&addr, config, &lease_block, &lease_index);
-
 
   dhcp_lease* lease;
 

@@ -385,7 +385,9 @@ dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t
       DEBUG("dhcp_packet_list_find(...): Packet (%u)\n", packet->xid);
     }
   }
+
   DEBUG("dhcp_packet_list_find(...): No matching packet found\n");
+
   return NULL;
 }
 

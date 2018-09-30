@@ -325,7 +325,6 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
 
   DEBUG("Sending message to %s\n",
         inet_ntop(AF_INET6, dest, ipv6_sender, INET6_ADDRSTRLEN));
-
 #endif
 
   hton_packet(packet, buffer);

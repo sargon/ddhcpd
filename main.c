@@ -122,7 +122,6 @@ void handle_signal_terminate(int sig_nr) {
   }
 }
 
-
 int main(int argc, char** argv) {
 
   srand((unsigned int)time(NULL));

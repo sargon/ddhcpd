@@ -122,6 +122,7 @@ void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config
 
   assert(packet->command == 2);
   time_t now = time(NULL);
+
   ddhcp_block* blocks = config->blocks;
 
   for (unsigned int i = 0; i < packet->count; i++) {
@@ -228,11 +229,13 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
 void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
+
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_leaseack(...): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);
 #endif
+
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
   if (!packet) {
@@ -251,11 +254,13 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
 void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
+
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
   DEBUG("ddhcp_dhcp_leaseack(...): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
   free(hwaddr);
 #endif
+
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
   if (!packet) {

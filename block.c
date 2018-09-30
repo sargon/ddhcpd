@@ -18,7 +18,6 @@ int block_alloc(ddhcp_block* block) {
   }
 
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
-
   if (!block->addresses) {
     return 1;
   }
@@ -189,6 +188,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   int index = 0;
   ddhcp_block* block;
+
   list_for_each_entry(block, &config->claiming_blocks, claim_list) {
     block->claiming_counts++;
     packet->payload[index].block_index = block->index;
@@ -230,8 +230,10 @@ uint32_t block_num_free_leases(ddhcp_config* config) {
 
 ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   DEBUG("block_find_free_leases(blocks,config)\n");
+
   ddhcp_block* block = config->blocks;
   ddhcp_block* selected = NULL;
+
   uint32_t selected_free_leases = (uint32_t)config->block_size + 1;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
@@ -254,8 +256,8 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   } else {
     DEBUG("block_find_free_leases(blocks,config): No block found!\n");
   }
-
 #endif
+
   return selected;
 }
 
