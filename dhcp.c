@@ -383,10 +383,12 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         for (unsigned int j = 0 ; j < block->subnet_len ; j++) {
           if (lease_iter->state == OFFERED && lease_iter->xid == request->xid) {
             if (memcmp(request->chaddr, lease_iter->chaddr, 16) == 0) {
+              DEBUG("dhcp_hdl_request(...): Found requested lease\n");
+
               lease = lease_iter;
               lease_block = block;
               lease_index = j;
-              DEBUG("dhcp_request(...): Found requested lease\n");
+
               break;
             }
           }

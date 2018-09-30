@@ -311,12 +311,15 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
+      DEBUG("block_update_claims(...): update claim for block %i\n", block->index);
+
+      block->timeout = now + config->block_timeout;
+
       packet->payload[index].block_index = block->index;
       packet->payload[index].timeout     = config->block_timeout;
       packet->payload[index].reserved    = 0;
+
       index++;
-      block->timeout = now + config->block_timeout;
-      DEBUG("block_update_claims(...): update claim for block %i\n", block->index);
     }
 
     block++;
