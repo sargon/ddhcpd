@@ -179,7 +179,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
     break;
 
   default:
-    ERROR("noth_mcast_packet(...): Unknown packet type\n");
+    DEBUG("noth_mcast_packet(...): Unknown packet type\n");
     return 2;
     break;
   }
@@ -255,7 +255,7 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
     break;
 
   default:
-
+    DEBUG("hton_packet(...): Unknown packet type: %i\n", packet->command);
     break;
   }
 
