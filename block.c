@@ -34,11 +34,11 @@ int block_alloc(ddhcp_block* block) {
 int block_own(ddhcp_block* block, ddhcp_config* config) {
   if (block_alloc(block)) {
     return 1;
-  } else {
-    block->state = DDHCP_OURS;
-    NODE_ID_CP(&block->node_id, &config->node_id);
-    return 0;
   }
+
+  block->state = DDHCP_OURS;
+  NODE_ID_CP(&block->node_id, &config->node_id);
+  return 0;
 }
 
 void block_free(ddhcp_block* block) {
