@@ -127,22 +127,22 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 
   if (state->disable_dhcp == 0) {
     if (netsock_openv4(interface_client, state) < 0) {
-      return -1;
+      goto err_nomc;
     }
   }
 
   sock_mc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
-  if (sock_mc  < 0) {
+  if (sock_mc < 0) {
     perror("can't open multicast socket");
-    return -1;
+    goto err_nomc;
   }
 
   sock_srv = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
-  if (sock_srv  < 0) {
+  if (sock_srv < 0) {
     perror("can't open server socket");
-    return -1;
+    goto err_nosrv;
   }
 
   memset(&ifr, 0, sizeof(ifr));
@@ -276,11 +276,13 @@ int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
   state->server_socket = sock_srv;
 
   memcpy(&state->node_id, &hwaddr, sizeof(hwaddr));
-
   return 0;
+
 err:
   close(sock_srv);
+err_nosrv:
   close(sock_mc);
+err_nomc:
   return -1;
 }
 
