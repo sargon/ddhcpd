@@ -24,7 +24,6 @@ int set_option(dhcp_option* options, uint8_t len, uint8_t code, uint8_t payload_
   DEBUG("set_option(options, len:%i, code:%i, payload_len:%i, payload)\n", len, code, payload_len);
 
   for (int i = len - 1; i >= 0; i--) {
-    DEBUG("set_option(...) %i\n", i);
     dhcp_option* option = options + i;
 
     if (option->code == code || option->code == 0) {
