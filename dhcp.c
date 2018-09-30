@@ -307,11 +307,9 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
       DEBUG("dhcp_hdl_request(...): Lease found.\n");
 
       if (lease_block->state == DDHCP_CLAIMED) {
-        if (!lease_block->addresses) {
-          if (block_alloc(lease_block)) {
-            ERROR("dhcp_hdl_request(...): can't allocate requested block");
-            dhcp_nack(socket, request);
-          }
+        if (block_alloc(lease_block)) {
+          ERROR("dhcp_hdl_request(...): can't allocate requested block");
+          dhcp_nack(socket, request);
         }
 
         lease = lease_block->addresses + lease_index;

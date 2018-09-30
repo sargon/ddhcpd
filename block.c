@@ -8,6 +8,11 @@
 
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
+  // Do not allocate memory and initialise, when the block is already allocated
+  if (block->addresses) {
+    return 0;
+  }
+
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
 
   if (!block->addresses) {
