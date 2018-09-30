@@ -10,7 +10,8 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
   DEBUG("handle_command(socket, %u, %i, blocks, config)\n", buffer[0], msglen);
 
   if (msglen == 0) {
-    WARNING("handle_command(...): zero length command received\n");
+    DEBUG("handle_command(...): zero length command received\n");
+    return -2;
   }
 
   switch (buffer[0]) {
