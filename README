@@ -9,20 +9,24 @@ consens about lease state.
 The implementation is very flexible, meaning we do not prevent you from doing
 very stupid stuff, but also allow you maximal adaption.
 
-    Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
+    Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
 
     -h                     This usage information.
     -c CLT-IFACE           Interface on which requests from clients are handled
     -i SRV-IFACE           Interface on which different servers communicate
+    -S                     no Client interface
     -t TENTATIVE           Time required for a block to be claimed
     -N NETWORK/CIDR        Network to announce and manage blocks in
-    -o CODE:LEN:P1. .. .Pn DHCP Option with code.len and #len chars in decimal
+    -o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal
     -b BLKSIZEPOW          Power over two of block size
     -s SPAREBLKS           Amount of spare blocks
     -L                     Deactivate learning phase
     -d                     Run in background and daemonize
     -D                     Run in foreground and log to console (default)
     -C CTRL_PATH           Path to control socket
+    -H COMMAND             Hook to call on events
+    -v                     Print build revision
+    -V                     Increase verbosity, can be specified multiple times
 
 Build
 -----
