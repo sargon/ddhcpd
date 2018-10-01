@@ -201,10 +201,9 @@ int main(int argc, char** argv) {
       early_housekeeping = 1;
       break;
 
-    case 'v':
+    case 'V':
       printf("Revision: %s\n", REVISION);
       return 0;
-      break;
 
     case 'N':
       do {
@@ -232,7 +231,6 @@ int main(int argc, char** argv) {
           exit(1);
         }
       } while (0);
-
       break;
 
     case 'S':
@@ -244,7 +242,6 @@ int main(int argc, char** argv) {
         dhcp_option* option = parse_option();
         set_option_in_store(&config.options, option);
       } while (0);
-
       break;
 
     case 's':
@@ -259,11 +256,10 @@ int main(int argc, char** argv) {
       config.hook_command = optarg;
       break;
 
-    case 'V':
+    case 'v':
       if (log_level < LOG_LEVEL_MAX) {
         log_level++;
       }
-
       break;
 
     default:
@@ -274,7 +270,7 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("Usage: ddhcpd [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
     printf("\n");
     printf("-h                     This usage information.\n");
     printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
@@ -290,8 +286,8 @@ int main(int argc, char** argv) {
     printf("-D                     Run in foreground and log to console (default)\n");
     printf("-C CTRL_PATH           Path to control socket\n");
     printf("-H COMMAND             Hook to call on events\n");
-    printf("-v                     Print build revision\n");
-    printf("-V                     Increase verbosity, can be specified multiple times\n");
+    printf("-V                     Print build revision\n");
+    printf("-v                     Increase verbosity, can be specified multiple times\n");
     exit(0);
   }
 

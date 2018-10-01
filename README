@@ -25,8 +25,8 @@ stupid stuff, but also allow you maximal adaption.
     -D                     Run in foreground and log to console (default)
     -C CTRL_PATH           Path to control socket
     -H COMMAND             Hook to call on events
-    -v                     Print build revision
-    -V                     Increase verbosity, may be specified multiple times
+    -V                     Print build revision
+    -v                     Increase verbosity, may be specified multiple times
 
 Build
 -----
