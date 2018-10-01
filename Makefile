@@ -42,7 +42,6 @@ ifeq ($(DEBUG),1)
 CFLAGS+= \
     -Og -g \
     -fsanitize=address,signed-integer-overflow,undefined \
-    -masm=intel \
     -Wduplicated-cond \
     -Wduplicated-branches \
     -Wnull-dereference \
@@ -84,6 +83,7 @@ clean:
 	-rm -f ${OBJ}
 	-rm -f ${OBJCTL}
 	-rm -f *.d
+	-rm -f *.bal
 	-rm -f *.orig
 
 style:
