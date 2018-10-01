@@ -2,9 +2,9 @@ A Distributed DHCP Daemon
 =========================
 
 In self managed networks with decentralized client realms a central DHCP
-server is not available. DDHCP allows every realm to have its own server,
+server is not available. DDHCP allows every realm to have its own server;
 while preserving roaming features for the client, by maintaining a common
-consens about lease state.
+consens on dhcp leases.
 
 The implementation is very flexible, meaning we do not prevent you from doing
 very stupid stuff, but also allow you maximal adaption.
