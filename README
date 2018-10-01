@@ -44,7 +44,7 @@ or debug symbols and more logging
     DEBUG=1 CFLAGS="-D LOG_LEVEL=20" make clean all
 
 Depending on the choosen variant the binary size may variate between 
-30kb and 130kb.
+30kb and 500kb.
 
 Running
 -------
