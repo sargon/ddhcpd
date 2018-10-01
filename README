@@ -2,12 +2,12 @@ A Distributed DHCP Daemon
 =========================
 
 In self managed networks with decentralized client realms a central DHCP
-server is not available. DDHCP allows every realm to have its own server;
-while preserving roaming features for the client, by maintaining a common
+server is not available. DDHCP allows every realm to have his own server;
+preserving roaming features for the client, by maintaining a common
 consens on dhcp leases.
 
-The implementation is very flexible, meaning we do not prevent you from doing
-very stupid stuff, but also allow you maximal adaption.
+The implementation is flexible, meaning we do not prevent you from doing
+stupid stuff, but also allow you maximal adaption.
 
     Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
 
@@ -26,59 +26,73 @@ very stupid stuff, but also allow you maximal adaption.
     -C CTRL_PATH           Path to control socket
     -H COMMAND             Hook to call on events
     -v                     Print build revision
-    -V                     Increase verbosity, can be specified multiple times
+    -V                     Increase verbosity, may be specified multiple times
 
 Build
 -----
 
+To build a production binary of ddhcpd just
+
+    make clean all
+
+, if you want more logging output
+
+    CFLAGS="-D LOG_LEVEL=20"
+
+or debug symbols and more logging
+
     DEBUG=1 CFLAGS="-D LOG_LEVEL=20" make clean all
+
+Depending on the choosen variant the binary size may variate between 
+30kb and 130kb.
 
 Running
 -------
 
-On a gluon node the command should look like something like this:.
+On a gluon node the command should look this:
 
     ddhcpd -o "3:4:10.116.254.254" -o "1:4:255.255.128.0" -o "28:4:10.116.254.255" -N 10.116.224.0/20 -b 2 -s 1 -c br-client -i bat0
 
-As you can see we can register dhcp options during startup, but we also
-can change the during runtime, i.e. the standard gateway:
+We are able to register dhcp options during startup and also during runtime.
+Using the ddhcpdctl binary, to add i.e. the standard gateway:
 
     ddhcpdctl -o "3:4:10.116.254.253"
 
-or further add knowledge about a emerged timeserver 
+or an emerged timeserver 
 
     ddhcpdctl -o "42:4:10.116.254.252"
 
-and later remove those entries:.
+,and remove:.
 
     ddhcpdctl -r "42"
 
-Be careful with this, as stated above we do not save you from doing dumb things.
+Be careful with this, as expressed above we do not save you from doing dumb things.
 
 Hook
 ----
 
-If you like to act on events of ddhcpd you may register a binary via the '-H' 
-command. Every time an event that binary will be called. The binary is given
-a list of arguments:
+If you want to act on events, you can register a binary via the '-H' 
+command. On every event that binary will be called given a list of arguments:
 
   <command> [lease|release] <ip-addr> <hwaddr>
 
 Testing
 -------
 
-The network-test script can create a setup of virtual interfaces
-which is composed of a <number> of server and client interface pairs.
-Which are called srvX and cltX in the main network namespace and server0
-and client0 in the ''daemon'' network namespace. All srvX are bridged
-via br-srv, so the daemons can talk to each other.
+The network-test script setups a set of virtual interfaces
+which are composed of server and client interface pairs. 
+Those are called srvX for daemons and cltX for clients inside of the main 
+network namespace and server0 and client0 in the ''daemons'' network namespaces.
+All srvX interfaces are bridged in br-srv; enabling all daemons to communicate
+bidirectional.
 
-Inside the daemon network ns the client0 interface has the address 10.0.0.1/20,
-a ipv4 address is needed on this interface so the dhcp part of ddhcp is able
-to bind on this interface. There is no need for an ipv4 address on the server0
-interface because, we use ipv6 multicast and link local addresses for d2d communication.
+Inside of the daemons network namespace the client0 interface has the address 10.0.0.1/20,
+a ipv4 address is needed here, because the dhcp part of ddhcp binds on this interface.
+It is the same address in every daemon namespace, since cltX interfaces are not
+bridged that is no problem. On the server0 interface we need no ipv4 address, 
+because d2d communication is handled via ipv6 multicast/unicast on the local link.
 
-You can setup a basic ddhcp network testing enviroment by calling
+To setup a basic ddhcp network testing enviroment by calling
 
     # ./network-test net-init <number>
 
@@ -86,31 +100,37 @@ to create a virtual network for <number> of ddhcp instances. You
 will need to have priviledges to create network namespaces. Short
 use sudo and check the network-test script upfront.
 
-To start the (n-1)-th instance of ddhcp in your test environment
-use for example, we also reduce the tentative timeout from 12 to 3 seconds:
+To start the (n-1)-th instance of ddhcp in your test environment, use 
 
     # ./network-test srv-start <n> ./ddhcp -t 3
 
-After starting multiple instances you can make dhcp request
-against specific instances of ddhcp by starting dhcp clients pointed
-to the cltX interfaces. For example by
+Above also reduces the tentative timeout from 12 to 3 seconds, 
+speeds up testing.
+
+After starting multiple instances, we generate dhcp request against specific 
+instances of ddhcpd by starting dhcp clients pointed to the cltX interfaces,
+i.e.
 
     # dhclient -sf /dev/null -d -v clt0
 
-for the first ddhcp instance. You can create multiple parallel running clients
-with different mac addresses via:
+for the first ddhcp instance. To create multiple parallel running clients
+with different mac addresses, do:.
 
    # ./network-test clt-start <n>
 
-To deconfigure the setup you can call.
+To deconfigure the setup call:.
 
     # ./network-test net-stop
+
+A simple testing routine incorporating all above:.
+
+    # ./network-test test
 
 Gluon Packages
 --------------
 
-For a maintained gluon package description see
+A maintained gluon integration:.
 
-  https://github.com/sargon/gluon-sargon
+   https://github.com/sargon/gluon-sargon/tree/v2018.x
 
 
