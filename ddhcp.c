@@ -193,11 +193,7 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
 void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_renewlease(request,config)\n");
 
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-  char* hwaddr = hwaddr2c(packet->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_renewlease(...): Request for xid: %u chaddr: %s\n", packet->renew_payload->xid, hwaddr);
-  free(hwaddr);
-#endif
+  DEBUG("ddhcp_dhcp_renewlease(...): Request for xid: %u chaddr: %s\n", packet->renew_payload->xid, hwaddr2c(packet->renew_payload->chaddr));
 
   int ret = dhcp_rhdl_request(&(packet->renew_payload->address), config);
 
@@ -232,11 +228,7 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   // Stub functions
   DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
 
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-  char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_leaseack(...): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
-  free(hwaddr);
-#endif
+  DEBUG("ddhcp_dhcp_leaseack(...): ACK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr2c(request->renew_payload->chaddr));
 
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 
@@ -257,11 +249,7 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   // Stub functions
   DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
 
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-  char* hwaddr = hwaddr2c(request->renew_payload->chaddr);
-  DEBUG("ddhcp_dhcp_leaseack(...): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr);
-  free(hwaddr);
-#endif
+  DEBUG("ddhcp_dhcp_leaseack(...): NAK for xid: %u chaddr: %s\n", request->renew_payload->xid, hwaddr2c(request->renew_payload->chaddr));
 
   dhcp_packet* packet = dhcp_packet_list_find(&config->dhcp_packet_cache, request->renew_payload->xid, request->renew_payload->chaddr);
 

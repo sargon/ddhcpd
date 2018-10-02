@@ -330,11 +330,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         payload.xid = request->xid;
         payload.lease_seconds = 0;
 
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-        char* hwaddr = hwaddr2c(payload.chaddr);
-        DEBUG("dhcp_hdl_request(...): Save request for xid: %u chaddr: %s\n", payload.xid, hwaddr);
-        free(hwaddr);
-#endif
+        DEBUG("dhcp_hdl_request(...): Save request for xid: %u chaddr: %s\n", payload.xid, hwaddr2c(payload.chaddr));
 
         // Send packet
         ddhcp_mcast_packet* packet = new_ddhcp_packet(DDHCP_MSG_RENEWLEASE, config);

@@ -7,11 +7,7 @@
 #include <sys/wait.h>
 
 void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-  char* hwaddr = hwaddr2c(chaddr);
-  DEBUG("hook(type:%i,addr:%s,chaddr:%s,config)\n", type, inet_ntoa(*address), hwaddr);
-  free(hwaddr);
-#endif
+  DEBUG("hook(type:%i,addr:%s,chaddr:%s,config)\n", type, inet_ntoa(*address), hwaddr2c(chaddr));
 
   if (!config->hook_command) {
     DEBUG("hook(...): No hook command set\n");
