@@ -274,11 +274,11 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  int32_t timeout_half = (int32_t)(config->block_timeout * (int32_t)(config->block_refresh_factor) / (config->block_refresh_factor + 1));
+  int32_t timeout_factor = (int32_t)(config->block_timeout / config->block_refresh_factor);
 
   // TODO Use a linked list instead of processing the block list twice.
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
+    if (block->state == DDHCP_OURS && block->timeout < now + timeout_factor) {
       if (blocks_needed < 0 && dhcp_num_free(block) == config->block_size) {
         DEBUG("block_update_claims(...): block %i is no longer needed.\n", block->index);
         block_free(block);
@@ -318,7 +318,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   block = config->blocks;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    if (block->state == DDHCP_OURS && block->timeout < now + timeout_half) {
+    if (block->state == DDHCP_OURS && block->timeout < now + timeout_factor) {
       DEBUG("block_update_claims(...): update claim for block %i\n", block->index);
 
       block->timeout = now + config->block_timeout;
