@@ -95,10 +95,13 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
       continue;
     }
 
-    if (blocks[block_index].state == DDHCP_OURS) {
+    if (blocks[block_index].state == DDHCP_OURS && NODE_ID_CMP(packet->node_id, config->node_id) < 0) {
       INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims our block %i\n", HEX_NODE_ID(packet->node_id), block_index);
       // TODO Decide when and if we reclaim this block
       //      Which node has more leases in this block, ..., who has the better node_id.
+      // Unrelated from the above, the original concept is claiming the block now.
+      blocks[block_index].timeout = 0;
+      block_update_claims(0, config);
     } else {
       // Notice the ownership
       blocks[block_index].state = DDHCP_CLAIMED;
