@@ -26,7 +26,7 @@ stupid stuff, but also allow you maximal adaption.
     -C CTRL_PATH           Path to control socket
     -H COMMAND             Hook to call on events
     -v                     Print build revision
-    -V                     Increase verbosity, may be specified multiple times
+    -V                     Increase verbosity, can be specified multiple times
 
 Build
 -----
