@@ -9,6 +9,7 @@
 
 #include "tools.h"
 #include "control.h"
+#include "version.h"
 
 int main(int argc, char** argv) {
 
@@ -32,7 +33,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  while ((c = getopt(argc, argv, "C:t:l:bdho:r:V:")) != -1) {
+  while ((c = getopt(argc, argv, "C:t:l:bdho:r:v:V")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -73,11 +74,15 @@ int main(int argc, char** argv) {
       path = optarg;
       break;
 
-    case 'V':
+    case 'v':
       msglen = 2;
       buffer[0] = (uint8_t) DDHCPCTL_LOG_LEVEL_SET;
       buffer[1] = (uint8_t) atoi(optarg);
       break;
+
+    case 'V':
+      printf("Revision: %s\n", REVISION);
+      return 0;
 
     default:
       printf("ARGC: %i\n", argc);
@@ -98,14 +103,15 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcpctl [-h|-b|-d|-o <option>|-C PATH]\n");
+    printf("Usage: ddhcpctl [-h|-V|-b|-d|-o <option>|-C PATH|-l TIMEOUT|-v VERBOSITY]\n");
     printf("\n");
     printf("-h                     This usage information.\n");
+    printf("-V                     Print build revision\n");
     printf("-b                     Show current block usage.\n");
     printf("-d                     Show the current dhcp options store.\n");
-    printf("-l                     Set the dhcp lease time.\n");
+    printf("-l TIMEOUT             Set the dhcp lease time.\n");
     printf("-o CODE:LEN:P1. .. .Pn Set DHCP Option with code,len and #len chars in decimal\n");
-    printf("-V LEVEL               Set log level\n");
+    printf("-v LEVEL               Set log level\n");
     printf("-r CODE                Remove DHCP Option");
     printf("-C PATH                Path to control socket\n");
     exit(0);
