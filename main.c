@@ -290,7 +290,7 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT] [-B BLOCK-TIMEOUT]\n");
+    printf("Usage: %s [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT] [-B BLOCK-TIMEOUT]\n", argv[0]);
     printf("\n");
     printf("-h                     This usage information.\n");
     printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
