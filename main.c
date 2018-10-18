@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "block.h"
 #include "ddhcp.h"
@@ -166,7 +167,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:N:o:s:H:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:B:N:o:s:H:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -178,6 +179,21 @@ int main(int argc, char** argv) {
 
     case 'b':
       config.block_size = (uint8_t)(1 << atoi(optarg));
+      break;
+
+    case 'B':
+      {
+        unsigned long block_timeout = strtoul(optarg, NULL, 0);
+        if(!block_timeout) {
+          ERROR("Block timeout must be > 0\n");
+          exit(1);
+        }
+        if(block_timeout == ULONG_MAX && errno) {
+          ERROR("Failed to parse block timeout: %s(%d)\n", strerror(errno), errno);
+          exit(1);
+        }
+        config.block_timeout = (uint16_t)block_timeout;
+      }
       break;
 
     case 't':
@@ -274,7 +290,7 @@ int main(int argc, char** argv) {
   }
 
   if (show_usage) {
-    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]\n");
+    printf("Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT] [-B BLOCK-TIMEOUT]\n");
     printf("\n");
     printf("-h                     This usage information.\n");
     printf("-c CLT-IFACE           Interface on which requests from clients are handled\n");
@@ -284,6 +300,7 @@ int main(int argc, char** argv) {
     printf("-N NETWORK/CIDR        Network to announce and manage blocks in\n");
     printf("-o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
     printf("-b BLKSIZEPOW          Power over two of block size\n");
+    printf("-B TIMEOUT             Block timeout\n");
     printf("-s SPAREBLKS           Amount of spare blocks\n");
     printf("-L                     Deactivate learning phase\n");
     printf("-d                     Run in background and daemonize\n");

@@ -9,7 +9,7 @@ consens on dhcp leases.
 The implementation is flexible, meaning we do not prevent you from doing
 stupid stuff, but also allow you maximal adaption.
 
-    Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT]
+    Usage: ddhcp [-h] [-d|-D] [-L] [-c CLT-IFACE|-S] [-i SRV-IFACE] [-t TENTATIVE-TIMEOUT] [-B BLOCK-TIMEOUT]
 
     -h                     This usage information.
     -c CLT-IFACE           Interface on which requests from clients are handled
@@ -19,6 +19,7 @@ stupid stuff, but also allow you maximal adaption.
     -N NETWORK/CIDR        Network to announce and manage blocks in
     -o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal
     -b BLKSIZEPOW          Power over two of block size
+    -B TIMEOUT             Block timeout
     -s SPAREBLKS           Amount of spare blocks
     -L                     Deactivate learning phase
     -d                     Run in background and daemonize
