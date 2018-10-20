@@ -52,12 +52,29 @@ void ddhcp_block_free(ddhcp_config* config) {
   free(config->blocks);
 }
 
+int ddhcp_check_packet(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+  if (memcmp(&packet->prefix, &config->prefix, sizeof(struct in_addr)) != 0 ||
+      packet->prefix_len != config->prefix_len ||
+      packet->blocksize != config->block_size) {
+    return 1;
+  }
+
+  return 0;
+}
+
 void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
   struct ddhcp_mcast_packet packet;
   ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
   packet.sender = &sender;
 
   if (ret == 0) {
+    // Check if this packet is for our swarm
+    if (ddhcp_check_packet(&packet, config)) {
+      DEBUG("ddhcp_block_process(...): drop foreign packet before processing");
+      free(packet.payload);
+      return;
+    }
+
     switch (packet.command) {
     case DDHCP_MSG_UPDATECLAIM:
       ddhcp_block_process_claims(&packet, config);
@@ -170,6 +187,13 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
   packet.sender = &sender;
 
   if (ret == 0) {
+    // Check if this packet is for our swarm
+    if (ddhcp_check_packet(&packet, config)) {
+      DEBUG("ddhcp_dhcp_process(...): drop foreign packet before processing");
+      free(packet.renew_payload);
+      return;
+    }
+
     switch (packet.command) {
     case DDHCP_MSG_RENEWLEASE:
       ddhcp_dhcp_renewlease(&packet, config);
