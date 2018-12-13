@@ -20,39 +20,57 @@ function isNumber(){
   fi
 }
 
-function buildNS(){
-  local NS_NAME="test$1"
+function buildInterfaces() {
+  local IDX=$1
+  local NS_NAME="ddhcpd$1"
+  # create interfaces for s2s and s2c communication
+  ip link add name "srv${IDX}" type veth peer name "server0" 
+  ip link add name "clt${IDX}" type veth peer name "client0"
+  # create netns for server
   ip netns add "${NS_NAME}" 
+  #  move interfaces into server netns
   ip link set dev "server0" netns "$NS_NAME"
-  ip netns exec "$NS_NAME" ip link set dev "server0" up
   ip link set dev "client0" netns "$NS_NAME"
+  # bring up interfaces
+  ip link set dev "srv${IDX}" up
+  ip netns exec "$NS_NAME" ip link set dev "server0" up
+  ip link set dev "clt${IDX}" up
   ip netns exec "$NS_NAME" ip link set dev "client0" up
+  # configure interfaces in server netns
   ip netns exec "$NS_NAME" ip a a 10.0.0.1/20 dev client0
   ip netns exec "$NS_NAME" ip link set dev lo up
-  sleep 1
-}
-
-function destroyNS(){
-  local NS_NAME="test$1"
-  ip netns delete "${NS_NAME}" 
-}
-
-function buildInterfacePairs() {
-  local IDX=$1
-  ip link add name "srv${IDX}" type veth peer name "server0" type veth
-  ip link add name "clt${IDX}" type veth peer name "client0" type veth
-  for iface in "srv${IDX}" "server0" "clt${IDX}" "client0"; do
-    ip link set dev "${iface}" up
-  done 
-  ip link add name br-clt${IDX} type bridge
+  # network bridge for s2c communication
+  ip link add name br-clt${IDX} type bridge #nf_call_iptables 0 nf_call_ip6tables 0 nf_call_arptables 0
   ip link set dev "clt${IDX}" master "br-clt${IDX}"
-  ip link set dev br-clt${IDX} up
+  ip link set dev "br-clt${IDX}" up
+  # construct netns for each client and attach interfaces to the s2c bridge
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ip link add name "clt${IDX}-${idc}" type veth peer name "clb${IDX}-${idc}" type veth
-    ip link set dev clt${IDX}-${idc} up 
+    ip link add name "clt${IDX}-${idc}" type veth peer name "clb${IDX}-${idc}"
+    # create netns for dhcp client
+    ip netns add "dhcp-${IDX}-${idc}"
+    # move interface into netns and attach to bridge bridge
     ip link set dev "clb${IDX}-${idc}" master "br-clt${IDX}"
+    ip link set dev "clt${IDX}-${idc}" netns "dhcp-${IDX}-${idc}"
+    # bring interfaces up
+    ip netns exec "dhcp-${IDX}-${idc}" ip link set dev "clt${IDX}-${idc}" up 
     ip link set dev "clb${IDX}-${idc}" up
   done
+  # allow forward on bridge
+  iptables -I FORWARD 1 -p all -i "br-clt${IDX}" -j ACCEPT
+}
+
+function destroyInterfaces(){
+  local IDX=$1
+  local NS_NAME="ddhcpd$1"
+  ip netns delete "${NS_NAME}" 
+  ip link delete dev "srv${IDX}" 
+  ip link delete dev "clt${IDX}" 
+  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
+    ip netns del "dhcp-${IDX}-${idc}"
+    ip link delete dev "clb${IDX}-${idc}" 
+  done
+  iptables -D FORWARD -p all -i "br-clt${IDX}" -j ACCEPT
+  ip link delete dev br-clt${IDX} 
 }
 
 function roamClientInterfaces() {
@@ -63,18 +81,8 @@ function roamClientInterfaces() {
   done
 }
 
-function destroyInterfacePairs() {
-  local IDX=$1
-  ip link delete dev "srv${IDX}" 
-  ip link delete dev "clt${IDX}" 
-  for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ip link delete dev "clt${IDX}-${idc}" 
-  done
-  ip link delete dev br-clt${IDX} 
-}
-
 function startServer() {
-  local NS_NAME="test$1"
+  local NS_NAME="ddhcpd$1"
   shift
   echo ip netns exec "${NS_NAME}" $@
   ip netns exec "${NS_NAME}" $@
@@ -85,7 +93,7 @@ function startDHCPClients() {
   shift
   local args="$@"
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ( dhclient -4 -nw -d \
+    ( ip netns exec "dhcp-${IDX}-${idc}" dhclient -4 -nw -d \
         -pf "/tmp/clt${IDX}-${idc}.pid" \
         -lf "/tmp/clt${IDX}-${idc}.lease" \
         $args \
@@ -98,7 +106,7 @@ function stopDHCPClients() {
   local IDX="$1"
   shift
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
-    ( dhclient -r \
+    ( ip netns exec "dhcp-${IDX}-${idc}" dhclient -r \
         -pf "/tmp/clt${IDX}-${idc}.pid" \
         -lf "/tmp/clt${IDX}-${idc}.lease" >> "/tmp/dhclient-${IDX}-${idc}.log" 2>&1
       mv "/tmp/clt${IDX}-${idc}.lease" "/tmp/clt${IDX}-${idc}.lease.old"
@@ -111,30 +119,36 @@ function network-init() {
 
   echo -n "Building Network Namespaces "
   for index in $(seq 0 ${NUMBER_OF_INSTANCES}); do
-    buildInterfacePairs "${index}"
-    buildNS "${index}"
-    #startServer "${index}" "${SERVER_BINARY}" &
+    buildInterfaces "${index}"
     echo -n "."
   done
   echo " done"
   echo "$NUMBER_OF_INSTANCES" > /tmp/ddhcp-netns-count
 
-  echo "Building server bridge"
+  echo -n "Building server bridge "
   ip link add name br-srv type bridge
   ip link set dev br-srv up
   for index in $(seq 0 ${NUMBER_OF_INSTANCES}); do
     ip link set dev "srv${index}" master "br-srv"
+    echo -n "."
   done
+  # allow forward on bridge
+  iptables -I FORWARD -p all -i "br-srv" -j ACCEPT
+  ip6tables -I FORWARD -p all -i "br-srv" -j ACCEPT
+  echo " done"
 }
 
 function network-stop() {
-  echo "Destroy server bridge"
+  echo -n "Destroy server bridge "
   ip link delete dev "br-srv"
+  # remove forward rules
+  iptables -D FORWARD -p all -i "br-srv" -j ACCEPT
+  ip6tables -D FORWARD -p all -i "br-srv" -j ACCEPT
+  echo " done"
 
   echo -n "Destroy Network Namespaces "
   for index in $(seq 0 ${NUM_OF_INTERFACE}); do
-    destroyInterfacePairs "${index}"
-    destroyNS "${index}"
+    destroyInterfaces "${index}"
     echo -n "."
   done
   echo " done"
@@ -191,15 +205,15 @@ case "$1" in
   test)
     # A test routine
     $0 net-init 1
-    trap "pkill dhclient ; pkill ddhcpd ; rm /tmp/ddhcpd-ctl* ; $0 net-stop" EXIT
+    trap "pkill ddhcpd ; rm /tmp/ddhcpd-ctl* 2>&1 > /dev/null; $0 net-stop" EXIT
     # Start two daemons
-    ( $0 srv-start 0 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ) &
-    ( $0 srv-start 1 ./ddhcpd -t 20 -C /tmp/ddhcpd-ctl1 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ) &
-    # Wait some seconds
-    sleep 20
+    echo -n "Startup DDHCPD instances "
+    ( $0 srv-start 0 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+    ( $0 srv-start 1 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+    echo " done"
     # Start some clients 
-    echo "Starting clients on realm 0"
-    $0 clt-start 0 -v
+    echo "Starting clients on realm 0 "
+    startDHCPClients 0 -v
     while :; do
       # Let Clients get a first lease in realm 0
       sleep 60 
