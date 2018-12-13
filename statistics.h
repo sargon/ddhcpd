@@ -4,7 +4,7 @@
 #include "types.h"
 
 #ifdef DDHCPD_STATISTICS
-#define statistics_record(config,type,count) do{config->statistics[type]+=count;}while(0)
+#define statistics_record(config,type,count) do{(config)->statistics[type]+=count;}while(0)
 void statistics_show(int socket, ddhcp_config* config);
 #else
 #define statistics_record(...)
