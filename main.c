@@ -25,6 +25,7 @@
 #include "control.h"
 #include "version.h"
 #include "hook.h"
+#include "statistics.h"
 
 volatile int daemon_running = 0;
 
@@ -149,6 +150,10 @@ int main(int argc, char** argv) {
   config.disable_dhcp = 0;
 
   config.hook_command = NULL;
+
+#ifdef DDHCPD_STATISTICS
+  memset(config.statistics, 0, sizeof(long int) * STAT_NUM_OF_FIELDS);
+#endif
 
   // DHCP
   config.dhcp_port = 67;
@@ -445,6 +450,8 @@ int main(int argc, char** argv) {
           in_addr = get_in_addr((struct sockaddr*)&sender);
           DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
+          statistics_record((&config), STAT_DIRECT_RECV_BYTE, (long int)len);
+          statistics_record((&config), STAT_DIRECT_RECV_PKG, 1);
           ddhcp_dhcp_process(buffer, len, sender, &config);
         }
       } else if (config.mcast_socket == events[i].data.fd) {
@@ -458,6 +465,8 @@ int main(int argc, char** argv) {
           in_addr = get_in_addr((struct sockaddr*)&sender);
           DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
 #endif
+          statistics_record((&config), STAT_MCAST_RECV_BYTE, (long int)len);
+          statistics_record((&config), STAT_MCAST_RECV_PKG, 1);
           ddhcp_block_process(buffer, len, sender, &config);
         }
 
@@ -468,6 +477,8 @@ int main(int argc, char** argv) {
         ssize_t len;
 
         while ((len = read(config.client_socket, buffer, 1500)) > 0) {
+          statistics_record((&config), STAT_DHCP_RECV_BYTE, (long int)len);
+          statistics_record((&config), STAT_DHCP_RECV_PKG, 1);
           need_house_keeping |= dhcp_process(buffer, len, &config);
         }
       } else if (config.control_socket == events[i].data.fd) {

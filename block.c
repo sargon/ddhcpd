@@ -5,6 +5,8 @@
 
 #include "dhcp.h"
 #include "logger.h"
+#include "statistics.h"
+#include "tools.h"
 
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
@@ -205,7 +207,10 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
     index++;
   }
 
-  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   free(packet->payload);
   free(packet);
@@ -259,11 +264,13 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   }
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
+
   if (selected) {
     DEBUG("block_find_free_leases(...): Block %i selected\n", selected->index);
   } else {
     DEBUG("block_find_free_leases(...): No block found!\n");
   }
+
 #endif
 
   return selected;
@@ -333,7 +340,10 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
     block++;
   }
 
-  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   free(packet->payload);
   free(packet);

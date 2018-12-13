@@ -42,7 +42,7 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
  */
 void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config);
 
-int dhcp_nack(int socket, dhcp_packet* from_client);
+int dhcp_nack(int socket, dhcp_packet* from_client, ddhcp_config* config);
 int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_t lease_index, ddhcp_config* config);
 
 /**

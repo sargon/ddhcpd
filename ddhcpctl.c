@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  while ((c = getopt(argc, argv, "C:t:l:bdho:r:v:V")) != -1) {
+  while ((c = getopt(argc, argv, "C:t:l:bdho:sr:v:V")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -49,6 +49,11 @@ int main(int argc, char** argv) {
       // show dhcp
       msglen = 1;
       buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTIONS_SHOW;
+      break;
+
+    case 's':
+      msglen = 1;
+      buffer[0] = (uint8_t) DDHCPCTL_STATISTICS;
       break;
 
     case 'o':

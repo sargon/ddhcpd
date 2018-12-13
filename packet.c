@@ -267,7 +267,7 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
   char* buffer = (char*) calloc(1, len);
 
   if (buffer == NULL) {
-    return 1;
+    return -1;
   }
 
   errno = 0;
@@ -294,11 +294,12 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
 
   memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
 
-  sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+  // TODO Handle return value of sendto.
+  ssize_t bytes_send = sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
   free(buffer);
 
-  return 0;
+  return bytes_send;
 }
 
 ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
@@ -309,7 +310,7 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
 
   if (buffer == NULL) {
     ERROR("send_packet_direct(...): Failed to allocate send buffer\n");
-    return 1;
+    return -1;
   }
 
   struct sockaddr_in6 dest_addr = {
@@ -325,14 +326,15 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
 
   DEBUG("Sending message to %s\n",
         inet_ntop(AF_INET6, dest, ipv6_sender, INET6_ADDRSTRLEN));
+
 #endif
 
   hton_packet(packet, buffer);
 
-  // TODO Error handling
-  sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
+  // TODO Handle return value of sendto.
+  ssize_t bytes_send = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
 
   free(buffer);
 
-  return 0;
+  return bytes_send;
 }

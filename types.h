@@ -15,6 +15,38 @@ typedef uint8_t ddhcp_node_id[8];
 #define NODE_ID_CLEAR(id) memset(id,'\0',sizeof(ddhcp_node_id))
 #define NODE_ID_CP(dest,src) memcpy(dest,src,sizeof(ddhcp_node_id))
 
+// statistic fields
+
+#define STAT_MCAST_RECV_PKG 0
+#define STAT_MCAST_SEND_PKG 1
+#define STAT_MCAST_RECV_BYTE 2
+#define STAT_MCAST_SEND_BYTE 3
+#define STAT_MCAST_RECV_UPDATECLAIM 4
+#define STAT_MCAST_RECV_INQUIRE 5
+#define STAT_DIRECT_RECV_PKG 6
+#define STAT_DIRECT_SEND_PKG 7
+#define STAT_DIRECT_RECV_BYTE 8
+#define STAT_DIRECT_SEND_BYTE 9
+#define STAT_DIRECT_RECV_RENEWLEASE 10
+#define STAT_DIRECT_SEND_RENEWLEASE 11
+#define STAT_DIRECT_RECV_LEASEACK 12
+#define STAT_DIRECT_SEND_LEASEACK 13
+#define STAT_DIRECT_RECV_LEASENAK 14
+#define STAT_DIRECT_SEND_LEASENAK 15
+#define STAT_DIRECT_RECV_RELEASE 16
+#define STAT_DIRECT_SEND_RELEASE 17
+#define STAT_DHCP_RECV_PKG 18
+#define STAT_DHCP_SEND_PKG 19
+#define STAT_DHCP_RECV_BYTE 20
+#define STAT_DHCP_SEND_BYTE 21
+#define STAT_DHCP_RECV_DISCOVER 22
+#define STAT_DHCP_SEND_OFFER 23
+#define STAT_DHCP_RECV_REQUEST 24
+#define STAT_DHCP_SEND_ACK 25
+#define STAT_DHCP_SEND_NAK 26
+#define STAT_DHCP_RECV_RELEASE 27
+#define STAT_NUM_OF_FIELDS 28
+
 // block structures
 
 enum ddhcp_block_state {
@@ -136,6 +168,11 @@ struct ddhcp_config {
 
   // DHCP
   uint16_t dhcp_port;
+
+  // Statistics
+#ifdef DDHCPD_STATISTICS
+  long int statistics[STAT_NUM_OF_FIELDS];
+#endif
 };
 typedef struct ddhcp_config ddhcp_config;
 
