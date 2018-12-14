@@ -6,6 +6,6 @@ build-debian-package:
   image: debian:latest
   script:
     - apt-get update && apt-get install -y build-essential
-    - dpkg-buildpackage -b -us -u
+    - dpkg-buildpackage -b -us -uc
     - ls -l 
     - ls -l ../
