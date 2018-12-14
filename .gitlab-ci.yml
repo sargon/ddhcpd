@@ -9,3 +9,6 @@ build-debian-package:
     - dpkg-buildpackage -b -us -uc
     - ls -l 
     - ls -l ../
+  artifacts:
+    paths: 
+      - ../ddhcpd_*.deb
