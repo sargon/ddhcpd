@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #ifdef DDHCPD_STATISTICS
-void statistics_show(int fd, ddhcp_config* config) {
+void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
   dprintf(fd, "mcast.recv_pkg %li\n", config->statistics[STAT_MCAST_RECV_PKG]);
   dprintf(fd, "mcast.send_pkg %li\n", config->statistics[STAT_MCAST_SEND_PKG]);
   dprintf(fd, "mcast.recv_byte %li\n", config->statistics[STAT_MCAST_RECV_BYTE]);
@@ -31,5 +31,9 @@ void statistics_show(int fd, ddhcp_config* config) {
   dprintf(fd, "dhcp.send_ack %li\n", config->statistics[STAT_DHCP_SEND_ACK]);
   dprintf(fd, "dhcp.send_nak %li\n", config->statistics[STAT_DHCP_SEND_NAK]);
   dprintf(fd, "dhcp.recv_release %li\n", config->statistics[STAT_DHCP_RECV_RELEASE]);
+
+  if (reset > 0) {
+    memset(config->statistics, 0, sizeof(long int) * STAT_NUM_OF_FIELDS);
+  }
 }
 #endif
