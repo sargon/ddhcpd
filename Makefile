@@ -91,5 +91,6 @@ style:
 
 install:
 	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd
+	$(INSTALL_PROGRAM) ddhcpdctl $(DESTDIR)$(prefix)/sbin/ddhcpdctl
 
 -include *.d
