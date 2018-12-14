@@ -1,7 +1,11 @@
+stages:
+  - build
+
 build-debian-package:
+  stage: build
   image: debian:latest
   script:
-    - apt-get update && apt-get install -y build-essentials
+    - apt-get update && apt-get install -y build-essential
     - dpkg-buildpackage -b -us -u
     - ls -l 
     - ls -l ../
