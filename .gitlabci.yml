@@ -1,0 +1,7 @@
+build-debian-package:
+  image: debian:latest
+  script:
+    - apt-get update && apt-get install -y build-essentials
+    - dpkg-buildpackage -b -us -u
+    - ls -l 
+    - ls -l ../
