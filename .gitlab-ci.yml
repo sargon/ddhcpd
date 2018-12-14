@@ -7,8 +7,9 @@ build-debian-package:
   script:
     - apt-get update && apt-get install -y build-essential debhelper
     - dpkg-buildpackage -b -us -uc
-    - ls -l 
     - ls -l ../
+    - mkdir result
+    - mv ../ddhcpd_* result/
   artifacts:
     paths: 
-      - ../ddhcpd_*.deb
+      - result/*
