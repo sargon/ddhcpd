@@ -10,6 +10,7 @@ enum {
   DDHCPCTL_DHCP_OPTION_REMOVE,
   DDHCPCTL_LOG_LEVEL_SET,
   DDHCPCTL_STATISTICS,
+  DDHCPCTL_STATISTICS_RESET,
 };
 
 int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config);
