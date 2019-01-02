@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
 #ifdef DDHCPD_STATISTICS
     printf("-s                    Print statistics\n");
     printf("-S                    Print statistics and reset values\n");
-#endif 
+#endif
     exit(0);
   }
 
