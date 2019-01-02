@@ -137,7 +137,7 @@ struct ddhcp_config {
   uint16_t block_refresh_factor;
   uint16_t tentative_timeout;
   uint8_t block_size;
-  uint8_t spare_blocks_needed;
+  uint8_t spare_leases_needed;
   struct in_addr prefix;
   uint8_t prefix_len;
   uint8_t disable_dhcp;

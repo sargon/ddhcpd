@@ -384,7 +384,7 @@ void block_show_status(int fd, ddhcp_config* config) {
   dprintf(fd, "      tentative timeout\t%u\n", config->tentative_timeout);
   dprintf(fd, "      timeout\t%u\n", config->block_timeout);
   dprintf(fd, "      refresh factor\t%u\n", config->block_refresh_factor);
-  dprintf(fd, "      spare\t%u\n", config->spare_blocks_needed);
+  dprintf(fd, "      spare leases needed\t%u\n", config->spare_leases_needed);
   dprintf(fd, "      network: %s/%i \n", inet_ntoa(config->prefix), config->prefix_len);
 
   char node_id[17];
