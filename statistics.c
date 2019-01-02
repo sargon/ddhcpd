@@ -32,6 +32,41 @@ void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
   dprintf(fd, "dhcp.send_nak %li\n", config->statistics[STAT_DHCP_SEND_NAK]);
   dprintf(fd, "dhcp.recv_release %li\n", config->statistics[STAT_DHCP_RECV_RELEASE]);
 
+
+  // calculate block status
+  ddhcp_block* block = config->blocks;
+  uint32_t blocks_free = 0;
+  uint32_t blocks_tentative = 0;
+  uint32_t blocks_claimed = 0;
+
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+    switch (block->state) {
+    case DDHCP_BLOCKED:
+    case DDHCP_FREE:
+      blocks_free++;
+      break;
+
+    case DDHCP_CLAIMING:
+    case DDHCP_TENTATIVE:
+      blocks_tentative++;
+      break;
+
+    case DDHCP_CLAIMED:
+    case DDHCP_OURS:
+      blocks_claimed++;
+      break;
+
+    default:
+      break;
+    }
+
+    block++;
+  }
+
+  dprintf(fd, "ddhcp.blocks.free %u\n", blocks_free);
+  dprintf(fd, "ddhcp.blocks.tentative %u\n", blocks_tentative);
+  dprintf(fd, "ddhcp.blocks.claimed %u\n", blocks_claimed);
+
   if (reset > 0) {
     memset(config->statistics, 0, sizeof(long int) * STAT_NUM_OF_FIELDS);
   }
