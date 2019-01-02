@@ -210,6 +210,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   }
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  statistics_record(config, STAT_MCAST_SEND_INQUIRE, 1);
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
@@ -343,6 +344,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   }
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
