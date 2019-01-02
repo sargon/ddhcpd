@@ -7,7 +7,9 @@ void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
   dprintf(fd, "mcast.send_pkg %li\n", config->statistics[STAT_MCAST_SEND_PKG]);
   dprintf(fd, "mcast.recv_byte %li\n", config->statistics[STAT_MCAST_RECV_BYTE]);
   dprintf(fd, "mcast.send_byte %li\n", config->statistics[STAT_MCAST_SEND_BYTE]);
+  dprintf(fd, "mcast.send_updateclaim %li\n", config->statistics[STAT_MCAST_SEND_UPDATECLAIM]);
   dprintf(fd, "mcast.recv_updateclaim %li\n", config->statistics[STAT_MCAST_RECV_UPDATECLAIM]);
+  dprintf(fd, "mcast.send_inquire %li\n", config->statistics[STAT_MCAST_SEND_INQUIRE]);
   dprintf(fd, "mcast.recv_inquire %li\n", config->statistics[STAT_MCAST_RECV_INQUIRE]);
   dprintf(fd, "direct.recv_pkg %li\n", config->statistics[STAT_DIRECT_RECV_PKG]);
   dprintf(fd, "direct.send_pkg %li\n", config->statistics[STAT_DIRECT_SEND_PKG]);

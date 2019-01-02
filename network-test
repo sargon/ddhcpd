@@ -37,7 +37,7 @@ function buildInterfaces() {
   ip link set dev "clt${IDX}" up
   ip netns exec "$NS_NAME" ip link set dev "client0" up
   # configure interfaces in server netns
-  ip netns exec "$NS_NAME" ip a a 10.0.0.1/20 dev client0
+  ip netns exec "$NS_NAME" ip a a 10.0.0.1/16 dev client0
   ip netns exec "$NS_NAME" ip link set dev lo up
   # network bridge for s2c communication
   ip link add name br-clt${IDX} type bridge #nf_call_iptables 0 nf_call_ip6tables 0 nf_call_arptables 0
@@ -155,6 +155,72 @@ function network-stop() {
   rm /tmp/ddhcp-netns-count
 }
 
+function test_small(){
+  # A test routine
+  $0 net-init 1
+  trap "pkill ddhcpd ; rm /tmp/ddhcpd-ctl* 2>&1 > /dev/null; $0 net-stop" EXIT
+  # Start two daemons
+  echo -n "Startup DDHCPD instances "
+  ( $0 srv-start 0 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 1 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  echo " done"
+  # Start some clients 
+  echo "Starting clients on realm 0 "
+  startDHCPClients 0 -v
+  while :; do
+    # Let Clients get a first lease in realm 0
+    sleep 60 
+    # Move Client Between Realms
+    echo "Move Clients from Realm 0 to 1"
+    roamClientInterfaces 0 1
+    # Wait longer so clients refresh their lease in the other realm
+    sleep 600
+    # And Move them Back
+    echo "Move Clients from Realm 1 back to 0"
+    roamClientInterfaces 0 0
+  done
+}
+
+function test_one(){
+  # A test with two nodes each one client
+  NUMBER_OF_CLIENT_INTERFACES=1
+  $0 net-init 1
+  echo -n "Startup DDHCPD instances"
+  ( $0 srv-start 0 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 1 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  echo " done"
+  startDHCPClients 0 -v
+  startDHCPClients 1 -v
+  while :; do
+    sleep 60
+  done
+}
+
+function test_full(){
+  # This test consists of 5 ddhcpd daemons and 25 clients
+  # A test routine
+  NUMBER_OF_CLIENT_INTERFACES=5
+  $0 net-init 4
+  trap "pkill ddhcpd ; rm /tmp/ddhcpd-ctl* 2>&1 > /dev/null; $0 net-stop" EXIT
+  # Start deamons
+  echo -n "Startup DDHCPD instances"
+  ( $0 srv-start 0 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 1 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 2 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-2.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 3 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-3.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  ( $0 srv-start 4 ./ddhcpd -L -s 1 -t 15 -B 300 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 -N 10.0.128.0/17 -o 54:4:10.0.0.1 -o 1:4:255.255.0.0 -o 51:4:0.0.1.44 > /tmp/ddhcpd-4.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
+  echo " done"
+  startDHCPClients 0 -v
+  startDHCPClients 1 -v
+  startDHCPClients 2 -v
+  startDHCPClients 3 -v
+  startDHCPClients 4 -v
+  while :; do
+    sleep 60
+  done
+}
+
+
 if [[ "$(id -u)" != "0" ]] ; then
   echo "Error: Need root privileges" 
   exit 1
@@ -203,29 +269,11 @@ case "$1" in
     stopDHCPClients "$INDEX" $@
   ;;
   test)
-    # A test routine
-    $0 net-init 1
-    trap "pkill ddhcpd ; rm /tmp/ddhcpd-ctl* 2>&1 > /dev/null; $0 net-stop" EXIT
-    # Start two daemons
-    echo -n "Startup DDHCPD instances "
-    ( $0 srv-start 0 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
-    ( $0 srv-start 1 ./ddhcpd -L -t 20 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
-    echo " done"
-    # Start some clients 
-    echo "Starting clients on realm 0 "
-    startDHCPClients 0 -v
-    while :; do
-      # Let Clients get a first lease in realm 0
-      sleep 60 
-      # Move Client Between Realms
-      echo "Move Clients from Realm 0 to 1"
-      roamClientInterfaces 0 1
-      # Wait longer so clients refresh their lease in the other realm
-      sleep 600
-      # And Move them Back
-      echo "Move Clients from Realm 1 back to 0"
-      roamClientInterfaces 0 0
-    done
+    case $2 in
+      one) test_one ;;
+      small) test_small ;;
+      full) test_full ;;
+    esac
     ;;
   *)
     echo "Usage: $0 <command> <parameter>"
