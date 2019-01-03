@@ -363,7 +363,6 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         ssize_t bytes_send = send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
         statistics_record(config, STAT_DIRECT_SEND_BYTE, (long int) bytes_send);
         UNUSED(bytes_send);
-        UNUSED(config);
         free(packet);
         return 2;
 
