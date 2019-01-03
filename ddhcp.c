@@ -309,7 +309,6 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
     DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
-    statistics_record(config, STAT_DHCP_SEND_PKG, 1);
     dhcp_nack(config->client_socket, packet, config);
     dhcp_packet_free(packet, 1);
     free(packet);

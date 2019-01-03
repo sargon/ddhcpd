@@ -281,7 +281,6 @@ int dhcp_rhdl_ack(int socket, struct dhcp_packet* request, ddhcp_config* config)
     return 1;
   }
 
-  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
   return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
@@ -485,6 +484,7 @@ int dhcp_nack(int socket, dhcp_packet* from_client, ddhcp_config* config) {
     DHCPNAK
   });
 
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
   statistics_record(config, STAT_DHCP_SEND_NAK, 1);
   ssize_t bytes_send = dhcp_packet_send(socket, packet);
   statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
@@ -523,6 +523,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   }
 
   DEBUG("dhcp_ack(...): offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
   statistics_record(config, STAT_DHCP_SEND_ACK, 1);
   ssize_t bytes_send = dhcp_packet_send(socket, packet);
   statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
