@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
       buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTIONS_SHOW;
       break;
 
+#ifdef DDHCPD_STATISTICS
     case 's':
       msglen = 1;
       buffer[0] = (uint8_t) DDHCPCTL_STATISTICS;
@@ -60,6 +61,7 @@ int main(int argc, char** argv) {
       msglen = 1;
       buffer[0] = (uint8_t) DDHCPCTL_STATISTICS_RESET;
       break;
+#endif
 
     case 'o':
       option = parse_option();

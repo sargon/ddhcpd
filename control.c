@@ -36,6 +36,7 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
     dhcp_options_show(socket, config);
     return 0;
 
+#ifdef DDHCPD_STATISTICS
   case DDHCPCTL_STATISTICS:
     if (msglen != 1) {
       DEBUG("handle_command(...): message length mismatch\n");
@@ -53,6 +54,7 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
     DEBUG("handle_command(...): show statistics reset\n");
     statistics_show(socket, 1, config);
     return 0;
+#endif
 
   case DDHCPCTL_DHCP_OPTION_SET:
     DEBUG("handle_command(...): set dhcp option\n");
