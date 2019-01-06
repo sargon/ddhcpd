@@ -67,12 +67,17 @@ void house_keeping(ddhcp_config* config) {
   int32_t leases_needed = (int32_t)config->spare_leases_needed - (int32_t)spare_leases;
   int32_t blocks_needed = leases_needed / config->block_size;
 
-  if ( leases_needed % config->block_size > 0 ) {
+  if (leases_needed % config->block_size > 0) {
     blocks_needed++;
   }
 
-  block_claim(blocks_needed, config);
-  block_update_claims(blocks_needed, config);
+  if (blocks_needed < 0 ) {
+    block_drop_unused(config);
+  } else {
+    block_claim(blocks_needed, config);
+  }
+
+  block_update_claims(config);
 
   dhcp_packet_list_timeout(&config->dhcp_packet_cache);
   DEBUG("house_keeping(...) finish\n\n");

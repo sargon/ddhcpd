@@ -284,13 +284,6 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   return selected;
 }
 
-/**
- * Free the last claimed of the unused blocks.
- * In practice we usually need to free one block at a time
- * and not multiple, so finding the right one is more valuable.
- * If multiple blocks needs to be freed, they will be freed continuously
- * in the housekeeping tour.
- */
 void block_drop_unused(ddhcp_config* config) {
   DEBUG("block_drop_unsued(config)\n");
   ddhcp_block* block = config->blocks;
@@ -339,17 +332,12 @@ void _block_update_claim_send(struct ddhcp_mcast_packet* packet, uint32_t new_bl
   }
 }
 
-void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
-  DEBUG("block_update_claims(needed:%i, config)\n", blocks_needed);
+void block_update_claims(ddhcp_config* config) {
+  DEBUG("block_update_claims(config)\n");
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
   int32_t timeout_factor = now + config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
-
-  if (blocks_needed < 0) {
-    // TODO this call could be handled in house keeping function
-    block_drop_unused(config);
-  }
 
   // Determine if we need to run a full update claim run
   // we run through the list until we see one block which needs update.

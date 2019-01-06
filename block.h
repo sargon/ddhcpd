@@ -46,13 +46,21 @@ uint32_t block_num_free_leases(ddhcp_config* config);
 ddhcp_block* block_find_free_leases(ddhcp_config* config);
 
 /**
+ * Drop the youngest unused block.
+ * In this context drop is equivalent to forget our claim
+ * and stop updating the claim. Freeing the block after its
+ * timeout.
+ */
+void block_drop_unused(ddhcp_config* config);
+
+/**
  *  Update the timeout of claimed blocks and send packets to
  *  distribute the continuations of that claim.
  *
  *  Due to fragmented timeouts this packet may send 2 times more packets
  *  than optimal. TODO fixthis
  */
-void block_update_claims(int32_t blocks_needed, ddhcp_config* config);
+void block_update_claims(ddhcp_config* config);
 
 /**
  * Check the timeout of all blocks, and mark timed out once as FREE.
