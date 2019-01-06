@@ -253,6 +253,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
 
   uint32_t selected_free_leases = (uint32_t)config->block_size + 1;
 
+  // TODO Change strategy, select the oldest block with free leases
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
       uint32_t free_leases = dhcp_num_free(block);
@@ -280,6 +281,42 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   return selected;
 }
 
+/**
+ * Free the last claimed of the unused blocks.
+ * In practice we usually need to free one block at a time
+ * and not multiple, so finding the right one is more valuable.
+ * If multiple blocks needs to be freed, they will be freed continuously
+ * in the housekeeping tour.
+ */
+void block_drop_unused(ddhcp_config* config) {
+  DEBUG("block_drop_unsued(config)\n");
+  ddhcp_block* block = config->blocks;
+  ddhcp_block* freeable_block = NULL;
+
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+    if (block->state == DDHCP_OURS) {
+      if (dhcp_num_free(block) == config->block_size) {
+        DEBUG("block_drop unused(...): block %i is unused.\n", block->index);
+
+        if (freeable_block) {
+          if (freeable_block->first_claimed < block->first_claimed) {
+            freeable_block = block;
+          }
+        } else {
+          freeable_block = block;
+        }
+      }
+    }
+
+    block++;
+  }
+
+  if (freeable_block) {
+    DEBUG("block_drop_unused(...): free block %i.\n", freeable_block->index);
+    block_free(freeable_block);
+  }
+}
+
 void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(needed:%i, config)\n", blocks_needed);
   uint32_t our_blocks = 0;
@@ -287,16 +324,18 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   time_t now = time(NULL);
   int32_t timeout_factor = config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
 
-  // TODO Use a linked list instead of processing the block list twice.
+  if (blocks_needed < 0) {
+    // TODO this call could be handled in house keeping function
+    block_drop_unused(config);
+  }
+
+  // Determine if we need to run a full update claim run
+  // we run through the list until we see one block which needs update.
+  // Running a full update claims (see below) is much more expensive
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < now + timeout_factor) {
-      if (blocks_needed < 0 && dhcp_num_free(block) == config->block_size) {
-        DEBUG("block_update_claims(...): block %i is no longer needed.\n", block->index);
-        block_free(block);
-        blocks_needed++;
-      } else {
-        our_blocks++;
-      }
+      our_blocks++;
+      break;
     }
 
     block++;
