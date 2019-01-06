@@ -73,7 +73,7 @@ void house_keeping(ddhcp_config* config) {
 
   if (blocks_needed < 0 ) {
     block_drop_unused(config);
-  } else {
+  } else if ( blocks_needed > 0) {
     block_claim(blocks_needed, config);
   }
 
