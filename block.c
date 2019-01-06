@@ -8,6 +8,9 @@
 #include "statistics.h"
 #include "tools.h"
 
+// TODO define sane value
+#define UPDATE_CLAIM_MAX_BLOCKS 32
+
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
 
@@ -317,6 +320,25 @@ void block_drop_unused(ddhcp_config* config) {
   }
 }
 
+void _block_update_claim_send(struct ddhcp_mcast_packet* packet, uint32_t new_block_timeout, ddhcp_config* config) {
+
+  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
+  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
+  // TODO? Stat the number of blocks reclaimed.
+
+  if (bytes_send > 0) {
+    // Update the timeout value of all contained blocks
+    // iff the packet has been transmitted
+    for (uint8_t i = 0; i < packet->count; i++) {
+      uint32_t index = packet->payload[i].block_index;
+      DEBUG("block_update_claims(...): updated claim for block %i\n", index);
+      config->blocks[index].timeout = new_block_timeout;
+    }
+  }
+}
+
 void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   DEBUG("block_update_claims(needed:%i, config)\n", blocks_needed);
   uint32_t our_blocks = 0;
@@ -353,9 +375,10 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
     return;
   }
 
-  // TODO We need to split packets if our_blocks > max_uint8_t
-  packet->count = (uint8_t)our_blocks;
-  packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), our_blocks);
+  // Aggressively group blocks into packets, send packet iff
+  // at least one block in a packet is below the baseline.
+
+  packet->payload = (struct ddhcp_payload*) calloc(sizeof(struct ddhcp_payload), UPDATE_CLAIM_MAX_BLOCKS);
 
   if (!packet->payload) {
     WARNING("block_update_claims(...): Failed to allocate ddhcpd packet payload.\n");
@@ -363,31 +386,43 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
     return;
   }
 
-  uint32_t index = 0;
-
   block = config->blocks;
+  uint8_t send_packet = 0;
+  uint32_t index = 0;
+  uint32_t new_block_timeout = now + config->block_timeout;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    if (block->state == DDHCP_OURS && block->timeout < now + timeout_factor) {
-      DEBUG("block_update_claims(...): update claim for block %i\n", block->index);
+    if (block->state == DDHCP_OURS) {
 
-      block->timeout = now + config->block_timeout;
+      if (block->timeout < now + timeout_factor) {
+        DEBUG("block_update_claims(...): update claim for block %i needed\n", block->index);
+        send_packet = 1;
+      }
 
       packet->payload[index].block_index = block->index;
       packet->payload[index].timeout     = config->block_timeout;
       packet->payload[index].reserved    = 0;
 
       index++;
+
+      if (index == UPDATE_CLAIM_MAX_BLOCKS) {
+        if (send_packet) {
+          packet->count = index;
+          send_packet = 0;
+          _block_update_claim_send(packet, new_block_timeout, config);
+        }
+
+        index = 0;
+      }
     }
 
     block++;
   }
 
-  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
-  statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
-  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
-  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
-  UNUSED(bytes_send);
+  if (send_packet) {
+    packet->count = index;
+    _block_update_claim_send(packet, new_block_timeout, config);
+  }
 
   free(packet->payload);
   free(packet);
