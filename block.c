@@ -48,6 +48,7 @@ int block_own(ddhcp_block* block, ddhcp_config* config) {
   }
 
   block->state = DDHCP_OURS;
+  block->first_claimed = time(NULL);
   NODE_ID_CP(&block->node_id, &config->node_id);
   return 0;
 }
