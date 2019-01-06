@@ -344,7 +344,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  int32_t timeout_factor = config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
+  int32_t timeout_factor = now + config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
 
   if (blocks_needed < 0) {
     // TODO this call could be handled in house keeping function
@@ -355,7 +355,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   // we run through the list until we see one block which needs update.
   // Running a full update claims (see below) is much more expensive
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-    if (block->state == DDHCP_OURS && block->timeout < now + timeout_factor) {
+    if (block->state == DDHCP_OURS && block->timeout < timeout_factor) {
       our_blocks++;
       break;
     }
@@ -394,7 +394,7 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
 
-      if (block->timeout < now + timeout_factor) {
+      if (block->timeout < timeout_factor) {
         DEBUG("block_update_claims(...): update claim for block %i needed\n", block->index);
         send_packet = 1;
       }
