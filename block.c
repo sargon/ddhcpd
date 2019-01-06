@@ -254,15 +254,15 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   ddhcp_block* block = config->blocks;
   ddhcp_block* selected = NULL;
 
-  uint32_t selected_free_leases = (uint32_t)config->block_size + 1;
-
   // TODO Change strategy, select the oldest block with free leases
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
-      uint32_t free_leases = dhcp_num_free(block);
-
-      if (free_leases > 0) {
-        if (free_leases < selected_free_leases) {
+      if (dhcp_has_free(block)) {
+        if (selected) {
+          if (selected->first_claimed > block->first_claimed) {
+            selected = block;
+          }
+        } else {
           selected = block;
         }
       }
