@@ -1,3 +1,13 @@
+ddhcpd r2 (2019-01-07)
+======================
+
+ - Change inquire triggering from spare blocks to spare leases.
+ - Add statistics (optional activated on compile time)
+ - Add gitlab-ci for debian package.
+ - Major memory allocation review
+ - Major type-safety review
+ - Various bugfixes and small improvements
+
 ddhcpd r1 (2018-10-01)
 ======================
 
