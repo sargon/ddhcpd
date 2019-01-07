@@ -63,9 +63,13 @@ void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping(blocks,config)\n");
   block_check_timeouts(config);
 
-  uint32_t spares = block_num_free_leases(config);
-  uint32_t spare_blocks = spares / config->block_size;
-  int32_t blocks_needed = (int32_t)config->spare_blocks_needed - (int32_t)spare_blocks;
+  uint32_t spare_leases = block_num_free_leases(config);
+  int32_t leases_needed = (int32_t)config->spare_leases_needed - (int32_t)spare_leases;
+  int32_t blocks_needed = leases_needed / config->block_size;
+
+  if ( leases_needed % config->block_size > 0 ) {
+    blocks_needed++;
+  }
 
   block_claim(blocks_needed, config);
   block_update_claims(blocks_needed, config);
@@ -142,7 +146,7 @@ int main(int argc, char** argv) {
 
   inet_aton("10.0.0.0", &config.prefix);
   config.prefix_len = 24;
-  config.spare_blocks_needed = 1;
+  config.spare_leases_needed = 2;
   config.block_timeout = 60;
   config.block_refresh_factor = 4;
   config.tentative_timeout = 15;
@@ -266,7 +270,14 @@ int main(int argc, char** argv) {
       break;
 
     case 's':
-      config.spare_blocks_needed = (uint8_t)atoi(optarg);
+      config.spare_leases_needed = (uint8_t)atoi(optarg);
+#if LOG_LEVEL_LIMIT >= LOG_WARNING
+
+      if (config.spare_leases_needed == 0) {
+        WARNING("This deamon will only serve roamed clients with a spare limit of zero.");
+      }
+
+#endif
       break;
 
     case 'C':
@@ -302,7 +313,7 @@ int main(int argc, char** argv) {
     printf("-o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
     printf("-b BLKSIZEPOW          Power over two of block size\n");
     printf("-B TIMEOUT             Block timeout\n");
-    printf("-s SPAREBLKS           Amount of spare blocks\n");
+    printf("-s SPARELEASES         Amount of spare leases (max: 256)\n");
     printf("-L                     Deactivate learning phase\n");
     printf("-d                     Run in background and daemonize\n");
     printf("-D                     Run in foreground and log to console (default)\n");
@@ -320,13 +331,13 @@ int main(int argc, char** argv) {
   config.number_of_blocks = (uint32_t)pow(2u, (32u - config.prefix_len - ceil(log2(config.block_size))));
 
   if (config.disable_dhcp) {
-    config.spare_blocks_needed = 0;
+    config.spare_leases_needed = 0;
   }
 
   INFO("CONFIG: network=%s/%i\n", inet_ntoa(config.prefix), config.prefix_len);
   INFO("CONFIG: block_size=%i\n", config.block_size);
   INFO("CONFIG: #blocks=%i\n", config.number_of_blocks);
-  INFO("CONFIG: #spare_blocks=%i\n", config.spare_blocks_needed);
+  INFO("CONFIG: #spare_leases=%i\n", config.spare_leases_needed);
   INFO("CONFIG: timeout=%i\n", config.block_timeout);
   INFO("CONFIG: refresh_factor=%i\n", config.block_refresh_factor);
   INFO("CONFIG: tentative_timeout=%i\n", config.tentative_timeout);
