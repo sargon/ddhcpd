@@ -4,7 +4,7 @@
 # This script will construct a number of network namespaces and
 # then create veth-pairs. One pair for server connections and another for
 # client commands. Inside of the netns the client interface is named "client0"
-# and the server interface "server0". 
+# and the server interface "server0".
 
 
 NUM_OF_INTERFACE=$(cat /tmp/ddhcp-netns-count 2>/dev/null)
@@ -15,7 +15,7 @@ function isNumber(){
   re='^[0-9]+$'
   if ! [[ $NUMBER =~ $re ]] ; then
     return 1
-  else 
+  else
     return 0
   fi
 }
@@ -24,10 +24,10 @@ function buildInterfaces() {
   local IDX=$1
   local NS_NAME="ddhcpd$1"
   # create interfaces for s2s and s2c communication
-  ip link add name "srv${IDX}" type veth peer name "server0" 
+  ip link add name "srv${IDX}" type veth peer name "server0"
   ip link add name "clt${IDX}" type veth peer name "client0"
   # create netns for server
-  ip netns add "${NS_NAME}" 
+  ip netns add "${NS_NAME}"
   #  move interfaces into server netns
   ip link set dev "server0" netns "$NS_NAME"
   ip link set dev "client0" netns "$NS_NAME"
@@ -52,7 +52,7 @@ function buildInterfaces() {
     ip link set dev "clb${IDX}-${idc}" master "br-clt${IDX}"
     ip link set dev "clt${IDX}-${idc}" netns "dhcp-${IDX}-${idc}"
     # bring interfaces up
-    ip netns exec "dhcp-${IDX}-${idc}" ip link set dev "clt${IDX}-${idc}" up 
+    ip netns exec "dhcp-${IDX}-${idc}" ip link set dev "clt${IDX}-${idc}" up
     ip link set dev "clb${IDX}-${idc}" up
   done
   # allow forward on bridge
@@ -62,15 +62,15 @@ function buildInterfaces() {
 function destroyInterfaces(){
   local IDX=$1
   local NS_NAME="ddhcpd$1"
-  ip netns delete "${NS_NAME}" 
-  ip link delete dev "srv${IDX}" 
-  ip link delete dev "clt${IDX}" 
+  ip netns delete "${NS_NAME}"
+  ip link delete dev "srv${IDX}"
+  ip link delete dev "clt${IDX}"
   for idc in $(seq 0 $NUMBER_OF_CLIENT_INTERFACES); do
     ip netns del "dhcp-${IDX}-${idc}"
-    ip link delete dev "clb${IDX}-${idc}" 
+    ip link delete dev "clb${IDX}-${idc}"
   done
   iptables -D FORWARD -p all -i "br-clt${IDX}" -j ACCEPT
-  ip link delete dev br-clt${IDX} 
+  ip link delete dev br-clt${IDX}
 }
 
 function roamClientInterfaces() {
@@ -164,12 +164,12 @@ function test_small(){
   ( $0 srv-start 0 ./ddhcpd -L -t 20 -b 2 -C /tmp/ddhcpd-ctl0 -c client0 -i server0 > /tmp/ddhcpd-0.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
   ( $0 srv-start 1 ./ddhcpd -L -t 20 -b 2 -C /tmp/ddhcpd-ctl1 -c client0 -i server0 > /tmp/ddhcpd-1.log -H $(pwd)/example-hook.sh 2>&1 ; echo -n "." ) &
   echo " done"
-  # Start some clients 
+  # Start some clients
   echo "Starting clients on realm 0 "
   startDHCPClients 0 -v
   while :; do
     # Let Clients get a first lease in realm 0
-    sleep 60 
+    sleep 60
     # Move Client Between Realms
     echo "Move Clients from Realm 0 to 1"
     roamClientInterfaces 0 1
@@ -222,7 +222,7 @@ function test_full(){
 
 
 if [[ "$(id -u)" != "0" ]] ; then
-  echo "Error: Need root privileges" 
+  echo "Error: Need root privileges"
   exit 1
 fi
 
