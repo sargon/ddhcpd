@@ -32,15 +32,15 @@ stupid stuff, but also allow you maximal adaption.
 Build
 -----
 
-To build a production binary of ddhcpd just
+To build a production binary of ddhcpd run:
 
     make clean all
 
-, if you want more logging output
+To increase logging output additional CFLAGS can be provided:
 
-    CFLAGS="-D LOG_LEVEL=20"
+    CFLAGS="-D LOG_LEVEL=20" make clean all
 
-or debug symbols and more logging
+Additionally setting DEBUG=1 activates debug symbols:
 
     DEBUG=1 CFLAGS="-D LOG_LEVEL=20" make clean all
 
@@ -48,94 +48,102 @@ To collect statistics build with
 
     CFLAGS="-D DDHCPD_STATISTICS" make clean all
 
-Depending on the choosen variant the binary size may variate between 
-30kb and 500kb.
+Depending on the choosen variant the binary size may variate between
+30KiB and 500KiB.
 
 Running
 -------
 
-On a gluon node the command should look this:
+On a gluon node the command may look this:
 
     ddhcpd -o "3:4:10.116.254.254" -o "1:4:255.255.128.0" -o "28:4:10.116.254.255" -N 10.116.224.0/20 -b 2 -s 1 -c br-client -i bat0
 
-We are able to register dhcp options during startup and also during runtime.
-Using the ddhcpdctl binary, to add i.e. the standard gateway:
+We are able to register dhcp options during startup but also during runtime.
+Using the ddhcpdctl binary, to e.g. add the standard gateway:
 
     ddhcpdctl -o "3:4:10.116.254.253"
 
-or an emerged timeserver 
+or an dedicated timeserver
 
     ddhcpdctl -o "42:4:10.116.254.252"
 
-,and remove:.
+Configured options can be removed with:
 
     ddhcpdctl -r "42"
 
-Be careful with this, as expressed above we do not save you from doing dumb things.
+Be careful with this: as expressed above we do not save you from shooting yourself into your foot.
 
 Hook
 ----
 
-If you want to act on events, you can register a binary via the '-H' 
-command. On every event that binary will be called given a list of arguments:
+If you want to react to events, you can register an executable (binary or script)
+via the '-H' switch. On every event that executable will be called given a list of arguments:
 
-  <command> [lease|release] <ip-addr> <hwaddr>
+  <command> <action> <ip-addr> <hwaddr>
+
+Currently <action> is one of the following keywords:
+
+  - `lease`
+    A new lease was handed out to the client indicated
+
+  - `release`
+    The indicated lease has been released back into the address pool.
+
+Upcoming versions of ddhcpd may introduce further action verbs.
 
 Testing
 -------
 
 The network-test script setups a set of virtual interfaces
-which are composed of server and client interface pairs. 
-Those are called srvX for daemons and cltX for clients inside of the main 
+which are composed of server and client interface pairs.
+Those are called srvX for daemons and cltX for clients inside of the main
 network namespace and server0 and client0 in the ''daemons'' network namespaces.
 All srvX interfaces are bridged in br-srv; enabling all daemons to communicate
 bidirectional.
 
 Inside of the daemons network namespace the client0 interface has the address 10.0.0.1/20,
-a ipv4 address is needed here, because the dhcp part of ddhcp binds on this interface.
+a IPv4 address is needed here, because the dhcp part of ddhcp binds on this interface.
 It is the same address in every daemon namespace, since cltX interfaces are not
-bridged that is no problem. On the server0 interface we need no ipv4 address, 
-because d2d communication is handled via ipv6 multicast/unicast on the local link.
+bridged that is no problem. On the server0 interface we need no IPv4 address,
+because d2d communication is handled via IPv6 multicast/unicast on the local link.
 
-To setup a basic ddhcp network testing enviroment by calling
+You can setup a basic ddhcpd network testing enviroment by calling
 
     # ./network-test net-init <number>
 
-to create a virtual network for <number> of ddhcp instances. You
-will need to have priviledges to create network namespaces. Short
-use sudo and check the network-test script upfront.
+which creates a virtual network for <number> of ddhcpd instances. You
+will need to have sufficient priviledges to create network namespaces.
+Or in short: use sudo and check the network-test script upfront.
 
-To start the (n-1)-th instance of ddhcp in your test environment, use 
+To start the (n-1)-th instance of ddhcpd in your test environment, use
 
     # ./network-test srv-start <n> ./ddhcp -t 3
 
-Above also reduces the tentative timeout from 12 to 3 seconds, 
+The above also reduces the tentative timeout from 12 to 3 seconds,
 speeds up testing.
 
-After starting multiple instances, we generate dhcp request against specific 
+After starting multiple instances, we generate dhcp requests against specific
 instances of ddhcpd by starting dhcp clients pointed to the cltX interfaces,
 i.e.
 
     # dhclient -sf /dev/null -d -v clt0
 
-for the first ddhcp instance. To create multiple parallel running clients
-with different mac addresses, do:.
+for the first ddhcpd instance. To create multiple parallel running clients
+with different mac addresses, do:
 
-   # ./network-test clt-start <n>
+    # ./network-test clt-start <n>
 
-To deconfigure the setup call:.
+To deconfigure the setup call:
 
     # ./network-test net-stop
 
-A simple testing routine incorporating all above:.
+A simple testing routine incorporating all above:
 
     # ./network-test test
 
 Gluon Packages
 --------------
 
-A maintained gluon integration:.
+A maintained gluon integration can be found at:
 
-   https://github.com/sargon/gluon-sargon/tree/v2018.x
-
-
+    https://github.com/sargon/gluon-sargon/tree/v2018.x
