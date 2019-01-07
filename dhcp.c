@@ -4,10 +4,11 @@
 #include "block.h"
 #include "dhcp.h"
 #include "dhcp_options.h"
+#include "hook.h"
 #include "logger.h"
 #include "packet.h"
+#include "statistics.h"
 #include "tools.h"
-#include "hook.h"
 
 // Free an offered lease after 12 seconds.
 uint16_t DHCP_OFFER_TIMEOUT = 12;
@@ -144,6 +145,7 @@ int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
 
     switch (message_type) {
     case DHCPDISCOVER:
+      statistics_record(config, STAT_DHCP_RECV_DISCOVER, 1);
       ret = dhcp_hdl_discover(config->client_socket, &dhcp_packet_buf, config);
 
       if (ret == 1) {
@@ -154,10 +156,12 @@ int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
       break;
 
     case DHCPREQUEST:
+      statistics_record(config, STAT_DHCP_RECV_REQUEST, 1);
       dhcp_hdl_request(config->client_socket, &dhcp_packet_buf, config);
       break;
 
     case DHCPRELEASE:
+      statistics_record(config, STAT_DHCP_RECV_RELEASE, 1);
       dhcp_hdl_release(&dhcp_packet_buf, config);
       break;
 
@@ -218,7 +222,11 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
     return 1;
   }
 
-  dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
+  statistics_record(config, STAT_DHCP_SEND_OFFER, 1);
+  ssize_t bytes_send = dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   free(packet->options);
   free(packet);
@@ -310,7 +318,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
       if (lease_block->state == DDHCP_CLAIMED) {
         if (block_alloc(lease_block)) {
           ERROR("dhcp_hdl_request(...): can't allocate requested block\n");
-          dhcp_nack(socket, request);
+          dhcp_nack(socket, request, config);
         }
 
         lease = lease_block->addresses + lease_index;
@@ -350,7 +358,11 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
         // TODO Error handling
         dhcp_packet_list_add(&config->dhcp_packet_cache, request);
 
-        send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
+        statistics_record(config, STAT_DIRECT_SEND_PKG, 1);
+        statistics_record(config, STAT_DIRECT_SEND_RENEWLEASE, 1);
+        ssize_t bytes_send = send_packet_direct(packet, &lease_block->owner_address, config->server_socket, config->mcast_scope_id);
+        statistics_record(config, STAT_DIRECT_SEND_BYTE, (long int) bytes_send);
+        UNUSED(bytes_send);
         free(packet);
         return 2;
 
@@ -361,7 +373,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
             if (lease->state != FREE) {
               DEBUG("dhcp_hdl_request(...): Requested lease offered to other client\n");
               // Send DHCP_NACK
-              dhcp_nack(socket, request);
+              dhcp_nack(socket, request, config);
               return 2;
             }
           }
@@ -408,7 +420,7 @@ int dhcp_hdl_request(int socket, struct dhcp_packet* request, ddhcp_config* conf
   if (!lease) {
     DEBUG("dhcp_hdl_request(...): Requested lease not found\n");
     // Send DHCP_NACK
-    dhcp_nack(socket, request);
+    dhcp_nack(socket, request, config);
     return 2;
   }
 
@@ -450,7 +462,7 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
   }
 }
 
-int dhcp_nack(int socket, dhcp_packet* from_client) {
+int dhcp_nack(int socket, dhcp_packet* from_client, ddhcp_config* config) {
   dhcp_packet* packet = build_initial_packet(from_client);
 
   if (!packet) {
@@ -471,7 +483,13 @@ int dhcp_nack(int socket, dhcp_packet* from_client) {
     DHCPNAK
   });
 
-  dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
+  statistics_record(config, STAT_DHCP_SEND_NAK, 1);
+  ssize_t bytes_send = dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
+  UNUSED(config);
+
   free(packet->options);
   free(packet);
 
@@ -504,7 +522,11 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
   }
 
   DEBUG("dhcp_ack(...): offering address %i %s\n", lease_index, inet_ntoa(packet->yiaddr));
-  dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
+  statistics_record(config, STAT_DHCP_SEND_ACK, 1);
+  ssize_t bytes_send = dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   hook(HOOK_LEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
 

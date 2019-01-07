@@ -5,10 +5,13 @@
 
 #include "dhcp.h"
 #include "logger.h"
+#include "statistics.h"
+#include "tools.h"
 
 int block_alloc(ddhcp_block* block) {
   DEBUG("block_alloc(block)\n");
-  if(!block) {
+
+  if (!block) {
     WARNING("block_alloc(...): No block given to initialize\n");
     return 1;
   }
@@ -19,6 +22,7 @@ int block_alloc(ddhcp_block* block) {
   }
 
   block->addresses = (struct dhcp_lease*) calloc(sizeof(struct dhcp_lease), block->subnet_len);
+
   if (!block->addresses) {
     WARNING("block_alloc(...): Failed to allocate memory for lease management on block %i\n", block->index);
     return 1;
@@ -33,7 +37,7 @@ int block_alloc(ddhcp_block* block) {
 }
 
 int block_own(ddhcp_block* block, ddhcp_config* config) {
-  if(!block) {
+  if (!block) {
     WARNING("block_own(...): No block given to own\n");
     return 1;
   }
@@ -106,7 +110,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
     r--;
   }
 
-  if(random_free) {
+  if (random_free) {
     DEBUG("block_find_free(...): found block %i\n", random_free->index);
   } else {
     WARNING("block_find_free(...): no free block found\n");
@@ -205,7 +209,11 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
     index++;
   }
 
-  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  statistics_record(config, STAT_MCAST_SEND_INQUIRE, 1);
+  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   free(packet->payload);
   free(packet);
@@ -259,11 +267,13 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   }
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
+
   if (selected) {
     DEBUG("block_find_free_leases(...): Block %i selected\n", selected->index);
   } else {
     DEBUG("block_find_free_leases(...): No block found!\n");
   }
+
 #endif
 
   return selected;
@@ -333,7 +343,11 @@ void block_update_claims(int32_t blocks_needed, ddhcp_config* config) {
     block++;
   }
 
-  send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_PKG, 1);
+  statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
+  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
 
   free(packet->payload);
   free(packet);

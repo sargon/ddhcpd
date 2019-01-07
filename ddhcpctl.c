@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  while ((c = getopt(argc, argv, "C:t:l:bdho:r:v:V")) != -1) {
+  while ((c = getopt(argc, argv, "bC:dhl:o:r:sSt:v:V")) != -1) {
     switch (c) {
     case 'h':
       show_usage = 1;
@@ -50,6 +50,18 @@ int main(int argc, char** argv) {
       msglen = 1;
       buffer[0] = (uint8_t) DDHCPCTL_DHCP_OPTIONS_SHOW;
       break;
+
+#ifdef DDHCPD_STATISTICS
+    case 's':
+      msglen = 1;
+      buffer[0] = (uint8_t) DDHCPCTL_STATISTICS;
+      break;
+
+    case 'S':
+      msglen = 1;
+      buffer[0] = (uint8_t) DDHCPCTL_STATISTICS_RESET;
+      break;
+#endif
 
     case 'o':
       option = parse_option();
@@ -114,6 +126,10 @@ int main(int argc, char** argv) {
     printf("-v LEVEL               Set log level\n");
     printf("-r CODE                Remove DHCP Option");
     printf("-C PATH                Path to control socket\n");
+#ifdef DDHCPD_STATISTICS
+    printf("-s                    Print statistics\n");
+    printf("-S                    Print statistics and reset values\n");
+#endif
     exit(0);
   }
 

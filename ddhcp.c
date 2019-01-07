@@ -4,6 +4,7 @@
 #include "dhcp.h"
 #include "logger.h"
 #include "tools.h"
+#include "statistics.h"
 
 int ddhcp_block_init(ddhcp_config* config) {
   DEBUG("ddhcp_block_init(config)\n");
@@ -77,10 +78,12 @@ void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sende
 
     switch (packet.command) {
     case DDHCP_MSG_UPDATECLAIM:
+      statistics_record(config, STAT_MCAST_RECV_UPDATECLAIM, 1);
       ddhcp_block_process_claims(&packet, config);
       break;
 
     case DDHCP_MSG_INQUIRE:
+      statistics_record(config, STAT_MCAST_RECV_INQUIRE, 1);
       ddhcp_block_process_inquire(&packet, config);
       break;
 
@@ -92,7 +95,6 @@ void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sende
   } else {
     DEBUG("ddhcp_block_process(...): epoll returned status %i\n", ret);
   }
-
 }
 
 void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
@@ -196,18 +198,22 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
 
     switch (packet.command) {
     case DDHCP_MSG_RENEWLEASE:
+      statistics_record(config, STAT_DIRECT_RECV_RENEWLEASE, 1);
       ddhcp_dhcp_renewlease(&packet, config);
       break;
 
     case DDHCP_MSG_LEASEACK:
+      statistics_record(config, STAT_DIRECT_RECV_LEASEACK, 1);
       ddhcp_dhcp_leaseack(&packet, config);
       break;
 
     case DDHCP_MSG_LEASENAK:
+      statistics_record(config, STAT_DIRECT_RECV_LEASENAK, 1);
       ddhcp_dhcp_leasenak(&packet, config);
       break;
 
     case DDHCP_MSG_RELEASE:
+      statistics_record(config, STAT_DIRECT_RECV_RELEASE, 1);
       ddhcp_dhcp_release(&packet, config);
       break;
 
@@ -233,9 +239,11 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
   if (ret == 0) {
     DEBUG("ddhcp_dhcp_renewlease(...): %i ACK\n", ret);
     answer = new_ddhcp_packet(DDHCP_MSG_LEASEACK, config);
+    statistics_record(config, STAT_DIRECT_SEND_LEASEACK, 1);
   } else if (ret == 1) {
     DEBUG("ddhcp_dhcp_renewlease(...): %i NAK\n", ret);
     answer = new_ddhcp_packet(DDHCP_MSG_LEASENAK, config);
+    statistics_record(config, STAT_DIRECT_SEND_LEASENAK, 1);
     // TODO Can we hand over the block?
   } else {
     // Unexpected behaviour
@@ -250,7 +258,11 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
 
   answer->renew_payload = packet->renew_payload;
 
-  send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_DIRECT_SEND_PKG, 1);
+  ssize_t bytes_send = send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  statistics_record(config, STAT_DIRECT_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
+
   free(answer->renew_payload);
   free(answer);
 }
@@ -297,7 +309,7 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
     DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
-    dhcp_nack(config->client_socket, packet);
+    dhcp_nack(config->client_socket, packet, config);
     dhcp_packet_free(packet, 1);
     free(packet);
   }

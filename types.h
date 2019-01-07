@@ -15,6 +15,43 @@ typedef uint8_t ddhcp_node_id[8];
 #define NODE_ID_CLEAR(id) memset(id,'\0',sizeof(ddhcp_node_id))
 #define NODE_ID_CP(dest,src) memcpy(dest,src,sizeof(ddhcp_node_id))
 
+// statistic fields
+#ifdef DDHCPD_STATISTICS
+enum {
+  STAT_MCAST_RECV_PKG,
+  STAT_MCAST_SEND_PKG,
+  STAT_MCAST_RECV_BYTE,
+  STAT_MCAST_SEND_BYTE,
+  STAT_MCAST_SEND_UPDATECLAIM,
+  STAT_MCAST_RECV_UPDATECLAIM,
+  STAT_MCAST_SEND_INQUIRE,
+  STAT_MCAST_RECV_INQUIRE,
+  STAT_DIRECT_RECV_PKG,
+  STAT_DIRECT_SEND_PKG,
+  STAT_DIRECT_RECV_BYTE,
+  STAT_DIRECT_SEND_BYTE,
+  STAT_DIRECT_RECV_RENEWLEASE,
+  STAT_DIRECT_SEND_RENEWLEASE,
+  STAT_DIRECT_RECV_LEASEACK,
+  STAT_DIRECT_SEND_LEASEACK,
+  STAT_DIRECT_RECV_LEASENAK,
+  STAT_DIRECT_SEND_LEASENAK,
+  STAT_DIRECT_RECV_RELEASE,
+  STAT_DIRECT_SEND_RELEASE,
+  STAT_DHCP_RECV_PKG,
+  STAT_DHCP_SEND_PKG,
+  STAT_DHCP_RECV_BYTE,
+  STAT_DHCP_SEND_BYTE,
+  STAT_DHCP_RECV_DISCOVER,
+  STAT_DHCP_SEND_OFFER,
+  STAT_DHCP_RECV_REQUEST,
+  STAT_DHCP_SEND_ACK,
+  STAT_DHCP_SEND_NAK,
+  STAT_DHCP_RECV_RELEASE,
+  STAT_NUM_OF_FIELDS
+};
+#endif
+
 // block structures
 
 enum ddhcp_block_state {
@@ -136,6 +173,11 @@ struct ddhcp_config {
 
   // DHCP
   uint16_t dhcp_port;
+
+  // Statistics
+#ifdef DDHCPD_STATISTICS
+  long int statistics[STAT_NUM_OF_FIELDS];
+#endif
 };
 typedef struct ddhcp_config ddhcp_config;
 

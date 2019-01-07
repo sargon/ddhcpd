@@ -43,15 +43,15 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
  * function ddhcp_dhcp_renewlease handles receiving such a request.
  */
 void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config);
-/** 
+/**
  * After this node has send a renew request to another node. The other node
- * may send an acknowledge package. We handle receiving such a message 
+ * may send an acknowledge package. We handle receiving such a message
  * in ddhcp_dhcp_leaseack.
  */
 void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* packet, ddhcp_config* config);
-/** 
+/**
  * After this node has send a renew request to another node. The other node
- * may send an no acknowledge package. We handle receiving such a message 
+ * may send an no acknowledge package. We handle receiving such a message
  * in ddhcp_dhcp_leasenack.
  */
 void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* packet, ddhcp_config* config);

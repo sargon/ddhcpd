@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "block.h"
 #include "dhcp_options.h"
+#include "statistics.h"
 
 extern int log_level;
 
@@ -34,6 +35,26 @@ int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* co
     DEBUG("handle_command(...): show dhcp options\n");
     dhcp_options_show(socket, config);
     return 0;
+
+#ifdef DDHCPD_STATISTICS
+  case DDHCPCTL_STATISTICS:
+    if (msglen != 1) {
+      DEBUG("handle_command(...): message length mismatch\n");
+    }
+
+    DEBUG("handle_command(...): show statistics\n");
+    statistics_show(socket, 0, config);
+    return 0;
+
+  case DDHCPCTL_STATISTICS_RESET:
+    if (msglen != 1) {
+      DEBUG("handle_command(...): message length mismatch\n");
+    }
+
+    DEBUG("handle_command(...): show statistics reset\n");
+    statistics_show(socket, 1, config);
+    return 0;
+#endif
 
   case DDHCPCTL_DHCP_OPTION_SET:
     DEBUG("handle_command(...): set dhcp option\n");

@@ -301,16 +301,16 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
 
   broadcast.sin_port = htons(68);
 
-  ssize_t ret = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
+  ssize_t bytes_send = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
 
-  if (ret < 0) {
+  if (bytes_send < 0) {
     perror("sendto");
     printf("Err: %i\n", errno);
   }
 
   free(buffer);
 
-  return 0;
+  return bytes_send;
 }
 
 int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
