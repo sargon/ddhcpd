@@ -112,7 +112,7 @@ You can setup a basic ddhcpd network testing enviroment by calling
     # ./network-test net-init <number>
 
 which creates a virtual network for <number> of ddhcpd instances. You
-will need to have sufficient priviledges to create network namespaces.
+will need to have sufficient privileges to create network namespaces.
 Or in short: use sudo and check the network-test script upfront.
 
 To start the (n-1)-th instance of ddhcpd in your test environment, use
