@@ -11,5 +11,5 @@ build-debian-package:
     - mkdir result
     - mv ../ddhcpd_* result/
   artifacts:
-    paths: 
+    paths:
       - result/*
