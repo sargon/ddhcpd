@@ -2,9 +2,9 @@ A Distributed DHCP Daemon
 =========================
 
 In self managed networks with decentralized client realms a central DHCP
-server is not available. DDHCP allows every realm to have his own server;
+server is not available. DDHCPD allows every realm to have its own server;
 preserving roaming features for the client, by maintaining a common
-consens on dhcp leases.
+consens on DHCP leases.
 
 The implementation is flexible, meaning we do not prevent you from doing
 stupid stuff, but also allow you maximal adaption.
@@ -14,11 +14,11 @@ stupid stuff, but also allow you maximal adaption.
     -h                     This usage information.
     -c CLT-IFACE           Interface on which requests from clients are handled
     -i SRV-IFACE           Interface on which different servers communicate
-    -S                     no Client interface
+    -S                     no client interface
     -t TENTATIVE           Time required for a block to be claimed
     -N NETWORK/CIDR        Network to announce and manage blocks in
     -o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal
-    -b BLKSIZEPOW          Power over two of block size
+    -b BLKSIZEPOW          Block size as power of two
     -B TIMEOUT             Block timeout
     -s SPAREBLKS           Amount of spare blocks
     -L                     Deactivate learning phase
@@ -32,7 +32,7 @@ stupid stuff, but also allow you maximal adaption.
 Build
 -----
 
-To build a production binary of ddhcpd run:
+To build a production binary of DDHCPD run:
 
     make clean all
 
@@ -48,7 +48,7 @@ To collect statistics build with
 
     CFLAGS="-D DDHCPD_STATISTICS" make clean all
 
-Depending on the choosen variant the binary size may variate between
+Depending on the chosen variant the binary size may variate between
 30KiB and 500KiB.
 
 Running
@@ -58,12 +58,12 @@ On a gluon node the command may look this:
 
     ddhcpd -o "3:4:10.116.254.254" -o "1:4:255.255.128.0" -o "28:4:10.116.254.255" -N 10.116.224.0/20 -b 2 -s 1 -c br-client -i bat0
 
-We are able to register dhcp options during startup but also during runtime.
+We are able to register DHCP options during startup but also during runtime.
 Using the ddhcpdctl binary, to e.g. add the standard gateway:
 
     ddhcpdctl -o "3:4:10.116.254.253"
 
-or an dedicated timeserver
+or a dedicated timeserver
 
     ddhcpdctl -o "42:4:10.116.254.252"
 
@@ -84,12 +84,12 @@ via the '-H' switch. On every event that executable will be called given a list 
 Currently <action> is one of the following keywords:
 
   - `lease`
-    A new lease was handed out to the client indicated
+    A new lease was handed out to the client indicated.
 
   - `release`
     The indicated lease has been released back into the address pool.
 
-Upcoming versions of ddhcpd may introduce further action verbs.
+Upcoming versions of DDHCPD may introduce further action keywords.
 
 Testing
 -------
@@ -102,38 +102,38 @@ All srvX interfaces are bridged in br-srv; enabling all daemons to communicate
 bidirectional.
 
 Inside of the daemons network namespace the client0 interface has the address 10.0.0.1/20,
-a IPv4 address is needed here, because the dhcp part of ddhcp binds on this interface.
+an IPv4 address is needed here, because the DHCP part of DDHCPD binds on this interface.
 It is the same address in every daemon namespace, since cltX interfaces are not
 bridged that is no problem. On the server0 interface we need no IPv4 address,
 because d2d communication is handled via IPv6 multicast/unicast on the local link.
 
-You can setup a basic ddhcpd network testing enviroment by calling
+You can setup a basic DDHCPD network testing environment by calling
 
     # ./network-test net-init <number>
 
-which creates a virtual network for <number> of ddhcpd instances. You
-will need to have sufficient priviledges to create network namespaces.
+which creates a virtual network for <number> of DDHCPD instances. You
+will need to have sufficient privileges to create network namespaces.
 Or in short: use sudo and check the network-test script upfront.
 
-To start the (n-1)-th instance of ddhcpd in your test environment, use
+To start the (n-1)-th instance of DDHCPD in your test environment, use
 
-    # ./network-test srv-start <n> ./ddhcp -t 3
+    # ./network-test srv-start <n> ./ddhcpd -t 3
 
 The above also reduces the tentative timeout from 12 to 3 seconds,
 speeds up testing.
 
-After starting multiple instances, we generate dhcp requests against specific
-instances of ddhcpd by starting dhcp clients pointed to the cltX interfaces,
+After starting multiple instances, we generate DHCP requests against specific
+instances of DDHCPD by starting DHCP clients pointed to the cltX interfaces,
 i.e.
 
     # dhclient -sf /dev/null -d -v clt0
 
-for the first ddhcpd instance. To create multiple parallel running clients
+for the first DDHCPD instance. To create multiple parallel running clients
 with different mac addresses, do:
 
     # ./network-test clt-start <n>
 
-To deconfigure the setup call:
+To unconfigure the setup call:
 
     # ./network-test net-stop
 
@@ -146,4 +146,4 @@ Gluon Packages
 
 A maintained gluon integration can be found at:
 
-    https://github.com/sargon/gluon-sargon/tree/v2018.x
+    https://github.com/sargon/gluon-sargon/tree/master
