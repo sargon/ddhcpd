@@ -120,7 +120,7 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
       //      Which node has more leases in this block, ..., who has the better node_id.
       // Unrelated from the above, the original concept is claiming the block now.
       blocks[block_index].timeout = 0;
-      block_update_claims(0, config);
+      block_update_claims(config);
     } else {
       // Notice the ownership
       blocks[block_index].state = DDHCP_CLAIMED;
@@ -163,7 +163,7 @@ void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config
       // Update Claims
       INFO("ddhcp_block_process_inquire(...): block %i is ours, notify network\n", tmp->block_index);
       blocks[tmp->block_index].timeout = 0;
-      block_update_claims(0, config);
+      block_update_claims(config);
     } else if (blocks[tmp->block_index].state == DDHCP_CLAIMING) {
       INFO("ddhcp_block_process_inquire(...): we are furthermore interested in block %i\n", tmp->block_index);
 
