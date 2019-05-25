@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 #ifdef DDHCPD_STATISTICS
+
+
 void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
   dprintf(fd, "mcast.recv_pkg %li\n", config->statistics[STAT_MCAST_RECV_PKG]);
   dprintf(fd, "mcast.send_pkg %li\n", config->statistics[STAT_MCAST_SEND_PKG]);
@@ -61,6 +63,8 @@ void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
     default:
       break;
     }
+  
+    dprintf(fd, "block.%u.owner %lu\n",block->index,(uint64_t) block->node_id);
 
     block++;
   }
