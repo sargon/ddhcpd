@@ -64,7 +64,7 @@ void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
       break;
     }
   
-    dprintf(fd, "block.%u.owner %lu\n",block->index,(uint64_t) block->node_id);
+    dprintf(fd, "block.%u.owner %lu\n",block->index,(uint64_t) *block->node_id);
 
     block++;
   }
