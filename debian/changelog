@@ -1,5 +1,23 @@
-ddhcpd (0.1) unstable; urgency=medium
+ddhcpd (1) unstable; urgency=medium
 
   * Initial Release.
 
- -- Daniel Ehlers <sargon@toppoint.de>  Tue, 09 Aug 2016 01:19:48 +0200
+ -- Daniel Ehlers <sargon@toppoint.de>  Tue, 1 Okt 2018 01:19:48 +0200
+
+ddhcpd (2) unstable
+
+  * Change inquire triggering from spare blocks to spare leases.
+  * Add statistics (optional activated on compile time)
+  * Add gitlab-ci for debian package.
+  * Major memory allocation review
+  * Major type-safety review
+  * Various bugfixes and small improvements
+
+ -- Daniel Ehlers <sargon@toppoint.de>  Tue, 07 Jan 2019 01:19:48 +0200
+
+ddhcpd (3) unstable
+
+  * Rewrite reclaim mechansim
+
+ -- Daniel Ehlers <sargon@toppoint.de>  Tue, 07 Mar 2019 01:19:48 +0200
+
