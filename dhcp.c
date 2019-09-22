@@ -51,7 +51,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhc
       *lease_index = lease_number;
     }
 
-    DEBUG("find_lease_from_address(...): state: %i\n", DDHCP_OURS);
+    DEBUG("find_lease_from_address(...): state: %i\n", blocks[block_number].state);
 
     if (blocks[block_number].state == DDHCP_OURS) {
       return 0;
