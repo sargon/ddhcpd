@@ -1,11 +1,15 @@
-#ifndef _DHCP_H
-#define _DHCP_H
+#pragma once
+
 /**
  * DHCP Structures
  */
 
-#include "types.h"
+#include <stdint.h>
+
+#include <sys/types.h>
+
 #include "dhcp_packet.h"
+#include "types.h"
 
 /**
  * DHCP Process Packet
@@ -87,5 +91,3 @@ ATTR_NONNULL_ALL void dhcp_release_lease(uint32_t address, ddhcp_config* config)
  * Return the number of free leases in the block.
  */
 ATTR_NONNULL_ALL int dhcp_check_timeouts(ddhcp_block* block);
-
-#endif

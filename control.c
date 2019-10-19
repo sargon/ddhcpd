@@ -1,7 +1,12 @@
 #include "control.h"
-#include "logger.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "block.h"
 #include "dhcp_options.h"
+#include "logger.h"
 #include "statistics.h"
 
 extern int log_level;

@@ -26,13 +26,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LINUX_LIST_H_
-#define _LINUX_LIST_H_
+#pragma once
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-#include "types.h"
+#include "macros.h"
 
 #define	prefetch(x)
 
@@ -207,5 +206,3 @@ list_splice_tail_init(struct list_head* list, struct list_head* head)
   _list_splice(list, head->prev, head);
   INIT_LIST_HEAD(list);
 }
-
-#endif /* _LINUX_LIST_H_ */

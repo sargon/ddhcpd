@@ -1,9 +1,12 @@
+#include "dhcp_options.h"
+
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <errno.h>
+#include <netinet/in.h>
 
-#include "dhcp_options.h"
 #include "list.h"
 #include "logger.h"
 #include "tools.h"

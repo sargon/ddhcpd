@@ -1,5 +1,6 @@
-#ifndef _STATISTICS_H
-#define _STATISTICS_H
+#pragma once
+
+#include <stdint.h>
 
 #include "types.h"
 
@@ -9,6 +10,4 @@ ATTR_NONNULL_ALL void statistics_show(int socket, uint8_t reset, ddhcp_config* c
 #else
 #define statistics_record(...)
 #define statistics_show(...)
-#endif
-
 #endif

@@ -1,5 +1,4 @@
-#ifndef _LOGGER_H
-#define _LOGGER_H
+#pragma once
 
 /**
  * A set of logging function which allow compile time and runtime logging decissions.
@@ -59,6 +58,4 @@ ATTR_NONNULL_ALL void logger(int level, const char* prefix, ...);
 #define DEBUG(...) logger(LOG_DEBUG, "DEBUG: ", __VA_ARGS__)
 #else
 #define DEBUG(...)
-#endif
-
 #endif

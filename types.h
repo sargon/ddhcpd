@@ -1,14 +1,17 @@
-#ifndef _TYPES_H
-#define _TYPES_H
+#pragma once
 
-#include <arpa/inet.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h> // IWYU pragma: keep
 #include <time.h>
 
-#define ATTR_NONNULL_ALL __attribute__((nonnull))
-#define ATTR_NONNULL(...) __attribute__((nonnull( __VA_ARGS__ )))
+#include <sys/types.h>
 
-#include "list.h"
+#include <arpa/inet.h>
+
 #include "dhcp_packet.h"
+#include "list.h"
+#include "macros.h" // IWYU pragma: export
 
 #define NODE_ID_CMP(id1,id2) memcmp((char*) (id1), (char*) (id2), sizeof(ddhcp_node_id))
 
@@ -195,5 +198,3 @@ union in_addr_storage {
 };
 
 typedef union in_addr_storage in_addr_storage;
-
-#endif

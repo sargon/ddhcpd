@@ -1,9 +1,16 @@
+#include "dhcp.h"
+
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+#include <arpa/inet.h>
+
+#include <netinet/in.h>
 
 #include "block.h"
-#include "dhcp.h"
 #include "dhcp_options.h"
 #include "hook.h"
 #include "logger.h"

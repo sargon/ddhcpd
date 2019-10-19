@@ -1,24 +1,10 @@
-#ifndef _PACKET_H
-#define _PACKET_H
+#pragma once
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <net/ethernet.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/socket.h>
+
+#include <netinet/in.h>
+
 #include <sys/types.h>
-#include <unistd.h>
 
 #include "types.h"
 
@@ -67,5 +53,3 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct 
 
 ATTR_NONNULL_ALL ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id);
 ATTR_NONNULL_ALL ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id);
-
-#endif

@@ -1,8 +1,21 @@
-#include <assert.h>
-
 #include "ddhcp.h"
+
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <arpa/inet.h>
+
+#include <netinet/in.h>
+
+#include <sys/socket.h>
+
+#include "block.h"
 #include "dhcp.h"
+#include "dhcp_packet.h"
 #include "logger.h"
+#include "packet.h"
 #include "tools.h"
 #include "statistics.h"
 
