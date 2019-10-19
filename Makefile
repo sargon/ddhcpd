@@ -59,7 +59,11 @@ CFLAGS+= \
     -DNDEBUG
 endif
 
-IWYU ?= $(shell which iwyu || echo true)
+ifeq ($(USE_IWYU),1)
+IWYU ?= $(shell which iwyu || echo @true)
+else
+IWYU ?= @true
+endif
 
 prefix?=/usr
 INSTALL = install
@@ -90,6 +94,9 @@ clean:
 
 style:
 	astyle --mode=c --options=none -s2 -f -j -k1 -W3 -p -U -H *.c *.h
+
+iwyu:
+	${MAKE} USE_IWYU=1 clean all
 
 install:
 	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd
