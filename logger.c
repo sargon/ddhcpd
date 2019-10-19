@@ -4,7 +4,7 @@
 
 int log_level = LOG_LEVEL_DEFAULT;
 
-void logger(int level, const char* prefix, ...) {
+ATTR_NONNULL_ALL void logger(int level, const char* prefix, ...) {
   if (log_level >= level) {
     va_list args;
     char* fmt;

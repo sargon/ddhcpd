@@ -19,7 +19,7 @@ struct sockaddr_in unicast = {
 
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
-void printf_dhcp(dhcp_packet* packet) {
+ATTR_NONNULL_ALL void printf_dhcp(dhcp_packet* packet) {
   char tmpstr[INET_ADDRSTRLEN];
 
   inet_ntop(AF_INET, &(packet->ciaddr.s_addr), tmpstr, INET_ADDRSTRLEN);
@@ -71,7 +71,7 @@ void printf_dhcp(dhcp_packet* packet) {
 #define printf_dhcp(packet) {}
 # endif
 
-size_t _dhcp_packet_len(dhcp_packet* packet) {
+ATTR_NONNULL_ALL size_t _dhcp_packet_len(dhcp_packet* packet) {
   size_t len = 240 + 1;
   dhcp_option* option = packet->options;
 
@@ -93,7 +93,7 @@ size_t _dhcp_packet_len(dhcp_packet* packet) {
   return len;
 }
 
-ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
+ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
 
   uint16_t tmp16;
   uint32_t tmp32;
@@ -242,7 +242,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
   return 0;
 }
 
-ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
+ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   DEBUG("dhcp_packet_send(socket:%i, dhcp_packet)\n", socket);
   uint16_t tmp16;
   uint32_t tmp32;
@@ -333,7 +333,7 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   return bytes_send;
 }
 
-int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
+ATTR_NONNULL_ALL int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src) {
   int err;
 
   memcpy(dest, src, sizeof(struct dhcp_packet));
@@ -373,7 +373,7 @@ fail_options:
   return err;
 }
 
-int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
+ATTR_NONNULL_ALL int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   time_t now = time(NULL);
   // Save dhcp packet, for further actions, later.
   dhcp_packet* copy = calloc(1, sizeof(dhcp_packet));
@@ -389,7 +389,7 @@ int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet) {
   return 0;
 }
 
-dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr) {
+ATTR_NONNULL_ALL dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr) {
   DEBUG("dhcp_packet_list_find(list,xid:%u,chaddr)\n", xid);
   struct list_head* pos, *q;
 
@@ -412,7 +412,7 @@ dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t
   return NULL;
 }
 
-void dhcp_packet_list_free(dhcp_packet_list* list) {
+ATTR_NONNULL_ALL void dhcp_packet_list_free(dhcp_packet_list* list) {
   DEBUG("dhcp_packet_list_free(list)\n");
   struct list_head* pos, *q;
 
@@ -424,7 +424,7 @@ void dhcp_packet_list_free(dhcp_packet_list* list) {
   }
 }
 
-uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
+ATTR_NONNULL_ALL uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
   dhcp_option* option = packet->options;
 
   for (int i = 0; i < packet->options_len; i++) {
@@ -438,7 +438,7 @@ uint8_t dhcp_packet_message_type(dhcp_packet* packet) {
   return 0;
 }
 
-void dhcp_packet_list_timeout(dhcp_packet_list* list) {
+ATTR_NONNULL_ALL void dhcp_packet_list_timeout(dhcp_packet_list* list) {
   DEBUG("dhcp_packet_list_timeout(list)\n");
   struct list_head* pos, *q;
   time_t now = time(NULL);

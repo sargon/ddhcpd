@@ -3,8 +3,7 @@
 
 #ifdef DDHCPD_STATISTICS
 
-
-void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
+ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
   dprintf(fd, "mcast.recv_pkg %li\n", config->statistics[STAT_MCAST_RECV_PKG]);
   dprintf(fd, "mcast.send_pkg %li\n", config->statistics[STAT_MCAST_SEND_PKG]);
   dprintf(fd, "mcast.recv_byte %li\n", config->statistics[STAT_MCAST_RECV_BYTE]);
@@ -77,4 +76,5 @@ void statistics_show(int fd, uint8_t reset, ddhcp_config* config) {
     memset(config->statistics, 0, sizeof(long int) * STAT_NUM_OF_FIELDS);
   }
 }
+
 #endif

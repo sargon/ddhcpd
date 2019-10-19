@@ -13,6 +13,6 @@ enum {
   DDHCPCTL_STATISTICS_RESET,
 };
 
-int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config);
+ATTR_NONNULL_ALL int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config);
 
 #endif

@@ -6,7 +6,7 @@
 
 extern int log_level;
 
-int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config) {
+ATTR_NONNULL_ALL int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config) {
   if (msglen == 0) {
     DEBUG("handle_command(...): zero length command received\n");
     return -2;

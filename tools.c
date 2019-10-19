@@ -7,8 +7,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-
-void addr_add(struct in_addr* subnet, struct in_addr* result, int add) {
+ATTR_NONNULL_ALL void addr_add(struct in_addr* subnet, struct in_addr* result, int add) {
   struct in_addr addr;
   memcpy(&addr, subnet, sizeof(struct in_addr));
   addr.s_addr = ntohl(addr.s_addr);
@@ -79,7 +78,7 @@ dhcp_option* parse_option() {
   return option;
 }
 
-char* hwaddr2c(uint8_t* hwaddr) {
+ATTR_NONNULL_ALL char* hwaddr2c(uint8_t* hwaddr) {
   char* str = calloc(18, sizeof(char));
 
   if (!str) {

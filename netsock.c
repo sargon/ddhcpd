@@ -52,7 +52,7 @@ const struct in6_addr in6addr_localmcast =
   }
 };
 
-int mac_to_ipv6(const struct ether_addr* mac, struct in6_addr* addr)
+ATTR_NONNULL_ALL int mac_to_ipv6(const struct ether_addr* mac, struct in6_addr* addr)
 {
   memset(addr, 0, sizeof(*addr));
   addr->s6_addr[0] = 0xfe;
@@ -72,7 +72,7 @@ int mac_to_ipv6(const struct ether_addr* mac, struct in6_addr* addr)
   return 0;
 }
 
-int control_open(ddhcp_config* state) {
+ATTR_NONNULL_ALL int control_open(ddhcp_config* state) {
   int ctl_sock;
   struct sockaddr_un s_un;
   int ret;
@@ -112,9 +112,9 @@ err:
   return -1;
 }
 
-int netsock_openv4(char* interface_client, ddhcp_config* config);
+ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config);
 
-int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
+ATTR_NONNULL_ALL int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
 {
   int sock_mc;
   int sock_srv;
@@ -286,7 +286,7 @@ err_nomc:
   return -1;
 }
 
-int netsock_openv4(char* interface_client, ddhcp_config* config) {
+ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config) {
   int sock;
   struct sockaddr_in sin;
   struct in_addr address_client;

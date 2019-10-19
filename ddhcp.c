@@ -6,7 +6,7 @@
 #include "tools.h"
 #include "statistics.h"
 
-int ddhcp_block_init(ddhcp_config* config) {
+ATTR_NONNULL_ALL int ddhcp_block_init(ddhcp_config* config) {
   DEBUG("ddhcp_block_init(config)\n");
 
   if (config->number_of_blocks < 1) {
@@ -42,7 +42,7 @@ int ddhcp_block_init(ddhcp_config* config) {
   return 0;
 }
 
-void ddhcp_block_free(ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_block_free(ddhcp_config* config) {
   ddhcp_block* block = config->blocks;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
@@ -53,7 +53,7 @@ void ddhcp_block_free(ddhcp_config* config) {
   free(config->blocks);
 }
 
-int ddhcp_check_packet(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+ATTR_NONNULL_ALL int ddhcp_check_packet(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   if (memcmp(&packet->prefix, &config->prefix, sizeof(struct in_addr)) != 0 ||
       packet->prefix_len != config->prefix_len ||
       packet->blocksize != config->block_size) {
@@ -63,7 +63,7 @@ int ddhcp_check_packet(struct ddhcp_mcast_packet* packet, ddhcp_config* config) 
   return 0;
 }
 
-void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
   struct ddhcp_mcast_packet packet;
   ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
   packet.sender = &sender;
@@ -97,7 +97,7 @@ void ddhcp_block_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sende
   }
 }
 
-void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_block_process_claims(packet,config)\n");
 
   assert(packet->command == 1);
@@ -141,7 +141,7 @@ void ddhcp_block_process_claims(struct ddhcp_mcast_packet* packet, ddhcp_config*
   }
 }
 
-void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_block_process_inquire(packet,config)\n");
 
   assert(packet->command == 2);
@@ -183,7 +183,7 @@ void ddhcp_block_process_inquire(struct ddhcp_mcast_packet* packet, ddhcp_config
   }
 }
 
-void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender, ddhcp_config* config) {
   struct ddhcp_mcast_packet packet;
   ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
   packet.sender = &sender;
@@ -223,7 +223,7 @@ void ddhcp_dhcp_process(uint8_t* buffer, ssize_t len, struct sockaddr_in6 sender
   }
 }
 
-void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_renewlease(request,config)\n");
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -267,7 +267,7 @@ void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, ddhcp_config* conf
   free(answer);
 }
 
-void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
 
@@ -292,7 +292,7 @@ void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   free(request->renew_payload);
 }
 
-void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* config) {
   // Stub functions
   DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
 
@@ -317,7 +317,7 @@ void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, ddhcp_config* confi
   free(request->renew_payload);
 }
 
-void ddhcp_dhcp_release(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
+ATTR_NONNULL_ALL void ddhcp_dhcp_release(struct ddhcp_mcast_packet* packet, ddhcp_config* config) {
   DEBUG("ddhcp_dhcp_release(packet,config)\n");
   dhcp_release_lease(packet->renew_payload->address, config);
   free(packet->renew_payload);

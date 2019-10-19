@@ -34,7 +34,7 @@ extern int log_level;
 const int NET = 0;
 const int NET_LEN = 10;
 
-in_addr_storage get_in_addr(struct sockaddr* sa)
+ATTR_NONNULL_ALL in_addr_storage get_in_addr(struct sockaddr* sa)
 {
   struct sockaddr_in in;
   struct sockaddr_in6 in6;
@@ -59,7 +59,7 @@ in_addr_storage get_in_addr(struct sockaddr* sa)
  * + Claim new blocks if we are low on spare leases.
  * + Update our claims.
  */
-void house_keeping(ddhcp_config* config) {
+ATTR_NONNULL_ALL void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping(blocks,config)\n");
   block_check_timeouts(config);
 
@@ -115,7 +115,7 @@ void del_fd(int efd, int fd, uint32_t events) {
   }
 }
 
-uint32_t get_loop_timeout(ddhcp_config* config) {
+ATTR_NONNULL_ALL uint32_t get_loop_timeout(ddhcp_config* config) {
   //Multiply by 500 to convert the timeout value given in seconds
   //into milliseconds AND dividing the value by two at the same time.
   //The integer overflow occuring for timeouts greater than 99.4 days is ignored here.

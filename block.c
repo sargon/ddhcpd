@@ -39,7 +39,7 @@ int block_alloc(ddhcp_block* block) {
   return 0;
 }
 
-int block_own(ddhcp_block* block, ddhcp_config* config) {
+ATTR_NONNULL(2) int block_own(ddhcp_block* block, ddhcp_config* config) {
   if (!block) {
     WARNING("block_own(...): No block given to own\n");
     return 1;
@@ -56,7 +56,7 @@ int block_own(ddhcp_block* block, ddhcp_config* config) {
   return 0;
 }
 
-void block_free(ddhcp_block* block) {
+ATTR_NONNULL_ALL void block_free(ddhcp_block* block) {
   DEBUG("block_free(%i)\n", block->index);
 
   if (block->state != DDHCP_BLOCKED) {
@@ -73,7 +73,7 @@ void block_free(ddhcp_block* block) {
   }
 }
 
-ddhcp_block* block_find_free(ddhcp_config* config) {
+ATTR_NONNULL_ALL ddhcp_block* block_find_free(ddhcp_config* config) {
   DEBUG("block_find_free(config)\n");
   ddhcp_block* block = config->blocks;
 
@@ -127,7 +127,7 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
   return random_free;
 }
 
-int block_claim(int32_t num_blocks, ddhcp_config* config) {
+ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config* config) {
   DEBUG("block_claim(count:%i, config)\n", num_blocks);
 
   // Handle blocks already in claiming prozess
@@ -234,7 +234,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   return 0;
 }
 
-uint32_t block_num_free_leases(ddhcp_config* config) {
+ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config* config) {
   DEBUG("block_num_free_leases(config)\n");
 
   ddhcp_block* block = config->blocks;
@@ -258,7 +258,7 @@ uint32_t block_num_free_leases(ddhcp_config* config) {
   return free_leases;
 }
 
-ddhcp_block* block_find_free_leases(ddhcp_config* config) {
+ATTR_NONNULL_ALL ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   DEBUG("block_find_free_leases(config)\n");
 
   ddhcp_block* block = config->blocks;
@@ -294,7 +294,7 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   return selected;
 }
 
-void block_drop_unused(ddhcp_config* config) {
+ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config* config) {
   DEBUG("block_drop_unsued(config)\n");
   ddhcp_block* block = config->blocks;
   ddhcp_block* freeable_block = NULL;
@@ -340,8 +340,9 @@ void block_drop_unused(ddhcp_config* config) {
   }
 }
 
-void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_block_timeout, ddhcp_config* config) {
+ATTR_NONNULL_ALL static void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_block_timeout, ddhcp_config* config) {
   DEBUG("block_update_claims_send(packet:%i,%li,config)\n",packet->count,new_block_timeout);
+
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
@@ -361,7 +362,7 @@ void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_bloc
   }
 }
 
-void block_update_claims(ddhcp_config* config) {
+ATTR_NONNULL_ALL void block_update_claims(ddhcp_config* config) {
   DEBUG("block_update_claims(config)\n");
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
@@ -445,7 +446,7 @@ void block_update_claims(ddhcp_config* config) {
   free(packet);
 }
 
-void block_check_timeouts(ddhcp_config* config) {
+ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config* config) {
   DEBUG("block_check_timeouts(config)\n");
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
@@ -470,7 +471,7 @@ void block_check_timeouts(ddhcp_config* config) {
   }
 }
 
-void block_show_status(int fd, ddhcp_config* config) {
+ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config* config) {
   ddhcp_block* block = config->blocks;
   dprintf(fd, "block size/number\t%u/%u \n", config->block_size, config->number_of_blocks);
   dprintf(fd, "      tentative timeout\t%u\n", config->tentative_timeout);

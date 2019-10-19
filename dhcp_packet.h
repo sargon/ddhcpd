@@ -48,32 +48,32 @@ enum dhcp_message_type {
 /**
  * Store a packet in the packet_list, create a copy of the packet.
  */
-int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
+ATTR_NONNULL_ALL int dhcp_packet_list_add(dhcp_packet_list* list, dhcp_packet* packet);
 
 /**
  * Search for a packet in the dhcp_packet_list checking chaddr and xid.
  */
-dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr);
+ATTR_NONNULL_ALL dhcp_packet* dhcp_packet_list_find(dhcp_packet_list* list, uint32_t xid, uint8_t* chaddr);
 
 /**
  * Cleanup the packet list.
  */
-void dhcp_packet_list_timeout(dhcp_packet_list* list);
+ATTR_NONNULL_ALL void dhcp_packet_list_timeout(dhcp_packet_list* list);
 
 /**
  * Free DHCP packet list
  */
-void dhcp_packet_list_free(dhcp_packet_list* list);
+ATTR_NONNULL_ALL void dhcp_packet_list_free(dhcp_packet_list* list);
 
 /**
  * Print an representation of a dhcp_packet to stdout.
  */
-void printf_dhcp(dhcp_packet* packet);
+ATTR_NONNULL_ALL void printf_dhcp(dhcp_packet* packet);
 
 /**
  * Memcpy a packet into another packet.
  */
-int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
+ATTR_NONNULL_ALL int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
 
 
 /**
@@ -95,8 +95,9 @@ int dhcp_packet_copy(dhcp_packet* dest, dhcp_packet* src);
  * make pointer to the buffer inside of the dhcp_packet structure. Do not free
  * the buffer before the last operation on that struture!
  */
-ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len);
-ssize_t dhcp_packet_send(int socket, dhcp_packet* packet);
+ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len);
+ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet* packet);
 
-uint8_t dhcp_packet_message_type(dhcp_packet* packet);
+ATTR_NONNULL_ALL uint8_t dhcp_packet_message_type(dhcp_packet* packet);
+
 #endif

@@ -54,7 +54,7 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count) {
   return len;
 }
 
-struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* config) {
+ATTR_NONNULL_ALL struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* config) {
   struct ddhcp_mcast_packet* packet = (struct ddhcp_mcast_packet*) calloc(sizeof(struct ddhcp_mcast_packet), 1);
 
   if (!packet) {
@@ -72,7 +72,7 @@ struct ddhcp_mcast_packet* new_ddhcp_packet(uint8_t command, ddhcp_config* confi
   return packet;
 }
 
-ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packet* packet) {
+ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packet* packet) {
 
   // Header
   copy_buf_to_var_inc(buffer, ddhcp_node_id, packet->node_id);
@@ -188,7 +188,7 @@ ssize_t ntoh_mcast_packet(uint8_t* buffer, ssize_t len, struct ddhcp_mcast_packe
   return 0;
 }
 
-int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
+ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
 
   // Header
   copy_var_to_buf_inc(buffer, ddhcp_node_id, packet->node_id);
@@ -263,7 +263,7 @@ int hton_packet(struct ddhcp_mcast_packet* packet, char* buffer) {
   return 0;
 }
 
-ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
+ATTR_NONNULL_ALL ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socket, uint32_t scope_id) {
   size_t len = (size_t)_packet_size(packet->command, packet->count);
 
   char* buffer = (char*) calloc(1, len);
@@ -295,7 +295,7 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
   return bytes_send;
 }
 
-ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
+ATTR_NONNULL_ALL ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* dest, int multicast_socket, uint32_t scope_id) {
   DEBUG("send_packet_direct(packet,dest,mcsocket:%i,scope:%u)\n", multicast_socket, scope_id);
   size_t len = (size_t)_packet_size(packet->command, packet->count);
 
