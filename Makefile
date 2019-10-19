@@ -59,6 +59,8 @@ CFLAGS+= \
     -DNDEBUG
 endif
 
+IWYU ?= $(shell which iwyu || echo true)
+
 prefix?=/usr
 INSTALL = install
 INSTALL_FILE    = $(INSTALL) -D -p    -m  644
@@ -92,5 +94,9 @@ style:
 install:
 	$(INSTALL_PROGRAM) ddhcpd $(DESTDIR)$(prefix)/sbin/ddhcpd
 	$(INSTALL_PROGRAM) ddhcpdctl $(DESTDIR)$(prefix)/sbin/ddhcpdctl
+
+%.o: %.c %.h
+	${CC} ${CFLAGS} -c $< -o $@
+	${IWYU} -Xiwyu --no_comments -Xiwyu --no_fwd_decls -Xiwyu --mapping_file=ddhcpd.imp -DDDHCPD_STATISTICS -c $< -o $@ || true
 
 -include *.d
