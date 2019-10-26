@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "block.h"
@@ -51,7 +52,7 @@ uint8_t find_lease_from_address(struct in_addr* addr, ddhcp_config* config, ddhc
       *lease_index = lease_number;
     }
 
-    DEBUG("find_lease_from_address(...): state: %i\n", DDHCP_OURS);
+    DEBUG("find_lease_from_address(...): state: %i\n", blocks[block_number].state);
 
     if (blocks[block_number].state == DDHCP_OURS) {
       return 0;
@@ -109,7 +110,7 @@ dhcp_packet* build_initial_packet(dhcp_packet* from_client) {
 
 uint8_t _ddo[1] = { 0 };
 
-int16_t _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config) {
+int16_t _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet* request, ddhcp_config* config, bool include_lease_time) {
   int16_t num_options;
   // TODO We need a more extendable way to build up options
   // TODO Proper error handling
@@ -126,8 +127,11 @@ int16_t _dhcp_default_options(uint8_t msg_type, dhcp_packet* packet, dhcp_packet
   _ddo[0] = msg_type;
   set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE, 1, _ddo);
 
-  // DHCP Lease Time
-  set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME);
+  // To support DHCPINFORM (as of RFC 2132) we need to be able to omit the lease time
+  if (include_lease_time) {
+    // DHCP Lease Time
+    set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_ADDRESS_LEASE_TIME);
+  }
 
   // DHCP Server identifier
   set_option_from_store(&config->options, packet->options, packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
@@ -163,6 +167,11 @@ int dhcp_process(uint8_t* buffer, ssize_t len, ddhcp_config* config) {
     case DHCPRELEASE:
       statistics_record(config, STAT_DHCP_RECV_RELEASE, 1);
       dhcp_hdl_release(&dhcp_packet_buf, config);
+      break;
+
+    case DHCPINFORM:
+      statistics_record(config, STAT_DHCP_RECV_INFORM, 1);
+      dhcp_hdl_inform(config->client_socket, &dhcp_packet_buf, config);
       break;
 
     default:
@@ -216,7 +225,7 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
 
   DEBUG("dhcp_hdl_discover(...): offering address %i %s\n", lease_index, inet_ntoa(lease_block->subnet));
 
-  if (_dhcp_default_options(DHCPOFFER, packet, discover, config)) {
+  if (_dhcp_default_options(DHCPOFFER, packet, discover, config, true)) {
     WARNING("dhcp_hdl_discover(...): option memory allocation failed\n");
     free(packet);
     return 1;
@@ -462,6 +471,42 @@ void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config) {
   }
 }
 
+void dhcp_hdl_inform(int socket, dhcp_packet* request, ddhcp_config* config) {
+  DEBUG("dhcp_hdl_inform(socket:%i, dhcp_packet,config)\n", socket);
+
+  ddhcp_block* lease_block = NULL;
+  uint32_t lease_index = 0;
+
+  struct in_addr addr;
+  memcpy(&addr, &request->ciaddr, sizeof(struct in_addr));
+  find_lease_from_address(&addr, config, &lease_block, &lease_index);
+
+  dhcp_packet* packet = build_initial_packet(request);
+
+  if (!packet) {
+    WARNING("dhcp_hdl_inform(...): packed memory allocation failed\n");
+    return;
+  }
+
+  if (_dhcp_default_options(DHCPACK, packet, request, config, false)) {
+    WARNING("dhcp_hdl_inform(...): option memory allocation failed\n");
+    free(packet);
+    return;
+  }
+
+  DEBUG("dhcp_hdl_inform(...): informing address %i %s\n", lease_index, inet_ntoa(packet->ciaddr));
+  statistics_record(config, STAT_DHCP_SEND_PKG, 1);
+  statistics_record(config, STAT_DHCP_SEND_ACK, 1);
+  ssize_t bytes_send = dhcp_packet_send(socket, packet);
+  statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
+  UNUSED(bytes_send);
+
+  hook(HOOK_INFORM, &packet->ciaddr, (uint8_t*) &packet->chaddr, config);
+
+  free(packet->options);
+  free(packet);
+}
+
 int dhcp_nack(int socket, dhcp_packet* from_client, ddhcp_config* config) {
   dhcp_packet* packet = build_initial_packet(from_client);
 
@@ -515,7 +560,7 @@ int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lease_block, uint32_
 
   addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
 
-  if (_dhcp_default_options(DHCPACK, packet, request, config)) {
+  if (_dhcp_default_options(DHCPACK, packet, request, config, true)) {
     WARNING("dhcp_ack(...): option memory allocation failed\n");
     free(packet);
     return 1;
