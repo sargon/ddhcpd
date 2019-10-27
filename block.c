@@ -376,7 +376,7 @@ void block_update_claims(ddhcp_config* config) {
 
   block = config->blocks;
   uint8_t send_packet = 0;
-  uint32_t index = 0;
+  uint8_t index = 0;
   time_t new_block_timeout = now + config->block_timeout;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
