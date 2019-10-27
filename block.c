@@ -313,7 +313,7 @@ void block_drop_unused(ddhcp_config* config) {
   }
 }
 
-void _block_update_claim_send(struct ddhcp_mcast_packet* packet, uint32_t new_block_timeout, ddhcp_config* config) {
+void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_block_timeout, ddhcp_config* config) {
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
@@ -337,7 +337,7 @@ void block_update_claims(ddhcp_config* config) {
   uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
-  int32_t timeout_factor = now + config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
+  time_t timeout_factor = now + config->block_timeout - (time_t)(config->block_timeout / config->block_refresh_factor);
 
   // Determine if we need to run a full update claim run
   // we run through the list until we see one block which needs update.
@@ -377,7 +377,7 @@ void block_update_claims(ddhcp_config* config) {
   block = config->blocks;
   uint8_t send_packet = 0;
   uint32_t index = 0;
-  uint32_t new_block_timeout = now + config->block_timeout;
+  time_t new_block_timeout = now + config->block_timeout;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
