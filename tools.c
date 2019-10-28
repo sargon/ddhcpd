@@ -79,15 +79,26 @@ dhcp_option* parse_option() {
   return option;
 }
 
+//! Number of pre-allocated string buffers
+#define hwaddr_strcount 2u
+//! Maximum string length required to format an MAC address
+#define hwaddr_strlen 18u
+static char hwaddr_strbuf[hwaddr_strcount][hwaddr_strlen] = { 0 };
+static uint8_t hwaddr_stridx = 0;
+
+//! The function hwaddr2c formats a hwaddr (AKA MAC address) passed in the first argument
+//! into one (of several) static buffers. The buffer is chosen in a round-robin-like fashion
+//! by cycling through a list of hwaddr_strcount buffers, each of hwaddr_strlen bytes in size.
+//! If the last of the pre-allocated buffers has been reached filling up new buffers restarts
+//! with the first on.
+//!
+//! \note The memory returned SHOULD NOT be referenced by any long-living pointers as it
+//! can be overwritten at any time when the next hwaddr is converted by calling this function.
 char* hwaddr2c(uint8_t* hwaddr) {
-  char* str = calloc(18, sizeof(char));
+  char* str = hwaddr_strbuf[hwaddr_stridx];
+  hwaddr_stridx = (hwaddr_stridx + 1u) % hwaddr_strcount;
 
-  if (!str) {
-    FATAL("hwaddr2c(...): Failed to allocate buffer.\n");
-    return NULL;
-  }
-
-  snprintf(str, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+  snprintf(str, hwaddr_strlen, "%02X:%02X:%02X:%02X:%02X:%02X",
     hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 
   return str;
