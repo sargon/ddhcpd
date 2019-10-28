@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "dhcp.h"
 #include "logger.h"
@@ -334,7 +335,6 @@ void _block_update_claim_send(struct ddhcp_mcast_packet* packet, uint32_t new_bl
 
 void block_update_claims(ddhcp_config* config) {
   DEBUG("block_update_claims(config)\n");
-  uint32_t our_blocks = 0;
   ddhcp_block* block = config->blocks;
   time_t now = time(NULL);
   int32_t timeout_factor = now + config->block_timeout - (int32_t)(config->block_timeout / config->block_refresh_factor);
@@ -342,16 +342,18 @@ void block_update_claims(ddhcp_config* config) {
   // Determine if we need to run a full update claim run
   // we run through the list until we see one block which needs update.
   // Running a full update claims (see below) is much more expensive
+  bool our_blocks = false;
+
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS && block->timeout < timeout_factor) {
-      our_blocks++;
+      our_blocks = true;
       break;
     }
 
     block++;
   }
 
-  if (our_blocks == 0) {
+  if (!our_blocks) {
     DEBUG("block_update_claims(...): No blocks need claim updates.\n");
     return;
   }
@@ -375,16 +377,17 @@ void block_update_claims(ddhcp_config* config) {
   }
 
   block = config->blocks;
-  uint8_t send_packet = 0;
+
+  bool send_packet = false;
   uint32_t index = 0;
+
   uint32_t new_block_timeout = now + config->block_timeout;
 
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
-
       if (block->timeout < timeout_factor) {
         DEBUG("block_update_claims(...): update claim for block %i needed\n", block->index);
-        send_packet = 1;
+        send_packet = true;
       }
 
       packet->payload[index].block_index = block->index;
@@ -396,8 +399,9 @@ void block_update_claims(ddhcp_config* config) {
       if (index == UPDATE_CLAIM_MAX_BLOCKS) {
         if (send_packet) {
           packet->count = index;
-          send_packet = 0;
           _block_update_claim_send(packet, new_block_timeout, config);
+
+          send_packet = false;
         }
 
         index = 0;
