@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <errno.h>
 
+extern const struct in6_addr in6addr_localmcast;
+
 #define copy_buf_to_var_inc(buf, type, var)             \
   do {                                                  \
     type* tmp = &(var);                                 \
@@ -280,19 +282,7 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
     .sin6_scope_id = scope_id
   };
 
-  const struct in6_addr dest =
-  {
-    {
-      {
-        0xff, 0x02, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x12, 0x34
-      }
-    }
-  };
-
-  memcpy(&dest_addr.sin6_addr, &dest, sizeof(dest));
+  memcpy(&dest_addr.sin6_addr, &in6addr_localmcast, sizeof(in6addr_localmcast));
 
   // TODO Handle return value of sendto.
   ssize_t bytes_send = sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
