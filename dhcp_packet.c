@@ -11,6 +11,13 @@ struct sockaddr_in broadcast = {
   .sin_addr = {INADDR_BROADCAST},
 };
 
+struct sockaddr_in unicast = {
+  .sin_family = AF_INET,
+  .sin_addr = {0},
+};
+
+
+
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 void printf_dhcp(dhcp_packet* packet) {
   char tmpstr[INET_ADDRSTRLEN];
@@ -299,9 +306,19 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   // Network send
   printf("Message LEN: %zu\n", _dhcp_packet_len(packet));
 
-  broadcast.sin_port = htons(68);
+  struct sockaddr_in *address = &broadcast;
+  if ( (packet->flags & (uint16_t) 0x8000) == 0x0000 ) {
+    uint8_t zeros[4] = {0,0,0,0};
+    if ( memcmp(zeros,&packet->ciaddr,4) != 0) {
+      char ipv4_sender[INET_ADDRSTRLEN];
+      DEBUG("dhcp_packet_send: Sending unicast to %s \n",inet_ntop(AF_INET, &packet->ciaddr, ipv4_sender, INET_ADDRSTRLEN));
+      address = &unicast;
+      address->sin_addr = packet->ciaddr;
+    }
+  } 
+  address->sin_port = htons(68);
 
-  ssize_t bytes_send = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast));
+  ssize_t bytes_send = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)address, sizeof(broadcast));
 
   if (bytes_send < 0) {
     perror("sendto");
