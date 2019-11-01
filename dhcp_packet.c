@@ -310,8 +310,10 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
   if ( (packet->flags & (uint16_t) 0x8000) == 0x0000 ) {
     uint8_t zeros[4] = {0,0,0,0};
     if ( memcmp(zeros,&packet->ciaddr,4) != 0) {
+      #if LOG_LEVEL_LIMIT >= LOG_DEBUG
       char ipv4_sender[INET_ADDRSTRLEN];
       DEBUG("dhcp_packet_send: Sending unicast to %s \n",inet_ntop(AF_INET, &packet->ciaddr, ipv4_sender, INET_ADDRSTRLEN));
+      #endif
       address = &unicast;
       address->sin_addr = packet->ciaddr;
     }

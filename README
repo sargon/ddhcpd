@@ -32,17 +32,21 @@ stupid stuff, but also allow you maximal adaption.
 Build
 -----
 
-To build a production binary of DDHCPD run:
+To build a production binary of DDHCPD run.
 
     make clean all
 
-To increase logging output additional CFLAGS can be provided:
+To increase the default logging output additional CFLAGS can be provided:
 
-    CFLAGS="-D LOG_LEVEL=20" make clean all
+    CFLAGS="-D LOG_LEVEL_DEFAULT=5" make clean all
 
 Additionally setting DEBUG=1 activates debug symbols:
 
-    DEBUG=1 CFLAGS="-D LOG_LEVEL=20" make clean all
+    DEBUG=1 CFLAGS="-D LOG_LEVEL_DEFAULT=5" make clean all
+
+To reduce the binary size to the minimum run:
+
+    CFLAGS="-D LOG_LEVEL_LIMIT=0" make clean all
 
 To collect statistics build with
 
