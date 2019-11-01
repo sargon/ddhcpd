@@ -215,6 +215,7 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_INQUIRE, 1);
+  // TODO Send first, process error and on success update blocks.
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
@@ -314,7 +315,7 @@ void block_drop_unused(ddhcp_config* config) {
 }
 
 void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_block_timeout, ddhcp_config* config) {
-
+  DEBUG("block_update_claims_send(packet:%i,%l,config)\n",packet->count,new_block_timeout);
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
@@ -326,9 +327,11 @@ void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_bloc
     // iff the packet has been transmitted
     for (uint8_t i = 0; i < packet->count; i++) {
       uint32_t index = packet->payload[i].block_index;
-      DEBUG("block_update_claims(...): updated claim for block %i\n", index);
+      DEBUG("block_update_claims_send(...): updated claim for block %i\n", index);
       config->blocks[index].timeout = new_block_timeout;
     }
+  } else {
+    DEBUG("block_update_claims_send(...): Send failed, no updates made.\n");
   }
 }
 
