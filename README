@@ -53,7 +53,7 @@ To collect statistics build with
     CFLAGS="-D DDHCPD_STATISTICS" make clean all
 
 Depending on the chosen variant the binary size may variate between
-30KiB and 500KiB.
+30KiB and 1MiB.
 
 Running
 -------
