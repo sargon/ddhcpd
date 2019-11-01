@@ -299,6 +299,10 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
 
   free(buffer);
 
+  if ( bytes_send < 0 ) {
+    ERROR("send_packet_mcast(...): Failed (%i): %s\n",errno,strerror(errno));
+  }
+
   return bytes_send;
 }
 
@@ -335,6 +339,10 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
   ssize_t bytes_send = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
 
   free(buffer);
+
+  if ( bytes_send < 0 ) {
+    ERROR("send_packet_direct(...): Failed (%i): %s\n",errno,strerror(errno));
+  }
 
   return bytes_send;
 }
