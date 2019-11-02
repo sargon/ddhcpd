@@ -102,7 +102,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
     return -1;
   }
 
-  printf("LEN:%zi\n", len);
+  DEBUG("ntoh_dhcp_packet(...): package len:%zi\n", len);
 
   // TODO Use macros to read from the buffer
 
@@ -130,7 +130,7 @@ ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, ssize_t len) {
         && (uint8_t) buffer[238] == 83
         && (uint8_t) buffer[239] == 99
        )) {
-    printf("Warning: Magic cookie not found!\n");
+    WARNING("ntoh_dhcp_packet(...) -> Magic cookie not found, possibly malformed request!\n");
     return -7;
   }
 
