@@ -308,7 +308,7 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
 
   struct sockaddr_in *address = &broadcast;
   // Check the broadcast flag
-  if ( (packet->flags & (uint16_t) 0x8000) == 0x0000 ) {
+  if ( !(packet->flags & DHCP_BROADCAST_MASK) ) {
     // Check if client address is set to none zero
     uint8_t zeros[4] = {0,0,0,0};
     if ( memcmp(zeros,&packet->ciaddr,4) != 0) {
