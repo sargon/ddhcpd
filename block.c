@@ -206,7 +206,6 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
   ddhcp_block* block;
 
   list_for_each_entry(block, &config->claiming_blocks, claim_list) {
-    block->claiming_counts++;
     packet->payload[index].block_index = block->index;
     packet->payload[index].timeout = 0;
     packet->payload[index].reserved = 0;
@@ -215,10 +214,16 @@ int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_INQUIRE, 1);
-  // TODO Send first, process error and on success update blocks.
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
-  UNUSED(bytes_send);
+
+  if (bytes_send > 0) {
+    list_for_each_entry(block, &config->claiming_blocks, claim_list) {
+      block->claiming_counts++;
+    }
+  } else {
+    DEBUG("block_claim(...): Send failed, no updates made.\n");
+  }
 
   free(packet->payload);
   free(packet);
