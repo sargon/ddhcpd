@@ -262,11 +262,11 @@ ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   ddhcp_block* block = config->blocks;
   ddhcp_block* selected = NULL;
 
-  // TODO Change strategy, select the oldest block with free leases
   for (uint32_t i = 0; i < config->number_of_blocks; i++) {
     if (block->state == DDHCP_OURS) {
       if (dhcp_has_free(block)) {
         if (selected) {
+          // If observed block is claimed earlier, select that block.
           if (selected->first_claimed > block->first_claimed) {
             selected = block;
           }
@@ -303,6 +303,7 @@ void block_drop_unused(ddhcp_config* config) {
         DEBUG("block_drop unused(...): block %i is unused.\n", block->index);
 
         if (freeable_block) {
+          // If observed block is younger than current selected, select block.
           if (freeable_block->first_claimed < block->first_claimed) {
             freeable_block = block;
           }
@@ -322,7 +323,7 @@ void block_drop_unused(ddhcp_config* config) {
 }
 
 void _block_update_claim_send(struct ddhcp_mcast_packet* packet, time_t new_block_timeout, ddhcp_config* config) {
-  DEBUG("block_update_claims_send(packet:%i,%l,config)\n",packet->count,new_block_timeout);
+  DEBUG("block_update_claims_send(packet:%i,%li,config)\n",packet->count,new_block_timeout);
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
   ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
