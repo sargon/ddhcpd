@@ -324,9 +324,8 @@ ssize_t dhcp_packet_send(int socket, dhcp_packet* packet) {
 
   ssize_t bytes_send = sendto(socket, buffer, _dhcp_packet_len(packet), 0, (struct sockaddr*)address, sizeof(broadcast));
 
-  if (bytes_send < 0) {
-    perror("sendto");
-    printf("Err: %i\n", errno);
+  if ( bytes_send < 0 ) {
+    ERROR("dhcp_packet_send(...): Failed (%i): %s\n",errno,strerror(errno));
   }
 
   free(buffer);
