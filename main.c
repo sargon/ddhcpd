@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
   int show_usage = 0;
   int early_housekeeping = 0;
 
-  while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:B:N:o:s:H:")) != -1) {
+  while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:B:N:o:s:H:n:")) != -1) {
     switch (c) {
     case 'i':
       interface = optarg;
@@ -305,6 +305,10 @@ int main(int argc, char** argv) {
       }
       break;
 
+    case 'n':
+      config.block_needless_timeout = (uint16_t)(atoi(optarg));
+      break;
+
     default:
       printf("ARGC: %i\n", argc);
       show_usage = 1;
@@ -324,6 +328,7 @@ int main(int argc, char** argv) {
     printf("-o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal\n");
     printf("-b BLKSIZEPOW          Power over two of block size\n");
     printf("-B TIMEOUT             Block timeout\n");
+    printf("-n NEEDLESS_TIMEOUT    Time until we release needless blocks\n");
     printf("-s SPARELEASES         Amount of spare leases (max: 256)\n");
     printf("-L                     Deactivate learning phase\n");
     printf("-d                     Run in background and daemonize\n");
