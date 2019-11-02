@@ -73,9 +73,14 @@ void house_keeping(ddhcp_config* config) {
 
   if (blocks_needed < 0 ) {
     block_drop_unused(config);
-  } else if ( blocks_needed > 0) {
-    block_claim(blocks_needed, config);
-  }
+  } else {
+    if (config->needless_marks != 0) {
+      block_unmark_needless(config);
+    }
+    if (blocks_needed > 0) {
+      block_claim(blocks_needed, config);
+    }
+  } 
 
   block_update_claims(config);
 
@@ -154,6 +159,7 @@ int main(int argc, char** argv) {
   config.spare_leases_needed = 2;
   config.block_timeout = 60;
   config.block_refresh_factor = 4;
+  config.block_needless_timeout = 300;
   config.tentative_timeout = 15;
   config.control_path = (char*)"/tmp/ddhcpd_ctl";
   config.disable_dhcp = 0;

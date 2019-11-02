@@ -317,8 +317,23 @@ void block_drop_unused(ddhcp_config* config) {
   }
 
   if (freeable_block) {
-    DEBUG("block_drop_unused(...): free block %i.\n", freeable_block->index);
-    block_free(freeable_block);
+    time_t now = time(NULL);
+    if ( freeable_block->needless_since == 0 ) {
+      DEBUG("block_drop_unused(...): mark block %i to be needless\n",freeable_block->index);
+      freeable_block->needless_since = now;
+      // Set needless marks flag
+      config->needless_marks = 1;
+    } else {
+      if ( freeable_block->needless_since <= now - config->block_needless_timeout) {
+        DEBUG("block_drop_unused(...): free block %i.\n", freeable_block->index);
+        block_free(freeable_block);
+      } else {
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+        time_t time_left = now - config->block_needless_timeout - freeable_block->needless_since;
+        DEBUG("block_drop_unused(...): free block %i in about %li seconds\n",freeable_block->index,time_left);
+#endif
+      }
+    }
   }
 }
 
@@ -513,4 +528,20 @@ void block_show_status(int fd, ddhcp_config* config) {
   }
 
   dprintf(fd, "\nblocks in use: %i\n", num_reserved_blocks);
+}
+
+void block_unmark_needless(ddhcp_config* config){
+  DEBUG("block_unmark_needless(config)\n");
+  ddhcp_block* block = config->blocks;
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+    if (block->needless_since > 0) {
+      DEBUG("block_unmark_needless(...): Unmark block %i\n",block->index);
+    }
+#endif
+    block->needless_since = 0;
+    block++;
+  }
+  // Remove needless marks flag
+  config->needless_marks = 0;
 }

@@ -235,7 +235,16 @@ int dhcp_hdl_discover(int socket, dhcp_packet* discover, ddhcp_config* config) {
   statistics_record(config, STAT_DHCP_SEND_OFFER, 1);
   ssize_t bytes_send = dhcp_packet_send(socket, packet);
   statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
-  UNUSED(bytes_send);
+
+  if (bytes_send > 0) {
+    // We needed the block, hence remove a possible needless marking.
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+    if ( lease_block->needless_since > 0 ) {
+      DEBUG("dhcp_hdl_discover(...): Reset needless marker for block %i\n",lease_block->index);
+    }
+#endif
+    lease_block->needless_since = 0;
+  }
 
   free(packet->options);
   free(packet);

@@ -79,4 +79,9 @@ void block_check_timeouts(ddhcp_config* config);
  */
 void block_show_status(int fd, ddhcp_config* config);
 
+/**
+ * Reset needless markers in all blocks
+ */
+void block_unmark_needless(ddhcp_config* config);
+
 #endif

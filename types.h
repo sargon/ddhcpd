@@ -76,6 +76,7 @@ struct ddhcp_block {
   ddhcp_node_id node_id;
   struct in6_addr owner_address;
   time_t first_claimed;
+  time_t needless_since;
   time_t timeout;
   // Only iff state is equal to CLAIMED lease_block is not equal to NULL.
   struct dhcp_lease* addresses;
@@ -137,6 +138,7 @@ struct ddhcp_config {
   uint32_t number_of_blocks;
   uint16_t block_timeout;
   uint16_t block_refresh_factor;
+  uint16_t block_needless_timeout;
   uint16_t tentative_timeout;
   uint8_t block_size;
   uint8_t spare_leases_needed;
@@ -148,6 +150,7 @@ struct ddhcp_config {
   time_t next_wakeup;
   uint32_t loop_timeout;
   uint8_t claiming_blocks_amount;
+  uint8_t needless_marks;
   ddhcp_block* blocks;
   ddhcp_block_list claiming_blocks;
 
