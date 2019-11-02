@@ -114,11 +114,13 @@ ddhcp_block* block_find_free(ddhcp_config* config) {
     r--;
   }
 
+#if LOG_LEVEL_LIMIT >= LOG_WARNING
   if (random_free) {
     DEBUG("block_find_free(...): found block %i\n", random_free->index);
   } else {
     WARNING("block_find_free(...): no free block found\n");
   }
+#endif
 
   return random_free;
 }
