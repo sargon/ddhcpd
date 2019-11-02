@@ -68,6 +68,8 @@ void block_free(ddhcp_block* block) {
     DEBUG("block_free(%i): Freeing DHCP leases\n", block->index);
     free(block->addresses);
     block->addresses = NULL;
+    // Reset needless timeout
+    block->needless_since = 0;
   }
 }
 
@@ -327,6 +329,7 @@ void block_drop_unused(ddhcp_config* config) {
       if ( freeable_block->needless_since <= now - config->block_needless_timeout) {
         DEBUG("block_drop_unused(...): free block %i.\n", freeable_block->index);
         block_free(freeable_block);
+        config->needless_marks = 0;
       } else {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
         time_t time_left = now - config->block_needless_timeout - freeable_block->needless_since;
