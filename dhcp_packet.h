@@ -43,6 +43,8 @@ enum dhcp_message_type {
   DHCPINFORM    = 8,
 };
 
+#define DHCP_BROADCAST_MASK 0x8000u
+
 /**
  * Store a packet in the packet_list, create a copy of the packet.
  */
