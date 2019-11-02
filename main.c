@@ -445,10 +445,13 @@ int main(int argc, char** argv) {
   socklen_t sender_len = sizeof sender;
 
   do {
-    int n = epoll_wait(efd, events, (int)maxevents, (int)loop_timeout);
+    int n = 0;
+    do {
+      n = epoll_wait(efd, events, (int)maxevents, (int)loop_timeout);
+    } while (n < 0 && errno == EINTR);
 
     if (n < 0) {
-      perror("epoll error:");
+      ERROR("epoll error (%i) %s",errno,strerror(errno));
     }
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
