@@ -284,7 +284,6 @@ ssize_t send_packet_mcast(struct ddhcp_mcast_packet* packet, int mulitcast_socke
 
   memcpy(&dest_addr.sin6_addr, &in6addr_localmcast, sizeof(in6addr_localmcast));
 
-  // TODO Handle return value of sendto.
   ssize_t bytes_send = sendto(mulitcast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
   free(buffer);
@@ -325,7 +324,6 @@ ssize_t send_packet_direct(struct ddhcp_mcast_packet* packet, struct in6_addr* d
 
   hton_packet(packet, buffer);
 
-  // TODO Handle return value of sendto.
   ssize_t bytes_send = sendto(multicast_socket, buffer, len, 0, (struct sockaddr*) &dest_addr, sizeof(struct sockaddr_in6));
 
   free(buffer);
