@@ -20,7 +20,7 @@ stupid stuff, but also allow you maximal adaption.
     -o CODE:LEN:P1. .. .Pn DHCP Option with code, len and #len chars in decimal
     -b BLKSIZEPOW          Block size as power of two
     -B TIMEOUT             Block claim timeout
-    -s SPAREBLKS           Amount of spare blocks
+    -s SPARELEASES         Amount of spare leases (max: 256)
     -L                     Deactivate learning phase
     -d                     Run in background and daemonize
     -D                     Run in foreground and log to console (default)
