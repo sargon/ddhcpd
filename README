@@ -95,6 +95,15 @@ Currently <action> is one of the following keywords:
 
 Upcoming versions of DDHCPD may introduce further action keywords.
 
+
+Network analyzing
+-----------------
+
+You can count the nodes in your network wich an active ddhcpd with
+
+    # ddhcpdctl -b | tail -n+10 | sed -e 's/\t\+/ /g' | cut -d ' ' -f 3 | sort -u | wc -l
+
+
 Testing
 -------
 
