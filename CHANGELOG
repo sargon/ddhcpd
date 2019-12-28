@@ -1,3 +1,11 @@
+ddhcpd r4 (2019-12-28)
+======================
+
+  - Free unneeded blocks after some waiting time
+  - Send dhcp unicast if client is renewing
+  - Add dhcp inform message support 
+  - Various bugfixes and small improvements
+
 ddhcpd r3 (2019-03-07)
 ======================
 
