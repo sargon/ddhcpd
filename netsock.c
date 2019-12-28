@@ -19,25 +19,24 @@
  *
  */
 
-#include <arpa/inet.h>
-#include <errno.h>
+#include "netsock.h"
+
 #include <fcntl.h>
-#include <net/ethernet.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/un.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include "netsock.h"
-#include "packet.h"
+
+#include <arpa/inet.h>
+
+#include <net/ethernet.h>
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 // ff02::1234.1234
 const struct in6_addr in6addr_localmcast =

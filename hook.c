@@ -1,10 +1,15 @@
 #include "hook.h"
+
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+
+#include <sys/wait.h>
+
 #include "logger.h"
 #include "tools.h"
-
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
 ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG

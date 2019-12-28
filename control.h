@@ -1,5 +1,8 @@
-#ifndef _CONTROL_H
-#define _CONTROL_H
+#pragma once
+
+#include <stdint.h>
+
+#include <sys/types.h>
 
 #include "types.h"
 
@@ -14,5 +17,3 @@ enum {
 };
 
 ATTR_NONNULL_ALL int handle_command(int socket, uint8_t* buffer, ssize_t msglen, ddhcp_config* config);
-
-#endif

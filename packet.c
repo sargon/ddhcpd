@@ -1,10 +1,16 @@
 #include "packet.h"
-#include "logger.h"
-#include "netsock.h"
 
-#include <endian.h>
-#include <assert.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <arpa/inet.h>
+
+#include <sys/socket.h>
+
+#include "netsock.h"
+#include "logger.h"
 
 extern const struct in6_addr in6addr_localmcast;
 

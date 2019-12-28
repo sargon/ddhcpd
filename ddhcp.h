@@ -1,9 +1,13 @@
-#ifndef _DDHCP_H
-#define _DDHCP_H
+#pragma once
 
+#include <stdint.h>
+
+#include <netinet/in.h>
+
+#include <sys/types.h>
+
+#include "packet.h"
 #include "types.h"
-#include "list.h"
-#include "block.h"
 
 /**
  * Initialise the blocks data structure in the global configuration state.
@@ -65,5 +69,3 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_release(struct ddhcp_mcast_packet* packet, ddhc
 ATTR_NONNULL_ALL ddhcp_block* block_find_lease(ddhcp_config* config);
 
 ATTR_NONNULL_ALL void house_keeping(ddhcp_config* config);
-
-#endif

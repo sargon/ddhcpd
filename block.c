@@ -1,10 +1,18 @@
 #include "block.h"
 
 #include <errno.h>
-#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#include <arpa/inet.h>
+
+#include <sys/types.h>
 
 #include "dhcp.h"
+#include "list.h"
 #include "logger.h"
+#include "packet.h"
 #include "statistics.h"
 #include "tools.h"
 

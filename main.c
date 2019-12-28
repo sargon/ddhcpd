@@ -1,31 +1,36 @@
-#include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <getopt.h>
+#include <limits.h>
 #include <math.h>
-#include <netinet/in.h>
-#include <sys/epoll.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <limits.h>
+
+#include <arpa/inet.h>
+
+#include <netinet/in.h>
+
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 #include "block.h"
+#include "control.h"
 #include "ddhcp.h"
 #include "dhcp.h"
+#include "dhcp_options.h"
 #include "dhcp_packet.h"
+#include "hook.h"
 #include "logger.h"
 #include "netsock.h"
 #include "packet.h"
-#include "tools.h"
-#include "dhcp_options.h"
-#include "control.h"
-#include "version.h"
-#include "hook.h"
 #include "statistics.h"
+#include "tools.h"
+#include "version.h"
 
 volatile int daemon_running = 0;
 

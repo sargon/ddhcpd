@@ -1,0 +1,6 @@
+[
+    { include: [ "<bits/getopt_core.h>", "private", "<getopt.h>", "public" ] },
+    { include: [ "<bits/stdint-intn.h>", "private", "<stdint.h>", "public" ] },
+    { include: [ "<bits/stdint-uintn.h>", "private", "<stdint.h>", "public" ] },
+    { include: [ "<bits/types/time_t.h>", "private", "<time.h>", "public" ] }
+]

@@ -1,5 +1,7 @@
-#include "types.h"
+#include "statistics.h"
+
 #include <stdio.h>
+#include <string.h>
 
 #ifdef DDHCPD_STATISTICS
 

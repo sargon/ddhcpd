@@ -1,5 +1,7 @@
-#ifndef _DHCP_OPTIONS_H
-#define _DHCP_OPTIONS_H
+#pragma once
+
+#include <stddef.h>
+#include <stdint.h>
 
 #include "types.h"
 
@@ -90,5 +92,3 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config* config);
  * Search for option in store and if found store it in the options list.
  */
 ATTR_NONNULL_ALL int set_option_from_store(dhcp_option_list* store, dhcp_option* options, uint8_t len, uint8_t code);
-
-#endif

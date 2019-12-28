@@ -1,6 +1,7 @@
-#include <stdarg.h>
-
 #include "logger.h"
+
+#include <stdarg.h>
+#include <stdio.h>
 
 int log_level = LOG_LEVEL_DEFAULT;
 

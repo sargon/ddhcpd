@@ -1,10 +1,14 @@
-#ifndef _DHCP_PACKET_H
-#define _DHCP_PACKET_H
+#pragma once
 
+#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
+#include <time.h>
+
 #include <netinet/in.h>
-#include "types.h"
+
+#include <sys/types.h>
+
+#include "list.h"
 
 // List of dhcp_packet
 typedef struct list_head dhcp_packet_list;
@@ -99,5 +103,3 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet* packet, uint8_t* buffer, 
 ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet* packet);
 
 ATTR_NONNULL_ALL uint8_t dhcp_packet_message_type(dhcp_packet* packet);
-
-#endif

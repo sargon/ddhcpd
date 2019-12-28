@@ -1,5 +1,8 @@
-#ifndef _HOOK_H
-#define _HOOK_H
+#pragma once
+
+#include <stdint.h>
+
+#include <netinet/in.h>
 
 #include "types.h"
 
@@ -9,5 +12,3 @@
 
 ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config);
 void hook_init();
-
-#endif
