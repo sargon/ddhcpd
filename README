@@ -17,10 +17,10 @@ stupid stuff, but also allow you maximal adaption.
     -S                     no client interface
     -t TENTATIVE           Time required for a block to be claimed
     -N NETWORK/CIDR        Network to announce and manage blocks in
-    -o CODE:LEN:P1. .. .Pn DHCP Option with code,len and #len chars in decimal
+    -o CODE:LEN:P1. .. .Pn DHCP Option with code, len and #len chars in decimal
     -b BLKSIZEPOW          Block size as power of two
-    -B TIMEOUT             Block timeout
-    -s SPAREBLKS           Amount of spare blocks
+    -B TIMEOUT             Block claim timeout
+    -s SPARELEASES         Amount of spare leases (max: 256)
     -L                     Deactivate learning phase
     -d                     Run in background and daemonize
     -D                     Run in foreground and log to console (default)
@@ -95,20 +95,29 @@ Currently <action> is one of the following keywords:
 
 Upcoming versions of DDHCPD may introduce further action keywords.
 
+
+Network analyzing
+-----------------
+
+You can count the nodes in your network wich an active ddhcpd with
+
+    # ddhcpdctl -b | tail -n+10 | sed -e 's/\t\+/ /g' | cut -d ' ' -f 3 | sort -u | wc -l
+
+
 Testing
 -------
 
-The network-test script setups a set of virtual interfaces
+The network-test script sets up a set of virtual interfaces
 which are composed of server and client interface pairs.
 Those are called srvX for daemons and cltX for clients inside of the main
 network namespace and server0 and client0 in the ''daemons'' network namespaces.
 All srvX interfaces are bridged in br-srv; enabling all daemons to communicate
 bidirectional.
 
-Inside of the daemons network namespace the client0 interface has the address 10.0.0.1/20,
-an IPv4 address is needed here, because the DHCP part of DDHCPD binds on this interface.
-It is the same address in every daemon namespace, since cltX interfaces are not
-bridged that is no problem. On the server0 interface we need no IPv4 address,
+Inside of the daemon's network namespace the client0 interface has the address 10.0.0.1/20.
+An IPv4 address is needed here, because the DHCP part of DDHCPD binds on this interface.
+It is the same address in every daemon namespace and since cltX interfaces are not
+bridged this is no problem. On the server0 interface we need no IPv4 address,
 because d2d communication is handled via IPv6 multicast/unicast on the local link.
 
 You can setup a basic DDHCPD network testing environment by calling
@@ -123,8 +132,8 @@ To start the (n-1)-th instance of DDHCPD in your test environment, use
 
     # ./network-test srv-start <n> ./ddhcpd -t 3
 
-The above also reduces the tentative timeout from 12 to 3 seconds,
-speeds up testing.
+The above also reduces the tentative timeout from 12 to 3 seconds to
+speed up testing.
 
 After starting multiple instances, we generate DHCP requests against specific
 instances of DDHCPD by starting DHCP clients pointed to the cltX interfaces,
@@ -141,7 +150,7 @@ To unconfigure the setup call:
 
     # ./network-test net-stop
 
-A simple testing routine incorporating all above:
+A simple testing routine incorporating all the above:
 
     # ./network-test test
 
