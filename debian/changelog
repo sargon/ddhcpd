@@ -21,3 +21,11 @@ ddhcpd (3) unstable
 
  -- Daniel Ehlers <sargon@toppoint.de>  Tue, 07 Mar 2019 01:19:48 +0200
 
+ddhcpd (4) unstable
+
+  * Free unneeded blocks after some waiting time
+  * Send dhcp unicast if client is renewing
+  * Add dhcp inform message support 
+  * Various bugfixes and small improvements
+
+ -- Daniel Ehlers <sargon@toppoint.de>  Fri, 28 Dec 2019 11:23:21 +0200
