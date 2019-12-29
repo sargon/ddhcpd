@@ -398,7 +398,13 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet* request, d
         }
       } else {
         // Block is neither blocked nor ours, so probably say nak here
-        // TODO but first we should check if we are still in warmup.
+        if ( block_num_owned(config) > 0 ) {
+          // When we own a block the learning phase is over, so we can safely nack requests
+          // in this step.
+          dhcp_nack(socket, request, config);
+        } else {
+          INFO("dhcp_hdl_request(...): Request could not be nacked safely.\n");
+        }
         return 2;
       }
     }
