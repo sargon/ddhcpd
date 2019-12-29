@@ -138,14 +138,15 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config* config) {
     ddhcp_block* block = list_entry(pos, ddhcp_block, claim_list);
 
     if (block->claiming_counts == 3) {
-      block_own(block, config);
+      if ( block_own(block, config) > 0) {
+        ERROR("block_claim(...): Claiming block (%i) failed, reseting claim counter.", block->index);
+        block->claiming_counts = 0;
+      } else {
+        //Reduce number of blocks we need to claim
+        num_blocks--;
+        INFO("block_claim(...): block %i claimed after 3 claims.\n", block->index);
+      }
 
-      // TODO Error Handling
-
-      //Reduce number of blocks we need to claim
-      num_blocks--;
-
-      INFO("block_claim(...): block %i claimed after 3 claims.\n", block->index);
       list_del(pos);
       config->claiming_blocks_amount--;
     } else if (block->state != DDHCP_CLAIMING) {
