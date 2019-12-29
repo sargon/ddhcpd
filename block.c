@@ -258,6 +258,12 @@ ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config* config) {
   return free_leases;
 }
 
+ATTR_NONNULL_ALL uint32_t block_num_owned(ddhcp_config* config) {
+  uint32_t owned_blocks = 0;
+  // TODO Implement function
+  return owned_blocks;
+}
+
 ATTR_NONNULL_ALL ddhcp_block* block_find_free_leases(ddhcp_config* config) {
   DEBUG("block_find_free_leases(config)\n");
 

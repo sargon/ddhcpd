@@ -39,6 +39,11 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config* config);
 ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config* config);
 
 /**
+ * Sum the number of owned blocks.
+ */
+ATTR_NONNULL_ALL uint32_t block_num_owned(ddhcp_config* config);
+
+/**
  * Find and return claimed block with free leases. Try to
  * reduce fragmentation of lease usage by returning already
  * used blocks.
