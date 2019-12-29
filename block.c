@@ -260,7 +260,13 @@ ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config* config) {
 
 ATTR_NONNULL_ALL uint32_t block_num_owned(ddhcp_config* config) {
   uint32_t owned_blocks = 0;
-  // TODO Implement function
+  ddhcp_block* block = config->blocks;
+  for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+    if (block->state == DDHCP_OURS) {
+      owned_blocks++;
+    }
+  }
+  DEBUG("block_num_owned(...): We own %lu blocks\n", owned_blocks);
   return owned_blocks;
 }
 
