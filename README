@@ -15,7 +15,7 @@ stupid stuff, but also allow you maximal adaption.
     -c CLT-IFACE           Interface on which requests from clients are handled
     -i SRV-IFACE           Interface on which different servers communicate
     -S                     no client interface
-    -t TENTATIVE           Time in seconds from when a block is announced to be claimed until a block is claimed (default: 15)
+    -t TENTATIVE           Time in seconds from when a block is announced to be claimed until a block is claimed (min: 2, default: 15)
     -N NETWORK/CIDR        Network to announce and manage blocks in
     -o CODE:LEN:P1. .. .Pn DHCP Option with code, len and #len chars in decimal
     -b BLKSIZEPOW          Block size as power of two
