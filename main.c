@@ -80,7 +80,7 @@ ATTR_NONNULL_ALL void house_keeping(ddhcp_config* config) {
     if (blocks_needed > 0) {
       block_claim(blocks_needed, config);
     }
-  } 
+  }
 
   block_update_claims(config);
 
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
 
   int c;
   int show_usage = 0;
-  int early_housekeeping = 0;
+  int learning_phase = 1;
 
   while ((c = getopt(argc, argv, "C:c:i:St:dvVDhLb:B:N:o:s:H:n:")) != -1) {
     switch (c) {
@@ -218,6 +218,10 @@ int main(int argc, char** argv) {
 
     case 't':
       config.tentative_timeout = (uint16_t)atoi(optarg);
+      if (config.tentative_timeout < 2) {
+        ERROR("Tentative timeout must divisible by two\n");
+        exit(1);
+      }
       break;
 
     case 'd':
@@ -234,7 +238,7 @@ int main(int argc, char** argv) {
       break;
 
     case 'L':
-      early_housekeeping = 1;
+      learning_phase = 0;
       break;
 
     case 'V':
@@ -431,12 +435,17 @@ int main(int argc, char** argv) {
     abort();
   }
 
-  int need_house_keeping;
+  int need_house_keeping = 0;
   uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
+  time_t now = time(NULL);
+  time_t timeout_time = now + (config.tentative_timeout >> 1);
 
-  if (early_housekeeping) {
+  if (!learning_phase) {
+    // We want no learning phase, so reset all the timers
     loop_timeout = 0;
+    timeout_time = now;
   }
+
 
   INFO("loop timeout: %i msecs\n", get_loop_timeout(&config));
 
@@ -455,15 +464,24 @@ int main(int argc, char** argv) {
     }
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
-
     if (loop_timeout != config.loop_timeout) {
       DEBUG("Increase loop timeout from %i to %i\n", loop_timeout, config.loop_timeout);
     }
-
 #endif
 
     loop_timeout = config.loop_timeout;
-    need_house_keeping = 1;
+
+    now = time(NULL);
+    if (timeout_time <= now) {
+      // Our time for house keeping has come
+      need_house_keeping = 1;
+      timeout_time = now + (config.tentative_timeout >> 1);
+      if (learning_phase) {
+        learning_phase = 0;
+      }
+    } else { 
+      need_house_keeping = 0;
+    }
 
     for (int i = 0; i < n; i++) {
       if ((events[i].events & EPOLLERR)) {
@@ -499,9 +517,7 @@ int main(int argc, char** argv) {
           statistics_record(&config, STAT_MCAST_RECV_PKG, 1);
           ddhcp_block_process(buffer, len, sender, &config);
         }
-
-        house_keeping(&config);
-        need_house_keeping = 0;
+        need_house_keeping = 1;
       } else if (config.client_socket == events[i].data.fd) {
         // DHCP
         ssize_t len;
@@ -536,7 +552,9 @@ int main(int argc, char** argv) {
     }
 
     if (need_house_keeping) {
-      house_keeping(&config);
+      if (!learning_phase) {
+        house_keeping(&config);
+      }
     }
   } while (daemon_running);
 
