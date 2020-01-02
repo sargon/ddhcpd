@@ -470,7 +470,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet* packet, ddhcp_config* config
     // Check Hardware Address of client
     if (memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
       _dhcp_release_lease(lease_block, lease_index);
-      hook(HOOK_RELEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
+      hook_address(HOOK_RELEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
     } else {
       ERROR("dhcp_hdl_release(...): Hardware address transmitted by client did not match with our record, doing nothing.\n");
     }
@@ -516,7 +516,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_inform(int socket, dhcp_packet* request, ddhcp_co
   statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
 
-  hook(HOOK_INFORM, &packet->ciaddr, (uint8_t*) &packet->chaddr, config);
+  hook_address(HOOK_INFORM, &packet->ciaddr, (uint8_t*) &packet->chaddr, config);
 
   free(packet->options);
   free(packet);
@@ -588,7 +588,7 @@ ATTR_NONNULL_ALL int dhcp_ack(int socket, dhcp_packet* request, ddhcp_block* lea
   statistics_record(config, STAT_DHCP_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
 
-  hook(HOOK_LEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
+  hook_address(HOOK_LEASE, &packet->yiaddr, (uint8_t*) &packet->chaddr, config);
 
   free(packet->options);
   free(packet);

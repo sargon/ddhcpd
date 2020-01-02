@@ -6,15 +6,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
+ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr* address, uint8_t* chaddr, ddhcp_config* config) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
   char* hwaddr = hwaddr2c(chaddr);
-  DEBUG("hook(type:%i,addr:%s,chaddr:%s,config)\n", type, inet_ntoa(*address), hwaddr);
+  DEBUG("hook_address(type:%i,addr:%s,chaddr:%s,config)\n", type, inet_ntoa(*address), hwaddr);
   free(hwaddr);
 #endif
 
   if (!config->hook_command) {
-    DEBUG("hook(...): No hook command set\n");
+    DEBUG("hook_address(...): No hook command set\n");
     return;
   }
 
@@ -36,7 +36,7 @@ ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chadd
   }
 
   if (!action) {
-    DEBUG("hook(...): unknown hook type: %i\n", type);
+    DEBUG("hook_address(...): unknown hook type: %i\n", type);
     return;
   }
 
@@ -44,7 +44,7 @@ ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chadd
 
   if (pid < 0) {
     // TODO: Include errno from fork
-    FATAL("hook(...): Failed to fork() for hook command execution (errno: %i).\n", pid);
+    FATAL("hook_address(...): Failed to fork() for hook command execution (errno: %i).\n", pid);
     return;
   }
 
@@ -70,11 +70,13 @@ ATTR_NONNULL_ALL void hook(uint8_t type, struct in_addr* address, uint8_t* chadd
 
   if (err < 0) {
     // TODO: Logging from the child should be synchronized
-    FATAL("hook(...): Command could not be executed (errno: %i).\n", err);
+    FATAL("hook_address(...): Command could not be executed (errno: %i).\n", err);
   }
 
   exit(1);
 }
+
+
 
 void cleanup_process_table(int signum)
 {
