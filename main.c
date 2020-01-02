@@ -444,6 +444,7 @@ int main(int argc, char** argv) {
     // We want no learning phase, so reset all the timers
     loop_timeout = 0;
     timeout_time = now;
+    hook(HOOK_LEARNING_PHASE_END,&config);
   }
 
 
@@ -478,6 +479,7 @@ int main(int argc, char** argv) {
       timeout_time = now + (config.tentative_timeout >> 1);
       if (learning_phase) {
         learning_phase = 0;
+        hook(HOOK_LEARNING_PHASE_END,&config);
       }
     } else { 
       need_house_keeping = 0;

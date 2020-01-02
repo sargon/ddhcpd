@@ -76,6 +76,65 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr* address, uint8_
   exit(1);
 }
 
+ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config* config) {
+  DEBUG("hook(type:%i,addr:%s,config)\n", type);
+
+  if (!config->hook_command) {
+    DEBUG("hook_address(...): No hook command set\n");
+    return;
+  }
+
+  int pid;
+
+  char* action = NULL;
+
+  switch (type) {
+  case HOOK_LEARNING_PHASE_END:
+    action = (char*)"endlearning";
+    break;
+
+  default:
+    break;
+  }
+
+  if (!action) {
+    DEBUG("hook(...): unknown hook type: %i\n", type);
+    return;
+  }
+
+  pid = fork();
+
+  if (pid < 0) {
+    // TODO: Include errno from fork
+    FATAL("hook(...): Failed to fork() for hook command execution (errno: %i).\n", pid);
+    return;
+  }
+
+  if (pid != 0) {
+    //Nothing to do as the parent
+    return;
+  }
+
+  int err = execl(
+    // Binary to execute
+    "/bin/sh",
+
+    // Arguments to pass
+    "/bin/sh", //Be pedantic about executing /bin/sh
+    "-e", // Terminate on error return
+    "--", // Terminate argument parsing
+    config->hook_command, // Our actual command to run
+    action, // The action we notify about
+    (char*) NULL // End of command line
+  );
+
+  if (err < 0) {
+    // TODO: Logging from the child should be synchronized
+    FATAL("hook(...): Command could not be executed (errno: %i).\n", err);
+  }
+
+  exit(1);
+}
 
 
 void cleanup_process_table(int signum)
