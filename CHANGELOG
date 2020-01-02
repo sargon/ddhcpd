@@ -1,3 +1,11 @@
+ddhcpd r5 (2020-01-XX)
+======================
+  - Fix SIGPIPE handling
+  - Timed house keeping
+  - Respect learning phase
+  - New hook actions
+  - More error handling
+
 ddhcpd r4 (2019-12-28)
 ======================
 
