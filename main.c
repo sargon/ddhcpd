@@ -366,6 +366,7 @@ int main(int argc, char** argv) {
 
   //Register signal handlers
   handle_signal(SIGHUP, SIG_IGN);
+  handle_signal(SIGPIPE, SIG_IGN);
   handle_signal(SIGINT, handle_signal_terminate);
   handle_signal(SIGTERM, handle_signal_terminate);
 
