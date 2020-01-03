@@ -7,4 +7,7 @@ case $1 in
   release)
     echo $@ >> /tmp/hook.log
     ;;
+  endlearning)
+    echo "$@ - learning phase is over" >> /tmp/hook.log
+    ;;
 esac
