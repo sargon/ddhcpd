@@ -439,7 +439,9 @@ int main(int argc, char** argv) {
   int need_house_keeping = 0;
   uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
   time_t now = time(NULL);
-  time_t timeout_time = now + (config.tentative_timeout >> 1);
+  // The first time we want to make housekeeping is after the learning phase, 
+  // which is block_timeout long. 
+  time_t timeout_time = now + config.block_timeout;
 
   if (!learning_phase) {
     // We want no learning phase, so reset all the timers
@@ -477,6 +479,7 @@ int main(int argc, char** argv) {
     if (timeout_time <= now) {
       // Our time for house keeping has come
       need_house_keeping = 1;
+      // The next time for house keeping is in half the tentative timeout.
       timeout_time = now + (config.tentative_timeout >> 1);
       if (learning_phase) {
         learning_phase = 0;
