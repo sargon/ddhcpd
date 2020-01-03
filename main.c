@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
     case 't':
       config.tentative_timeout = (uint16_t)atoi(optarg);
       if (config.tentative_timeout < 2) {
-        ERROR("Tentative timeout must divisible by two\n");
+        ERROR("Tentative timeout must at least two\n");
         exit(1);
       }
       break;
