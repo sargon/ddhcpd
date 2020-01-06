@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <net/ethernet.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -31,16 +32,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/un.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include "netsock.h"
 #include "packet.h"
+#include "logger.h"
 
 // ff02::1234.1234
-const struct in6_addr in6addr_localmcast =
+struct in6_addr in6addr_localmcast =
 {
   {
     {
@@ -52,24 +54,34 @@ const struct in6_addr in6addr_localmcast =
   }
 };
 
-ATTR_NONNULL_ALL int mac_to_ipv6(const struct ether_addr* mac, struct in6_addr* addr)
-{
-  memset(addr, 0, sizeof(*addr));
-  addr->s6_addr[0] = 0xfe;
-  addr->s6_addr[1] = 0x80;
+struct in6_addr* get_ipv6_linklokal(char* interface) {
+  struct ifaddrs *ifaddr, *ifa;
+  int n;
 
-  addr->s6_addr[8] = mac->ether_addr_octet[0] ^ 0x02;
-  addr->s6_addr[9] = mac->ether_addr_octet[1];
-  addr->s6_addr[10] = mac->ether_addr_octet[2];
+  if (getifaddrs(&ifaddr) == -1) {
+    ERROR("get_ipv6_linklokal(...): getifaddrs failed\n");
+    return NULL;
+  }
 
-  addr->s6_addr[11] = 0xff;
-  addr->s6_addr[12] = 0xfe;
+  for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+    if (ifa->ifa_addr == NULL) {
+      continue;
+    }
 
-  addr->s6_addr[13] = mac->ether_addr_octet[3];
-  addr->s6_addr[14] = mac->ether_addr_octet[4];
-  addr->s6_addr[15] = mac->ether_addr_octet[5];
+    if (strcmp(ifa->ifa_name,interface) == 0) {
+      if (ifa->ifa_addr->sa_family == AF_INET6) {
+        if(((struct sockaddr_in6*) ifa->ifa_addr)->sin6_scope_id > 0) {
+          struct in6_addr* address = malloc(sizeof(struct in6_addr));
+          memcpy(address,&((struct sockaddr_in6*) ifa->ifa_addr)->sin6_addr, sizeof(struct in6_addr));
+          freeifaddrs(ifaddr);
+          return address;
+        }
+      }
+    }
+  }
 
-  return 0;
+  freeifaddrs(ifaddr);
+  return NULL;
 }
 
 ATTR_NONNULL_ALL int control_open(ddhcp_config* state) {
@@ -112,188 +124,68 @@ err:
   return -1;
 }
 
-ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config);
+ATTR_NONNULL_ALL int netsock_open_socket_v6(char* interface, struct in6_addr* addr, uint16_t port) {
+  
+  struct sockaddr_in6 sin6 = { 0 };
+  
+  sin6.sin6_family = AF_INET6;
+  memcpy(&sin6.sin6_addr, addr,sizeof(struct in6_addr));
+  sin6.sin6_port = htons(port);
+  sin6.sin6_scope_id = if_nametoindex(interface);
 
-ATTR_NONNULL_ALL int netsock_open(char* interface, char* interface_client, ddhcp_config* state)
-{
-  int sock_mc;
-  int sock_srv;
-  struct sockaddr_in6 sin6_mc;
-  struct sockaddr_in6 sin6_srv;
-  struct ipv6_mreq mreq;
-  unsigned int mloop = 0;
-  struct ifreq ifr;
-  int ret;
-
-  if (state->disable_dhcp == 0) {
-    if (netsock_openv4(interface_client, state) < 0) {
-      goto err_nomc;
-    }
+  int sock = socket(PF_INET6, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
+  if (sock < 0) {
+    FATAL("netsock_open_socket_v6(...): unable to create socket\n");
   }
 
-  sock_mc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-
-  if (sock_mc < 0) {
-    perror("can't open multicast socket");
-    goto err_nomc;
+  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface))) {
+    FATAL("netsock_open_socket_v6(...): setsockopt: can't bind to device '%s'\n", interface);
+    goto error;
   }
 
-  sock_srv = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-
-  if (sock_srv < 0) {
-    perror("can't open server socket");
-    goto err_nosrv;
+  if (bind(sock, (struct sockaddr*) &sin6, sizeof(struct sockaddr_in6)) < 0) {
+    FATAL("netsock_open_socket_v6(...): unable to bind %s\n",interface);
+    perror("bind");
+    goto error;
   }
 
-  memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, interface, IFNAMSIZ);
-  ifr.ifr_name[IFNAMSIZ - 1] = '\0';
-
-  if (ioctl(sock_srv, SIOCGIFINDEX, &ifr) == -1) {
-    perror("can't get interface");
-    goto err;
-  }
-
-  uint32_t scope_id = (uint32_t)ifr.ifr_ifindex;
-  state->mcast_scope_id = (uint32_t)ifr.ifr_ifindex;
-
-  if (ioctl(sock_srv, SIOCGIFHWADDR, &ifr) == -1) {
-    perror("can't get MAC address");
-    goto err;
-  }
-
-  struct ether_addr hwaddr;
-
-  struct in6_addr address;
-
-  memcpy(&hwaddr, &ifr.ifr_hwaddr.sa_data, 6);
-
-  mac_to_ipv6(&hwaddr, &address);
-
-  // DDHCPD Multicast Port
-
-  memset(&sin6_mc, 0, sizeof(sin6_mc));
-
-  sin6_mc.sin6_port = htons(DDHCP_MULTICAST_PORT);
-
-  sin6_mc.sin6_family = AF_INET6;
-
-  memcpy(&sin6_mc.sin6_addr, &in6addr_localmcast,
-         sizeof(sin6_mc.sin6_addr));
-
-  sin6_mc.sin6_scope_id = scope_id;
-
-  // DDHCPD Unicast Port
-
-  memset(&sin6_srv, 0, sizeof(sin6_srv));
-
-  sin6_srv.sin6_port = htons(DDHCP_UNICAST_PORT);
-
-  sin6_srv.sin6_family = AF_INET6;
-
-  memcpy(&sin6_srv.sin6_addr, &in6addr_any,
-         sizeof(sin6_srv.sin6_addr));
-
-  sin6_srv.sin6_scope_id = scope_id;
-
-  // Socket Options
-
-  if (setsockopt(sock_mc, SOL_SOCKET, SO_BINDTODEVICE,
-                 interface,
-                 (socklen_t)strlen(interface) + 1)) {
-    perror("can't bind to multicast device");
-    goto err;
-  }
-
-  if (setsockopt(sock_srv, SOL_SOCKET, SO_BINDTODEVICE,
-                 interface,
-                 (socklen_t)strlen(interface) + 1)) {
-    perror("can't bind to server device");
-    goto err;
-  }
-
-  // Bind
-
-  if (bind(sock_mc, (struct sockaddr*)&sin6_mc, sizeof(sin6_mc)) < 0) {
-    perror("can't bind multicast");
-    goto err;
-  }
-
-  if (bind(sock_srv, (struct sockaddr*)&sin6_srv, sizeof(sin6_srv)) < 0) {
-    perror("can't bind server");
-    goto err;
-  }
-
-  // Multicast Group Registration
-
-  memcpy(&mreq.ipv6mr_multiaddr, &in6addr_localmcast,
-         sizeof(mreq.ipv6mr_multiaddr));
-  mreq.ipv6mr_interface = scope_id;
-
-  if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
-                 &mreq, sizeof(mreq))) {
-    perror("can't add multicast membership");
-    goto err;
-  }
-
-  if (setsockopt(sock_mc, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-                 &mloop, sizeof(mloop))) {
-    perror("can't unset multicast loop");
-    goto err;
-  }
-
-  // Broadcast Options for DHCP
-
-  ret = fcntl(sock_mc, F_GETFL, 0);
-
-  if (ret < 0) {
-    perror("failed to get file status flags");
-    goto err;
-  }
-
-  ret = fcntl(sock_mc, F_SETFL, ret | O_NONBLOCK);
-
-  if (ret < 0) {
-    perror("failed to set file status flags");
-    goto err;
-  }
-
-  ret = fcntl(sock_srv, F_GETFL, 0);
-
-  if (ret < 0) {
-    perror("failed to get file status flags");
-    goto err;
-  }
-
-  ret = fcntl(sock_srv, F_SETFL, ret | O_NONBLOCK);
-
-  if (ret < 0) {
-    perror("failed to set file status flags");
-    goto err;
-  }
-
-  state->mcast_socket = sock_mc;
-  state->server_socket = sock_srv;
-
-  memcpy(&state->node_id, &hwaddr, sizeof(hwaddr));
-  return 0;
-
-err:
-  close(sock_srv);
-err_nosrv:
-  close(sock_mc);
-err_nomc:
+  return sock;
+error:
+  close(sock);
   return -1;
 }
 
-ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config) {
+ATTR_NONNULL_ALL int netsock_multicast_join(int sock, char* interface, struct in6_addr* addr) {
+  unsigned int zero = 0;
+  struct ipv6_mreq mreq = { 0 };
+  
+  memcpy(&mreq.ipv6mr_multiaddr, addr,sizeof(struct in6_addr));
+  mreq.ipv6mr_interface = if_nametoindex(interface);
+
+  if (setsockopt(sock, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(struct ipv6_mreq))) {
+    perror("can't add multicast membership");
+    goto error;
+  }
+
+  if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &zero, sizeof(unsigned int))) {
+    perror("can't unset multicast loop");
+    goto error;
+  }
+
+  return sock;
+
+error:
+  close(sock);
+  return -1;
+}
+
+ATTR_NONNULL_ALL int netsock_open_dhcp(char* interface_client,uint16_t port) {
   int sock;
   struct sockaddr_in sin;
   struct in_addr address_client;
   unsigned int broadcast = 1;
-  int ret;
 
-  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  sock = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
 
   if (sock  < 0) {
     perror("can't open broadcast socket");
@@ -301,7 +193,7 @@ ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config
   }
 
   memset(&sin, 0, sizeof(sin));
-  sin.sin_port = htons(config->dhcp_port);
+  sin.sin_port = htons(port);
   sin.sin_family = AF_INET;
 
   inet_aton("0.0.0.0", &address_client);
@@ -326,23 +218,29 @@ ATTR_NONNULL_ALL int netsock_openv4(char* interface_client, ddhcp_config* config
     return -1;
   }
 
-  ret = fcntl(sock, F_GETFL, 0);
+  return sock;
+}
 
-  if (ret < 0) {
-    perror("failed to get file status flags");
-    close(sock);
+ATTR_NONNULL_ALL int netsock_init(char* interface, char* interface_client, ddhcp_config* config) {
+  
+  if ((config->mcast_socket = netsock_open_socket_v6(interface,&in6addr_localmcast,DDHCP_MULTICAST_PORT)) < 0) {
+    FATAL("netsock_init(...): Unable to open multicast socket\n");
     return -1;
   }
 
-  ret = fcntl(sock, F_SETFL, ret | O_NONBLOCK);
-
-  if (ret < 0) {
-    perror("failed to set file status flags");
-    close(sock);
+  if (netsock_multicast_join(config->mcast_socket,interface,&in6addr_localmcast) < 0) {
+    FATAL("netsock_init(...): Unable to join multicast group\n");
     return -1;
   }
 
-  config->client_socket = sock;
+  if ((config->server_socket = netsock_open_socket_v6(interface,(struct in6_addr*) &in6addr_any,DDHCP_UNICAST_PORT)) < 0) {
+    FATAL("netsock_init(...): Unable to open server socket\n");
+    return -1;
+  }
 
+  if ((config->client_socket = netsock_open_dhcp(interface_client,config->dhcp_port)) < 0) {
+    FATAL("netsock_init(...): Unable to open dhcp socket\n");
+    return -1;
+  }
   return 0;
 }

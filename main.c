@@ -392,7 +392,7 @@ int main(int argc, char** argv) {
   hook_init();
 
   // init network and event loops
-  if (netsock_open(interface, interface_client, &config) == -1) {
+  if (netsock_init(interface, interface_client, &config) == -1) {
     return 1;
   }
 
