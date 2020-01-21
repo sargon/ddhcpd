@@ -1,4 +1,4 @@
-OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o logger.o statistics.o
+OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o logger.o statistics.o epoll.o
 OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o hook.o logger.o
 HDRS=$(wildcard *.h)
 

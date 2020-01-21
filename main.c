@@ -14,18 +14,19 @@
 #include <limits.h>
 
 #include "block.h"
+#include "control.h"
 #include "ddhcp.h"
 #include "dhcp.h"
+#include "dhcp_options.h"
 #include "dhcp_packet.h"
+#include "epoll.h"
+#include "hook.h"
 #include "logger.h"
 #include "netsock.h"
 #include "packet.h"
-#include "tools.h"
-#include "dhcp_options.h"
-#include "control.h"
-#include "version.h"
-#include "hook.h"
 #include "statistics.h"
+#include "tools.h"
+#include "version.h"
 
 volatile int daemon_running = 0;
 
@@ -88,32 +89,6 @@ ATTR_NONNULL_ALL void house_keeping(ddhcp_config* config) {
   DEBUG("house_keeping(...) finish\n\n");
 }
 
-void add_fd(int efd, int fd, uint32_t events) {
-  struct epoll_event event = { 0 };
-  event.data.fd = fd;
-  event.events = events;
-
-  int s = epoll_ctl(efd, EPOLL_CTL_ADD, fd, &event);
-
-  if (s == -1) {
-    exit(1);   //("epoll_ctl");
-  }
-}
-
-void del_fd(int efd, int fd, uint32_t events) {
-  struct epoll_event event = { 0 };
-  event.data.fd = fd;
-  event.events = events;
-
-  int s = epoll_ctl(efd, EPOLL_CTL_DEL, fd, &event);
-
-  if (s < 0) {
-    int errsv = errno;
-    FATAL("%i", errsv);
-    perror("epoll_ctl");
-    exit(1);   //("epoll_ctl");
-  }
-}
 
 ATTR_NONNULL_ALL uint32_t get_loop_timeout(ddhcp_config* config) {
   //Multiply by 500 to convert the timeout value given in seconds
@@ -420,12 +395,12 @@ int main(int argc, char** argv) {
     abort();
   }
 
-  add_fd(efd, config.mcast_socket, EPOLLIN | EPOLLET);
-  add_fd(efd, config.server_socket, EPOLLIN | EPOLLET);
-  add_fd(efd, config.control_socket, EPOLLIN | EPOLLET);
+  add_fd(efd, config.mcast_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(efd, config.server_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(efd, config.control_socket, EPOLLIN | EPOLLET, NULL);
 
   if (config.disable_dhcp == 0) {
-    add_fd(efd, config.client_socket, EPOLLIN | EPOLLET);
+    add_fd(efd, config.client_socket, EPOLLIN | EPOLLET, NULL);
   }
 
   /* Buffer where events are returned */
@@ -539,7 +514,7 @@ int main(int argc, char** argv) {
         unsigned int len = sizeof(client_fd);
         config.client_control_socket = accept(config.control_socket, (struct sockaddr*) &client_fd, &len);
         //set_nonblocking(config.client_control_socket);
-        add_fd(efd, config.client_control_socket, EPOLLIN | EPOLLET);
+        add_fd(efd, config.client_control_socket, EPOLLIN | EPOLLET, NULL);
         DEBUG("ControlSocket: new connections\n");
       } else if (events[i].events & EPOLLIN) {
         // Handle commands comming over a control_socket
@@ -549,12 +524,13 @@ int main(int argc, char** argv) {
           ERROR("Malformed command on control socket.\n");
         }
 
-        del_fd(efd, events[i].data.fd, 0);
+        del_fd(efd, events[i].data.fd);
         close(events[i].data.fd);
       } else if (events[i].events & EPOLLHUP) {
-        del_fd(efd, events[i].data.fd, EPOLLIN);
+        DEBUG("Removing epoll fd %i\n",events[i].data.fd);
+        del_fd(efd, events[i].data.fd);
         close(events[i].data.fd);
-      }
+      } 
     }
 
     if (need_house_keeping) {
