@@ -170,6 +170,7 @@ struct ddhcp_config {
   uint32_t mcast_scope_id;
   uint32_t server_scope_id;
   uint32_t client_scope_id;
+  int epoll_fd;
 
   // Control
   int control_socket;

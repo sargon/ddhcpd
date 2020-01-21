@@ -3,7 +3,6 @@
 #include <getopt.h>
 #include <math.h>
 #include <netinet/in.h>
-#include <sys/epoll.h>
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -384,23 +383,17 @@ int main(int argc, char** argv) {
 
   ssize_t bytes = 0;
 
-  int efd;
   size_t maxevents = 64;
   struct epoll_event* events;
 
-  efd = epoll_create1(0);
+  epoll_init(&config);
 
-  if (efd == -1) {
-    perror("epoll_create");
-    abort();
-  }
-
-  add_fd(efd, config.mcast_socket, EPOLLIN | EPOLLET, NULL);
-  add_fd(efd, config.server_socket, EPOLLIN | EPOLLET, NULL);
-  add_fd(efd, config.control_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(config.epoll_fd, config.mcast_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(config.epoll_fd, config.server_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(config.epoll_fd, config.control_socket, EPOLLIN | EPOLLET, NULL);
 
   if (config.disable_dhcp == 0) {
-    add_fd(efd, config.client_socket, EPOLLIN | EPOLLET, NULL);
+    add_fd(config.epoll_fd, config.client_socket, EPOLLIN | EPOLLET, NULL);
   }
 
   /* Buffer where events are returned */
@@ -435,7 +428,7 @@ int main(int argc, char** argv) {
   do {
     int n = 0;
     do {
-      n = epoll_wait(efd, events, (int)maxevents, (int)loop_timeout);
+      n = epoll_wait(config.epoll_fd, events, (int)maxevents, (int)loop_timeout);
     } while (n < 0 && errno == EINTR);
 
     if (n < 0) {
@@ -514,7 +507,7 @@ int main(int argc, char** argv) {
         unsigned int len = sizeof(client_fd);
         config.client_control_socket = accept(config.control_socket, (struct sockaddr*) &client_fd, &len);
         //set_nonblocking(config.client_control_socket);
-        add_fd(efd, config.client_control_socket, EPOLLIN | EPOLLET, NULL);
+        add_fd(config.epoll_fd, config.client_control_socket, EPOLLIN | EPOLLET, NULL);
         DEBUG("ControlSocket: new connections\n");
       } else if (events[i].events & EPOLLIN) {
         // Handle commands comming over a control_socket
@@ -524,11 +517,11 @@ int main(int argc, char** argv) {
           ERROR("Malformed command on control socket.\n");
         }
 
-        del_fd(efd, events[i].data.fd);
+        del_fd(config.epoll_fd, events[i].data.fd);
         close(events[i].data.fd);
       } else if (events[i].events & EPOLLHUP) {
         DEBUG("Removing epoll fd %i\n",events[i].data.fd);
-        del_fd(efd, events[i].data.fd);
+        del_fd(config.epoll_fd, events[i].data.fd);
         close(events[i].data.fd);
       } 
     }

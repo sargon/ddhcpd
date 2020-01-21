@@ -4,6 +4,11 @@
 #include <sys/epoll.h>
 #include "types.h"
 
+/**
+ * Initialize epoll socket.
+ */
+void epoll_init(ddhcp_config* config);
+
 /** 
  * Add a file descriptor to an epoll instance.
  */
