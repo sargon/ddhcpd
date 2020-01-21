@@ -34,6 +34,8 @@ extern int log_level;
 const int NET = 0;
 const int NET_LEN = 10;
 
+uint8_t* buffer = NULL;
+
 ATTR_NONNULL_ALL in_addr_storage get_in_addr(struct sockaddr* sa)
 {
   struct sockaddr_in in;
@@ -118,6 +120,82 @@ void handle_signal_terminate(int sig_nr) {
   } else if (SIGTERM == sig_nr) {
     daemon_running = 0;
   }
+}
+
+ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(int fd, ddhcp_config* config) {
+  ssize_t len;
+  struct sockaddr_in6 sender;
+  socklen_t sender_len = sizeof sender;
+
+  while ((len = recvfrom(fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+    in_addr_storage in_addr;
+    char ipv6_sender[INET6_ADDRSTRLEN];
+    in_addr = get_in_addr((struct sockaddr*)&sender);
+    DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
+#endif
+    statistics_record(config, STAT_DIRECT_RECV_BYTE, (long int)len);
+    statistics_record(config, STAT_DIRECT_RECV_PKG, 1);
+    ddhcp_dhcp_process(buffer, len, sender, config);
+  }
+  return 0;
+}
+
+ATTR_NONNULL_ALL int hdl_ddhcp_block(int fd, ddhcp_config* config) {
+  ssize_t len;
+  struct sockaddr_in6 sender;
+  socklen_t sender_len = sizeof sender;
+
+  while ((len = recvfrom(fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
+#if LOG_LEVEL_LIMIT >= LOG_DEBUG
+    in_addr_storage in_addr;
+    char ipv6_sender[INET6_ADDRSTRLEN];
+    in_addr = get_in_addr((struct sockaddr*)&sender);
+    DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
+#endif
+    statistics_record(config, STAT_MCAST_RECV_BYTE, (long int)len);
+    statistics_record(config, STAT_MCAST_RECV_PKG, 1);
+    ddhcp_block_process(buffer, len, sender, config);
+  }
+  return 1;
+}
+
+ATTR_NONNULL_ALL int hdl_dhcp(int fd, ddhcp_config* config) {
+  ssize_t len;
+  int need_house_keeping = 0;
+
+  while ((len = read(fd, buffer, 1500)) > 0) {
+    statistics_record(config, STAT_DHCP_RECV_BYTE, (long int)len);
+    statistics_record(config, STAT_DHCP_RECV_PKG, 1);
+    need_house_keeping |= dhcp_process(buffer, len, config);
+  }
+  return need_house_keeping;
+}
+
+ATTR_NONNULL_ALL int hdl_ctrl_new(int fd, ddhcp_config* config) {
+  UNUSED(config);
+  // Handle new control socket connections
+  struct sockaddr_un client_fd;
+  unsigned int len = sizeof(client_fd);
+  config->client_control_socket = accept(fd, (struct sockaddr*) &client_fd, &len);
+  //set_nonblocking(config.client_control_socket);
+  add_fd(config->epoll_fd, config->client_control_socket, EPOLLIN | EPOLLET, NULL);
+  DEBUG("ControlSocket: new connections\n");
+  return 0;
+}
+
+ATTR_NONNULL_ALL int hdl_ctrl_cmd(int fd, ddhcp_config* config) {
+  ssize_t len;
+  // Handle commands comming over a control_socket
+  len = read(fd, buffer, 1500);
+
+  if (handle_command(fd, buffer, len, config) < 0) {
+    ERROR("Malformed command on control socket.\n");
+  }
+
+  del_fd(config->epoll_fd, fd);
+  close(fd);
+  return 0;
 }
 
 int main(int argc, char** argv) {
@@ -374,14 +452,12 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  uint8_t* buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
+  buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
 
   if (!buffer) {
     FATAL("Failed to allocate network buffer\n");
     abort();
   }
-
-  ssize_t bytes = 0;
 
   size_t maxevents = 64;
   struct epoll_event* events;
@@ -421,10 +497,6 @@ int main(int argc, char** argv) {
 
   INFO("loop timeout: %i msecs\n", get_loop_timeout(&config));
 
-  // TODO wait loop_timeout before first time housekeeping
-  struct sockaddr_in6 sender;
-  socklen_t sender_len = sizeof sender;
-
   do {
     int n = 0;
     do {
@@ -462,63 +534,15 @@ int main(int argc, char** argv) {
         ERROR("Error in epoll: %i \n", errno);
         exit(1);
       } else if (config.server_socket == events[i].data.fd) {
-        // DDHCP Roamed DHCP Requests
-        ssize_t len;
-
-        while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-          in_addr_storage in_addr;
-          char ipv6_sender[INET6_ADDRSTRLEN];
-          in_addr = get_in_addr((struct sockaddr*)&sender);
-          DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
-#endif
-          statistics_record(&config, STAT_DIRECT_RECV_BYTE, (long int)len);
-          statistics_record(&config, STAT_DIRECT_RECV_PKG, 1);
-          ddhcp_dhcp_process(buffer, len, sender, &config);
-        }
+        hdl_ddhcp_dhcp(events[i].data.fd, &config);
       } else if (config.mcast_socket == events[i].data.fd) {
-        // DDHCP Block Handling
-        ssize_t len;
-
-        while ((len = recvfrom(events[i].data.fd, buffer, 1500, 0, (struct sockaddr*) &sender, &sender_len)) > 0) {
-#if LOG_LEVEL_LIMIT >= LOG_DEBUG
-          in_addr_storage in_addr;
-          char ipv6_sender[INET6_ADDRSTRLEN];
-          in_addr = get_in_addr((struct sockaddr*)&sender);
-          DEBUG("Receive message from %s\n", inet_ntop(AF_INET6, &in_addr, ipv6_sender, INET6_ADDRSTRLEN));
-#endif
-          statistics_record(&config, STAT_MCAST_RECV_BYTE, (long int)len);
-          statistics_record(&config, STAT_MCAST_RECV_PKG, 1);
-          ddhcp_block_process(buffer, len, sender, &config);
-        }
-        need_house_keeping = 1;
+        need_house_keeping |= hdl_ddhcp_block(events[i].data.fd, &config);
       } else if (config.client_socket == events[i].data.fd) {
-        // DHCP
-        ssize_t len;
-
-        while ((len = read(config.client_socket, buffer, 1500)) > 0) {
-          statistics_record(&config, STAT_DHCP_RECV_BYTE, (long int)len);
-          statistics_record(&config, STAT_DHCP_RECV_PKG, 1);
-          need_house_keeping |= dhcp_process(buffer, len, &config);
-        }
+        need_house_keeping |= hdl_dhcp(events[i].data.fd, &config);
       } else if (config.control_socket == events[i].data.fd) {
-        // Handle new control socket connections
-        struct sockaddr_un client_fd;
-        unsigned int len = sizeof(client_fd);
-        config.client_control_socket = accept(config.control_socket, (struct sockaddr*) &client_fd, &len);
-        //set_nonblocking(config.client_control_socket);
-        add_fd(config.epoll_fd, config.client_control_socket, EPOLLIN | EPOLLET, NULL);
-        DEBUG("ControlSocket: new connections\n");
+        hdl_ctrl_new(events[i].data.fd, &config);
       } else if (events[i].events & EPOLLIN) {
-        // Handle commands comming over a control_socket
-        bytes = read(events[i].data.fd, buffer, 1500);
-
-        if (handle_command(events[i].data.fd, buffer, bytes, &config) < 0) {
-          ERROR("Malformed command on control socket.\n");
-        }
-
-        del_fd(config.epoll_fd, events[i].data.fd);
-        close(events[i].data.fd);
+        hdl_ctrl_cmd(events[i].data.fd, &config);
       } else if (events[i].events & EPOLLHUP) {
         DEBUG("Removing epoll fd %i\n",events[i].data.fd);
         del_fd(config.epoll_fd, events[i].data.fd);
