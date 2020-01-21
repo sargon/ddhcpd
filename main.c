@@ -122,7 +122,9 @@ void handle_signal_terminate(int sig_nr) {
   }
 }
 
-ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(int fd, ddhcp_config* config) {
+
+ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config* config) {
+  int fd = epoll_get_fd(data);
   ssize_t len;
   struct sockaddr_in6 sender;
   socklen_t sender_len = sizeof sender;
@@ -141,7 +143,8 @@ ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(int fd, ddhcp_config* config) {
   return 0;
 }
 
-ATTR_NONNULL_ALL int hdl_ddhcp_block(int fd, ddhcp_config* config) {
+ATTR_NONNULL_ALL int hdl_ddhcp_block(epoll_data_t data, ddhcp_config* config) {
+  int fd = epoll_get_fd(data);
   ssize_t len;
   struct sockaddr_in6 sender;
   socklen_t sender_len = sizeof sender;
@@ -160,7 +163,8 @@ ATTR_NONNULL_ALL int hdl_ddhcp_block(int fd, ddhcp_config* config) {
   return 1;
 }
 
-ATTR_NONNULL_ALL int hdl_dhcp(int fd, ddhcp_config* config) {
+ATTR_NONNULL_ALL int hdl_dhcp(epoll_data_t data, ddhcp_config* config) {
+  int fd = epoll_get_fd(data);
   ssize_t len;
   int need_house_keeping = 0;
 
@@ -172,19 +176,8 @@ ATTR_NONNULL_ALL int hdl_dhcp(int fd, ddhcp_config* config) {
   return need_house_keeping;
 }
 
-ATTR_NONNULL_ALL int hdl_ctrl_new(int fd, ddhcp_config* config) {
-  UNUSED(config);
-  // Handle new control socket connections
-  struct sockaddr_un client_fd;
-  unsigned int len = sizeof(client_fd);
-  config->client_control_socket = accept(fd, (struct sockaddr*) &client_fd, &len);
-  //set_nonblocking(config.client_control_socket);
-  add_fd(config->epoll_fd, config->client_control_socket, EPOLLIN | EPOLLET, NULL);
-  DEBUG("ControlSocket: new connections\n");
-  return 0;
-}
-
-ATTR_NONNULL_ALL int hdl_ctrl_cmd(int fd, ddhcp_config* config) {
+ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config* config) {
+  int fd = epoll_get_fd(data);
   ssize_t len;
   // Handle commands comming over a control_socket
   len = read(fd, buffer, 1500);
@@ -195,6 +188,19 @@ ATTR_NONNULL_ALL int hdl_ctrl_cmd(int fd, ddhcp_config* config) {
 
   del_fd(config->epoll_fd, fd);
   close(fd);
+  return 0;
+}
+
+ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config* config) {
+  UNUSED(config);
+  int fd = epoll_get_fd(data);
+  // Handle new control socket connections
+  struct sockaddr_un client_fd;
+  unsigned int len = sizeof(client_fd);
+  config->client_control_socket = accept(fd, (struct sockaddr*) &client_fd, &len);
+  //set_nonblocking(config.client_control_socket);
+  add_fd(config->epoll_fd, config->client_control_socket, EPOLLIN | EPOLLET, &hdl_ctrl_cmd);
+  DEBUG("ControlSocket: new connections\n");
   return 0;
 }
 
@@ -464,12 +470,12 @@ int main(int argc, char** argv) {
 
   epoll_init(&config);
 
-  add_fd(config.epoll_fd, config.mcast_socket, EPOLLIN | EPOLLET, NULL);
-  add_fd(config.epoll_fd, config.server_socket, EPOLLIN | EPOLLET, NULL);
-  add_fd(config.epoll_fd, config.control_socket, EPOLLIN | EPOLLET, NULL);
+  add_fd(config.epoll_fd, config.mcast_socket, EPOLLIN | EPOLLET, hdl_ddhcp_block);
+  add_fd(config.epoll_fd, config.server_socket, EPOLLIN | EPOLLET, hdl_ddhcp_dhcp);
+  add_fd(config.epoll_fd, config.control_socket, EPOLLIN | EPOLLET, hdl_ctrl_new);
 
   if (config.disable_dhcp == 0) {
-    add_fd(config.epoll_fd, config.client_socket, EPOLLIN | EPOLLET, NULL);
+    add_fd(config.epoll_fd, config.client_socket, EPOLLIN | EPOLLET, hdl_dhcp);
   }
 
   /* Buffer where events are returned */
@@ -530,23 +536,16 @@ int main(int argc, char** argv) {
     }
 
     for (int i = 0; i < n; i++) {
+      ddhcp_epoll_data* data = (ddhcp_epoll_data*) events[i].data.ptr;
       if ((events[i].events & EPOLLERR)) {
         ERROR("Error in epoll: %i \n", errno);
         exit(1);
-      } else if (config.server_socket == events[i].data.fd) {
-        hdl_ddhcp_dhcp(events[i].data.fd, &config);
-      } else if (config.mcast_socket == events[i].data.fd) {
-        need_house_keeping |= hdl_ddhcp_block(events[i].data.fd, &config);
-      } else if (config.client_socket == events[i].data.fd) {
-        need_house_keeping |= hdl_dhcp(events[i].data.fd, &config);
-      } else if (config.control_socket == events[i].data.fd) {
-        hdl_ctrl_new(events[i].data.fd, &config);
       } else if (events[i].events & EPOLLIN) {
-        hdl_ctrl_cmd(events[i].data.fd, &config);
+        eventhandler_t fct = data->epollin;
+        need_house_keeping |= fct(events[i].data,&config);
       } else if (events[i].events & EPOLLHUP) {
-        DEBUG("Removing epoll fd %i\n",events[i].data.fd);
-        del_fd(config.epoll_fd, events[i].data.fd);
-        close(events[i].data.fd);
+        eventhandler_t fct = data->epollhup;
+        need_house_keeping |= fct(events[i].data,&config);
       } 
     }
 
