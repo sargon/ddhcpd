@@ -138,7 +138,7 @@ ATTR_NONNULL_ALL int netsock_open_socket_v6(char* interface, struct in6_addr* ad
     FATAL("netsock_open_socket_v6(...): unable to create socket\n");
   }
 
-  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface))) {
+  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, (socklen_t) strlen(interface))) {
     FATAL("netsock_open_socket_v6(...): setsockopt: can't bind to device '%s'\n", interface);
     goto error;
   }
