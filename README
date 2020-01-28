@@ -15,13 +15,14 @@ stupid stuff, but also allow you maximal adaption.
     -c CLT-IFACE           Interface on which requests from clients are handled
     -i SRV-IFACE           Interface on which different servers communicate
     -S                     no client interface
-    -t TENTATIVE           Time required for a block to be claimed
+    -t TENTATIVE           Time in seconds from when a block is announced to be claimed until a block is claimed (min: 2, default: 15)
     -N NETWORK/CIDR        Network to announce and manage blocks in
     -o CODE:LEN:P1. .. .Pn DHCP Option with code, len and #len chars in decimal
     -b BLKSIZEPOW          Block size as power of two
-    -B TIMEOUT             Block claim timeout
+    -B TIMEOUT             Block claim timeout (default 60s)
+    -n NEEDLESS_TIMEOUT    Time until we release needless blocks (default 300s)
     -s SPARELEASES         Amount of spare leases (max: 256)
-    -L                     Deactivate learning phase
+    -L                     Deactivate learning phase (otherwise the learning phase has the same time window like the block claim timeout)
     -d                     Run in background and daemonize
     -D                     Run in foreground and log to console (default)
     -C CTRL_PATH           Path to control socket
