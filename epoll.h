@@ -4,12 +4,13 @@
 #include <sys/epoll.h>
 #include "types.h"
 
-typedef int (*eventhandler_t)(epoll_data_t,ddhcp_config*);
+typedef int (*ddhcpd_epoll_event_t)(epoll_data_t,ddhcp_config*);
 
 struct ddhcp_epoll_data {
   int fd;
-  eventhandler_t epollin;
-  eventhandler_t epollhup;
+  ddhcpd_epoll_event_t epollin;
+  ddhcpd_epoll_event_t epollhup;
+  
 };
 typedef struct ddhcp_epoll_data ddhcp_epoll_data;
 
@@ -24,7 +25,7 @@ void epoll_init(ddhcp_config* config);
 /** 
  * Add a file descriptor to an epoll instance.
  */
-void add_fd(int efd, int fd, uint32_t events,eventhandler_t epollin);
+void add_fd(int efd, int fd, uint32_t events,ddhcpd_epoll_event_t epollin);
 
 /**
  * Remove a file descriptor from an epoll instance.

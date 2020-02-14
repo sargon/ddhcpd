@@ -29,7 +29,7 @@ int hdl_epoll_hup(epoll_data_t data, ddhcp_config* config) {
   return 0;
 }
 
-void add_fd(int efd, int fd, uint32_t events, eventhandler_t epollin) {
+void add_fd(int efd, int fd, uint32_t events, ddhcpd_epoll_event_t epollin) {
   DEBUG("add_fd(%i,%i.%i)\n",efd,fd,events);
   struct epoll_event event = { 0 };
   event.events = events;

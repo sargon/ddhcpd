@@ -541,10 +541,10 @@ int main(int argc, char** argv) {
         ERROR("Error in epoll: %i \n", errno);
         exit(1);
       } else if (events[i].events & EPOLLIN) {
-        eventhandler_t fct = data->epollin;
+        ddhcpd_epoll_event_t fct = data->epollin;
         need_house_keeping |= fct(events[i].data,&config);
       } else if (events[i].events & EPOLLHUP) {
-        eventhandler_t fct = data->epollhup;
+        ddhcpd_epoll_event_t fct = data->epollhup;
         need_house_keeping |= fct(events[i].data,&config);
       } 
     }
