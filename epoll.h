@@ -4,13 +4,17 @@
 #include <sys/epoll.h>
 #include "types.h"
 
+// epoll_data_t is always a void pointer to a ddhcp_epoll_data struct.
 typedef int (*ddhcpd_epoll_event_t)(epoll_data_t,ddhcp_config*);
+typedef int (*ddhcpd_socket_init_t)(epoll_data_t,ddhcp_config*);
 
 struct ddhcp_epoll_data {
   int fd;
+  int interface_id;
+  char* interface_name;
+  ddhcpd_socket_init_t setup;
   ddhcpd_epoll_event_t epollin;
   ddhcpd_epoll_event_t epollhup;
-  
 };
 typedef struct ddhcp_epoll_data ddhcp_epoll_data;
 
