@@ -12,6 +12,7 @@ struct ddhcp_epoll_data {
   int fd;
   int interface_id;
   char* interface_name;
+  void* data;
   ddhcpd_socket_init_t setup;
   ddhcpd_epoll_event_t epollin;
   ddhcpd_epoll_event_t epollhup;
