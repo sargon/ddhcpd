@@ -197,9 +197,10 @@ ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config* config) {
   // Handle new control socket connections
   struct sockaddr_un client_fd;
   unsigned int len = sizeof(client_fd);
-  config->client_control_socket = accept(fd, (struct sockaddr*) &client_fd, &len);
+  ddhcp_epoll_data* control_link = epoll_data_new(config->control_path, NULL, hdl_ctrl_cmd, NULL);
+  control_link->fd = accept(fd, (struct sockaddr*) &client_fd, &len);
   //set_nonblocking(config.client_control_socket);
-  add_fd(config->epoll_fd, config->client_control_socket, EPOLLIN | EPOLLET, &hdl_ctrl_cmd);
+  epoll_add_fd(config->epoll_fd, control_link, EPOLLIN | EPOLLET, config);
   DEBUG("ControlSocket: new connections\n");
   return 0;
 }
@@ -449,15 +450,10 @@ int main(int argc, char** argv) {
 
   hook_init();
 
-  // init network and event loops
-  if (netsock_init(interface, interface_client, &config) == -1) {
-    return 1;
-  }
-
-  if (control_open(&config) == -1) {
-    return 1;
-  }
-
+  // --------------------------------------------------------------------------
+  // Initializing Network Buffer, EPOLL and Sockets 
+  // Here all later event loop handling is initialized
+  // --------------------------------------------------------------------------
   buffer = (uint8_t*) malloc(sizeof(uint8_t) * 1500);
 
   if (!buffer) {
@@ -470,15 +466,21 @@ int main(int argc, char** argv) {
 
   epoll_init(&config);
 
-  add_fd(config.epoll_fd, config.mcast_socket, EPOLLIN | EPOLLET, hdl_ddhcp_block);
-  add_fd(config.epoll_fd, config.server_socket, EPOLLIN | EPOLLET, hdl_ddhcp_dhcp);
-  add_fd(config.epoll_fd, config.control_socket, EPOLLIN | EPOLLET, hdl_ctrl_new);
+  config.sockets[SKT_MCAST] = epoll_data_new(interface, netsock_multicast_init, hdl_ddhcp_block, NULL);
+  config.sockets[SKT_SERVER] = epoll_data_new(interface, netsock_server_init, hdl_ddhcp_dhcp, NULL);
+  config.sockets[SKT_CONTROL] = epoll_data_new(config.control_path, netsock_control_init, hdl_ctrl_new, NULL);
+
+  // Trigger socket initializing and register to EPOLL
+  epoll_add_fd(config.epoll_fd, config.sockets[SKT_MCAST], EPOLLIN | EPOLLET,&config);
+  epoll_add_fd(config.epoll_fd, config.sockets[SKT_SERVER], EPOLLIN | EPOLLET,&config);
+  epoll_add_fd(config.epoll_fd, config.sockets[SKT_CONTROL], EPOLLIN | EPOLLET,&config);
 
   if (config.disable_dhcp == 0) {
-    add_fd(config.epoll_fd, config.client_socket, EPOLLIN | EPOLLET, hdl_dhcp);
+    config.sockets[SKT_DHCP] = epoll_data_new(interface_client, netsock_dhcp_init, hdl_dhcp, NULL);
+    epoll_add_fd(config.epoll_fd, config.sockets[SKT_DHCP], EPOLLIN | EPOLLET,&config);
   }
 
-  /* Buffer where events are returned */
+  // Event buffer
   events = calloc(maxevents, sizeof(struct epoll_event));
 
   if (!events) {
@@ -486,6 +488,9 @@ int main(int argc, char** argv) {
     abort();
   }
 
+  // --------------------------------------------------------------------------
+  // Main event loop && House keeping handler
+  // --------------------------------------------------------------------------
   int need_house_keeping = 0;
   uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
   time_t now = time(NULL);
@@ -556,6 +561,9 @@ int main(int argc, char** argv) {
     }
   } while (daemon_running);
 
+  // --------------------------------------------------------------------------
+  // Shutdown process, cleaning up stuff
+  // --------------------------------------------------------------------------
   // TODO free dhcp_leases
   free(events);
   free(buffer);
@@ -565,9 +573,10 @@ int main(int argc, char** argv) {
   free_option_store(&config.options);
   dhcp_packet_list_free(&config.dhcp_packet_cache);
 
-  close(config.mcast_socket);
-  close(config.client_socket);
-  close(config.control_socket);
+  // TODO Handle shutdown of sockets
+  //close(config.mcast_socket);
+  //close(config.client_socket);
+  //close(config.control_socket);
 
   remove(config.control_path);
 

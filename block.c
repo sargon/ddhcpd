@@ -219,7 +219,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config* config) {
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_INQUIRE, 1);
-  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  ssize_t bytes_send = send_packet_mcast(packet, DDHCP_SKT_MCAST(config));
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
 
   if (bytes_send > 0) {
@@ -358,7 +358,7 @@ ATTR_NONNULL_ALL static void _block_update_claim_send(struct ddhcp_mcast_packet*
 
   statistics_record(config, STAT_MCAST_SEND_PKG, 1);
   statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
-  ssize_t bytes_send = send_packet_mcast(packet, config->mcast_socket, config->mcast_scope_id);
+  ssize_t bytes_send = send_packet_mcast(packet, DDHCP_SKT_MCAST(config));
   statistics_record(config, STAT_MCAST_SEND_BYTE, (long int) bytes_send);
   // TODO? Stat the number of blocks reclaimed.
 

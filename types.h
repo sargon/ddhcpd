@@ -133,9 +133,19 @@ enum dhcp_option_code {
 };
 
 
-// state
+// network socket
+#define SKT_MCAST 0
+#define SKT_SERVER 1
+#define SKT_DHCP 2
+#define SKT_CONTROL 3
 
-// TODO Rename to state
+#define DDHCP_SKT_MCAST(config) ((ddhcp_epoll_data*) config->sockets[SKT_MCAST])
+#define DDHCP_SKT_SERVER(config) ((ddhcp_epoll_data*) config->sockets[SKT_SERVER])
+#define DDHCP_SKT_DHCP(config) ((ddhcp_epoll_data*) config->sockets[SKT_DHCP])
+#define DDHCP_SKT_CONTROL(config) ((ddhcp_epoll_data*) config->sockets[SKT_CONTROL])
+
+
+// configuration and global state
 struct ddhcp_config {
   ddhcp_node_id node_id;
   uint32_t number_of_blocks;
@@ -164,13 +174,8 @@ struct ddhcp_config {
   dhcp_option_list options;
 
   // Network
-  int mcast_socket;
-  int server_socket;
-  int client_socket;
-  uint32_t mcast_scope_id;
-  uint32_t server_scope_id;
-  uint32_t client_scope_id;
   int epoll_fd;
+  void* sockets[4];
 
   // Control
   int control_socket;

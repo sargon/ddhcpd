@@ -259,7 +259,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet* packet, d
   answer->renew_payload = packet->renew_payload;
 
   statistics_record(config, STAT_DIRECT_SEND_PKG, 1);
-  ssize_t bytes_send = send_packet_direct(answer, &packet->sender->sin6_addr, config->server_socket, config->mcast_scope_id);
+  ssize_t bytes_send = send_packet_direct(answer, &packet->sender->sin6_addr, DDHCP_SKT_SERVER(config));
   statistics_record(config, STAT_DIRECT_SEND_BYTE, (long int) bytes_send);
   UNUSED(bytes_send);
 
@@ -284,7 +284,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet* request, dd
     DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
-    dhcp_rhdl_ack(config->client_socket, packet, config);
+    dhcp_rhdl_ack(DDHCP_SKT_DHCP(config)->fd, packet, config);
     dhcp_packet_free(packet, 1);
     free(packet);
   }
@@ -309,7 +309,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet* request, dd
     DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
   } else {
     // Process packet
-    dhcp_nack(config->client_socket, packet, config);
+    dhcp_nack(DDHCP_SKT_DHCP(config)->fd, packet, config);
     dhcp_packet_free(packet, 1);
     free(packet);
   }

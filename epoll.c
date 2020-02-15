@@ -29,25 +29,48 @@ int hdl_epoll_hup(epoll_data_t data, ddhcp_config* config) {
   return 0;
 }
 
-void add_fd(int efd, int fd, uint32_t events, ddhcpd_epoll_event_t epollin) {
-  DEBUG("add_fd(%i,%i.%i)\n",efd,fd,events);
-  struct epoll_event event = { 0 };
-  event.events = events;
-
+ddhcp_epoll_data* epoll_data_new(
+    char* interface_name
+    , ddhcpd_socket_init_t setup
+    , ddhcpd_epoll_event_t epollin
+    , ddhcpd_epoll_event_t epollhup
+    ) {
   ddhcp_epoll_data* ptr = (ddhcp_epoll_data*) calloc(1,sizeof(ddhcp_epoll_data));
   if (ptr == NULL) {
     FATAL("Unable to allocate memory for ddhcp_epoll_data\n");
     exit(2);
   }
-  ptr->fd = fd;
+  ptr->interface_name = interface_name;
   ptr->epollin = epollin;
-  ptr->epollhup = hdl_epoll_hup;
-  event.data.ptr = (void*) ptr;
+  ptr->setup = setup;
+  if (epollhup == NULL) {
+    ptr->epollhup = hdl_epoll_hup;
+  } else {
+    ptr->epollhup = epollhup;
+  }
+  return ptr;
+}
 
-  int s = epoll_ctl(efd, EPOLL_CTL_ADD, fd, &event);
+void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,ddhcp_config* config) {
+  DEBUG("epoll_add_fd(%i,%i)\n",efd,events);
+  // Initializing socket if needed
+  if (data->fd == 0) {
+    epoll_data_t u = { 0 };
+    u.ptr = (void*) data;
+    if (data->setup(u,config) != 0) {
+      FATAL("epoll_add_fd(...): Failure while initializing socket");
+      exit(2);
+    }
+  }
 
-  if (s != 0) {
-    exit(1);   //("epoll_ctl");
+  // Setup epoll event
+  struct epoll_event event = { 0 };
+  event.events = events;
+  event.data.ptr = (void*) data;
+
+  if(epoll_ctl(efd, EPOLL_CTL_ADD, data->fd, &event) != 0) {
+    FATAL("epoll_add_fd(...): Unable to register file descriptor to epoll"); 
+    exit(1);
   }
 }
 

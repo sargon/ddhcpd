@@ -26,10 +26,15 @@ typedef struct ddhcp_epoll_data ddhcp_epoll_data;
  */
 void epoll_init(ddhcp_config* config);
 
+/**
+ * Initializing a new ddhcp_epoll_data structure
+ */
+ddhcp_epoll_data* epoll_data_new(char* interface_name, ddhcpd_socket_init_t setup, ddhcpd_epoll_event_t epollin,ddhcpd_epoll_event_t epollhup);
+
 /** 
  * Add a file descriptor to an epoll instance.
  */
-void add_fd(int efd, int fd, uint32_t events,ddhcpd_epoll_event_t epollin);
+void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,ddhcp_config* config);
 
 /**
  * Remove a file descriptor from an epoll instance.
