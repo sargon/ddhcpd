@@ -21,6 +21,7 @@
 #include "epoll.h"
 #include "hook.h"
 #include "logger.h"
+#include "netlink.h"
 #include "netsock.h"
 #include "packet.h"
 #include "statistics.h"
@@ -469,11 +470,13 @@ int main(int argc, char** argv) {
   config.sockets[SKT_MCAST] = epoll_data_new(interface, netsock_multicast_init, hdl_ddhcp_block, NULL);
   config.sockets[SKT_SERVER] = epoll_data_new(interface, netsock_server_init, hdl_ddhcp_dhcp, NULL);
   config.sockets[SKT_CONTROL] = epoll_data_new(config.control_path, netsock_control_init, hdl_ctrl_new, NULL);
+  ddhcp_epoll_data* netlink = epoll_data_new(NULL, netlink_init, netlink_in, netlink_close);
 
   // Trigger socket initializing and register to EPOLL
   epoll_add_fd(config.epoll_fd, config.sockets[SKT_MCAST], EPOLLIN | EPOLLET,&config);
   epoll_add_fd(config.epoll_fd, config.sockets[SKT_SERVER], EPOLLIN | EPOLLET,&config);
   epoll_add_fd(config.epoll_fd, config.sockets[SKT_CONTROL], EPOLLIN | EPOLLET,&config);
+  epoll_add_fd(config.epoll_fd, netlink, EPOLLIN | EPOLLET,&config);
 
   if (config.disable_dhcp == 0) {
     config.sockets[SKT_DHCP] = epoll_data_new(interface_client, netsock_dhcp_init, hdl_dhcp, NULL);
@@ -577,6 +580,7 @@ int main(int argc, char** argv) {
   //close(config.mcast_socket);
   //close(config.client_socket);
   //close(config.control_socket);
+  epoll_data_call(netlink,epollhup,(&config));
 
   remove(config.control_path);
 

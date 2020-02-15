@@ -1,4 +1,4 @@
-OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o logger.o statistics.o epoll.o
+OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o logger.o statistics.o epoll.o netlink.o
 OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o hook.o logger.o
 HDRS=$(wildcard *.h)
 
@@ -26,7 +26,8 @@ CFLAGS+= \
     -Wswitch-default \
     -Wswitch-enum \
     -Wunreachable-code \
-    -Winit-self
+    -Winit-self \
+    `pkg-config --cflags libnl-3.0`
 
 CXXFLAGS+= \
     ${CFLAGS} \
@@ -36,7 +37,8 @@ CXXFLAGS+= \
 
 LFLAGS+= \
     -flto \
-    -lm
+    -lm \
+    `pkg-config --libs libnl-3.0`
 
 ifeq ($(DEBUG),1)
 CFLAGS+= \
