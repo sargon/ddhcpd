@@ -20,6 +20,7 @@ typedef struct ddhcp_epoll_data ddhcp_epoll_data;
 
 #define epoll_get_fd(data) (((ddhcp_epoll_data*) data.ptr)->fd)
 #define epoll_data_free(data) (free(data.ptr))
+#define epoll_data_call(data,method,config) data->method((epoll_data_t){.ptr=(void*)data},config)
 
 /**
  * Initialize epoll socket.

@@ -55,9 +55,7 @@ void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,ddhcp_config*
   DEBUG("epoll_add_fd(%i,%i)\n",efd,events);
   // Initializing socket if needed
   if (data->fd == 0) {
-    epoll_data_t u = { 0 };
-    u.ptr = (void*) data;
-    if (data->setup(u,config) != 0) {
+    if (epoll_data_call(data,setup,config) != 0) {
       FATAL("epoll_add_fd(...): Failure while initializing socket");
       exit(2);
     }
