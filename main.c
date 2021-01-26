@@ -51,6 +51,7 @@ ATTR_NONNULL_ALL in_addr_storage get_in_addr(struct sockaddr *sa)
 		memcpy(&in6, sa, sizeof(in6));
 		in_store.in6_addr = in6.sin6_addr;
 	}
+
 	return in_store;
 }
 
@@ -82,6 +83,7 @@ ATTR_NONNULL_ALL void house_keeping(ddhcp_config *config)
 		if (config->needless_marks != 0) {
 			block_unmark_needless(config);
 		}
+
 		if (blocks_needed > 0) {
 			block_claim(blocks_needed, config);
 		}
@@ -119,19 +121,16 @@ static sighandler_t handle_signal(int sig_nr, sighandler_t signalhandler)
 
 void handle_signal_terminate(int sig_nr)
 {
-	if (SIGINT == sig_nr) {
+	if (SIGINT == sig_nr || SIGTERM == sig_nr)
 		daemon_running = 0;
-	} else if (SIGTERM == sig_nr) {
-		daemon_running = 0;
-	}
 }
 
 ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config *config)
 {
 	int fd = epoll_get_fd(data);
-	ssize_t len;
-	struct sockaddr_in6 sender;
 	socklen_t sender_len = sizeof sender;
+	struct sockaddr_in6 sender;
+	ssize_t len;
 
 	while ((len = recvfrom(fd, buffer, 1500, 0, (struct sockaddr *)&sender,
 			       &sender_len)) > 0) {
@@ -147,6 +146,7 @@ ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config *config)
 		statistics_record(config, STAT_DIRECT_RECV_PKG, 1);
 		ddhcp_dhcp_process(buffer, len, sender, config);
 	}
+
 	return 0;
 }
 
@@ -171,6 +171,7 @@ ATTR_NONNULL_ALL int hdl_ddhcp_block(epoll_data_t data, ddhcp_config *config)
 		statistics_record(config, STAT_MCAST_RECV_PKG, 1);
 		ddhcp_block_process(buffer, len, sender, config);
 	}
+
 	return 1;
 }
 
@@ -185,6 +186,7 @@ ATTR_NONNULL_ALL int hdl_dhcp(epoll_data_t data, ddhcp_config *config)
 		statistics_record(config, STAT_DHCP_RECV_PKG, 1);
 		need_house_keeping |= dhcp_process(buffer, len, config);
 	}
+
 	return need_house_keeping;
 }
 
@@ -201,22 +203,26 @@ ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config *config)
 
 	del_fd(config->epoll_fd, fd);
 	close(fd);
+
 	return 0;
 }
 
+// Handle new control socket connections
 ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config *config)
 {
 	UNUSED(config);
 	int fd = epoll_get_fd(data);
-	// Handle new control socket connections
-	struct sockaddr_un client_fd;
 	unsigned int len = sizeof(client_fd);
+	struct sockaddr_un client_fd;
 	ddhcp_epoll_data *control_link =
 		epoll_data_new(config->control_path, NULL, hdl_ctrl_cmd, NULL);
+
 	control_link->fd = accept(fd, (struct sockaddr *)&client_fd, &len);
+
 	//set_nonblocking(config.client_control_socket);
 	epoll_add_fd(config->epoll_fd, control_link, EPOLLIN | EPOLLET, config);
 	DEBUG("ControlSocket: new connections\n");
+
 	return 0;
 }
 
@@ -247,9 +253,7 @@ int main(int argc, char **argv)
 	// DHCP
 	config.dhcp_port = 67;
 	INIT_LIST_HEAD(&config.options);
-
 	INIT_LIST_HEAD(&config.claiming_blocks);
-
 	INIT_LIST_HEAD(&config.dhcp_packet_cache);
 
 	char *interface = (char *)"server0";
@@ -267,15 +271,12 @@ int main(int argc, char **argv)
 		case 'i':
 			interface = optarg;
 			break;
-
 		case 'c':
 			interface_client = optarg;
 			break;
-
 		case 'b':
 			config.block_size = (uint8_t)(1 << atoi(optarg));
 			break;
-
 		case 'B': {
 			unsigned long block_timeout = strtoul(optarg, NULL, 0);
 			if (!block_timeout) {
@@ -289,7 +290,6 @@ int main(int argc, char **argv)
 			}
 			config.block_timeout = (uint16_t)block_timeout;
 		} break;
-
 		case 't':
 			config.tentative_timeout = (uint16_t)atoi(optarg);
 			if (config.tentative_timeout < 2) {
@@ -297,28 +297,22 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			break;
-
 		case 'd':
 			daemon_running = 1;
 			break;
-
 		case 'D':
 			//We pretend we are normally running, just in another mode
 			daemon_running = 2;
 			break;
-
 		case 'h':
 			show_usage = 1;
 			break;
-
 		case 'L':
 			learning_phase = 0;
 			break;
-
 		case 'V':
 			printf("Revision: %s\n", REVISION);
 			return 0;
-
 		case 'N':
 			do {
 				// TODO Split prefix and cidr
@@ -348,18 +342,15 @@ int main(int argc, char **argv)
 				}
 			} while (0);
 			break;
-
 		case 'S':
 			config.disable_dhcp = 1;
 			break;
-
 		case 'o':
 			do {
 				dhcp_option *option = parse_option();
 				set_option_in_store(&config.options, option);
 			} while (0);
 			break;
-
 		case 's':
 			config.spare_leases_needed = (uint8_t)atoi(optarg);
 #if LOG_LEVEL_LIMIT >= LOG_WARNING
@@ -370,26 +361,21 @@ int main(int argc, char **argv)
 
 #endif
 			break;
-
 		case 'C':
 			config.control_path = optarg;
 			break;
-
 		case 'H':
 			config.hook_command = optarg;
 			break;
-
 		case 'v':
-			if (log_level < LOG_LEVEL_MAX) {
+			if (log_level < LOG_LEVEL_MAX)
 				log_level++;
-			}
-			break;
 
+			break;
 		case 'n':
 			config.block_needless_timeout =
 				(uint16_t)(atoi(optarg));
 			break;
-
 		default:
 			printf("ARGC: %i\n", argc);
 			show_usage = 1;
@@ -429,9 +415,8 @@ int main(int argc, char **argv)
 	config.number_of_blocks = (uint32_t)pow(
 		2u, (32u - config.prefix_len - ceil(log2(config.block_size))));
 
-	if (config.disable_dhcp) {
+	if (config.disable_dhcp)
 		config.spare_leases_needed = 0;
-	}
 
 	INFO("CONFIG: network=%s/%i\n", inet_ntoa(config.prefix),
 	     config.prefix_len);
@@ -541,14 +526,15 @@ int main(int argc, char **argv)
 
 	do {
 		int n = 0;
+
 		do {
 			n = epoll_wait(config.epoll_fd, events, (int)maxevents,
 				       (int)loop_timeout);
 		} while (n < 0 && errno == EINTR);
 
-		if (n < 0) {
+		if (n < 0)
 			ERROR("epoll error (%i) %s", errno, strerror(errno));
-		}
+
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		if (loop_timeout != config.loop_timeout) {
@@ -590,11 +576,9 @@ int main(int argc, char **argv)
 			}
 		}
 
-		if (need_house_keeping) {
-			if (!learning_phase) {
-				house_keeping(&config);
-			}
-		}
+		if (need_house_keeping && !learning_phase)
+			house_keeping(&config);
+
 	} while (daemon_running);
 
 	// --------------------------------------------------------------------------

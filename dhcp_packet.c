@@ -46,9 +46,8 @@ ATTR_NONNULL_ALL void printf_dhcp(dhcp_packet *packet)
 			DEBUG("DHCP OPTION [ code %i, length %i, value ",
 			      option->code, option->len);
 
-			for (int k = 0; k < option->len; k++) {
+			for (int k = 0; k < option->len; k++)
 				LOG("%i ", option->payload[k]);
-			}
 
 			LOG("]\n");
 		} else {
@@ -76,7 +75,6 @@ ATTR_NONNULL_ALL size_t _dhcp_packet_len(dhcp_packet *packet)
 		case DHCP_CODE_END:
 			len++;
 			break;
-
 		default:
 			len += 2 + (size_t)option->len;
 			break;
@@ -94,9 +92,8 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 	uint16_t tmp16;
 	uint32_t tmp32;
 
-	if (len < 240) {
+	if (len < 240)
 		return -1;
-	}
 
 	DEBUG("ntoh_dhcp_packet(...): package len:%zi\n", len);
 
@@ -142,21 +139,17 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 			option += 1;
 			continue;
 			break;
-
 		case DHCP_CODE_END:
 			options++;
 			exit = 1;
 			continue;
 			break;
-
 		case DHCP_CODE_MESSAGE_TYPE:
 			dhcp_message_type = 1;
 			break;
-
 		case DHCP_CODE_PARAMETER_REQUEST_LIST:
 			dhcp_request_list = 1;
 			break;
-
 		default:
 			break;
 		}
@@ -181,9 +174,8 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 		return -6;
 	}
 
-	if (dhcp_request_list != 1) {
+	if (dhcp_request_list != 1)
 		DEBUG("ntoh_dhcp_packet(...): Message contains no DHCP request list - broken client?\n");
-	}
 
 	packet->options_len = (uint8_t)options;
 	packet->options = (dhcp_option *)calloc(options, sizeof(dhcp_option));
@@ -202,9 +194,6 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 		switch ((uint8_t)option[0]) {
 		case DHCP_CODE_END:
 			exit = 1;
-
-			/* fall through */
-
 		case DHCP_CODE_PAD:
 			// JUMP padding and end
 			packet->options[i].code = option[0];
@@ -214,7 +203,6 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 			option += 1;
 			i++;
 			break;
-
 		default:
 			packet->options[i].code = option[0];
 			packet->options[i].len = option[1];
@@ -243,9 +231,8 @@ ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet *packet)
 
 	uint8_t *buffer = calloc(sizeof(char), _dhcp_packet_len(packet));
 
-	if (!buffer) {
+	if (!buffer)
 		return -ENOMEM;
-	}
 
 	// Header
 	buffer[0] = packet->op;
@@ -340,9 +327,8 @@ ATTR_NONNULL_ALL int dhcp_packet_copy(dhcp_packet *dest, dhcp_packet *src)
 	dest->options = (struct dhcp_option *)calloc(
 		src->options_len, sizeof(struct dhcp_option));
 
-	if (!dest->options) {
+	if (!dest->options)
 		return 1;
-	}
 
 	dhcp_option *src_option = src->options;
 	dhcp_option *dest_option = dest->options;
@@ -390,6 +376,7 @@ ATTR_NONNULL_ALL int dhcp_packet_list_add(dhcp_packet_list *list,
 	dhcp_packet_copy(copy, packet);
 	copy->timeout = now + 120;
 	list_add_tail(&copy->packet_list, list);
+
 	return 0;
 }
 

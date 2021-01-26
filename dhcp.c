@@ -55,13 +55,11 @@ uint8_t find_lease_from_address(struct in_addr *addr, ddhcp_config *config,
 		DEBUG("find_lease_from_address(...): found block %i and lease %i with state %i\n",
 		      block_number, lease_number, blocks[block_number].state);
 
-		if (lease_block) {
+		if (lease_block)
 			*lease_block = blocks + block_number;
-		}
 
-		if (lease_index) {
+		if (lease_index)
 			*lease_index = lease_number;
-		}
 
 		DEBUG("find_lease_from_address(...): state: %i\n",
 		      blocks[block_number].state);
@@ -189,33 +187,29 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 			}
 
 			break;
-
 		case DHCPREQUEST:
 			statistics_record(config, STAT_DHCP_RECV_REQUEST, 1);
 			dhcp_hdl_request(DDHCP_SKT_DHCP(config)->fd,
 					 &dhcp_packet_buf, config);
 			break;
-
 		case DHCPRELEASE:
 			statistics_record(config, STAT_DHCP_RECV_RELEASE, 1);
 			dhcp_hdl_release(&dhcp_packet_buf, config);
 			break;
-
 		case DHCPINFORM:
 			statistics_record(config, STAT_DHCP_RECV_INFORM, 1);
 			dhcp_hdl_inform(DDHCP_SKT_DHCP(config)->fd,
 					&dhcp_packet_buf, config);
 			break;
-
 		default:
 			WARNING("dhcp_process(...): Unknown DHCP message of type %i\n",
 				message_type);
 			break;
 		}
 
-		if (dhcp_packet_buf.options_len > 0) {
+		if (dhcp_packet_buf.options_len > 0)
 			free(dhcp_packet_buf.options);
-		}
+
 	} else {
 		WARNING("dhcp_process(...): Malformed packet!? errcode: %li\n",
 			ret);
@@ -227,18 +221,20 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 				       ddhcp_config *config)
 {
-	DEBUG("dhcp_hdl_discover(socket:%i, packet, config)\n", socket);
-
-	time_t now = time(NULL);
 	ddhcp_block *lease_block = block_find_free_leases(config);
+	time_t now = time(NULL);
+	uint32_t lease_index;
+	dhcp_lease *lease;
+
+	DEBUG("dhcp_hdl_discover(socket:%i, packet, config)\n", socket);
 
 	if (!lease_block) {
 		DEBUG("dhcp_hdl_discover(...): no block with free leases found\n");
 		return 3;
 	}
 
-	uint32_t lease_index = dhcp_get_free_lease(lease_block);
-	dhcp_lease *lease = lease_block->addresses + lease_index;
+	lease_index = dhcp_get_free_lease(lease_block);
+	lease = lease_block->addresses + lease_index;
 
 	if (!lease) {
 		DEBUG("dhcp_hdl_discover(...): no free leases found, this should not happen!\n");
@@ -277,10 +273,9 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 	if (bytes_send > 0) {
 		// We needed the block, hence remove a possible needless marking.
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
-		if (lease_block->needless_since > 0) {
+		if (lease_block->needless_since > 0)
 			DEBUG("dhcp_hdl_discover(...): Reset needless marker for block %i\n",
 			      lease_block->index);
-		}
 #endif
 		lease_block->needless_since = 0;
 	}
@@ -293,12 +288,12 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 
 ATTR_NONNULL_ALL int dhcp_rhdl_request(uint32_t *address, ddhcp_config *config)
 {
-	DEBUG("dhcp_rhdl_request(address,config)\n");
-
-	time_t now = time(NULL);
 	ddhcp_block *lease_block = NULL;
 	uint32_t lease_index = 0;
+	time_t now = time(NULL);
 	struct in_addr requested_address;
+
+	DEBUG("dhcp_rhdl_request(address,config)\n");
 
 	memcpy(&requested_address, address, sizeof(struct in_addr));
 
@@ -357,16 +352,14 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 
 	// search the lease we may have offered
 
-	time_t now = time(NULL);
-	dhcp_lease *lease = NULL;
 	ddhcp_block *lease_block = NULL;
+	dhcp_lease *lease = NULL;
+	time_t now = time(NULL);
 	uint32_t lease_index = 0;
-
+	uint8_t found_address = 0;
 	uint8_t *address = find_option_requested_address(request->options,
 							 request->options_len);
-
 	struct in_addr requested_address;
-	uint8_t found_address = 0;
 
 	if (address) {
 		memcpy(&requested_address, address, sizeof(struct in_addr));
@@ -475,6 +468,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 				} else {
 					INFO("dhcp_hdl_request(...): Request could not be nacked safely.\n");
 				}
+
 				return 2;
 			}
 		}
@@ -506,9 +500,8 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 					lease_iter++;
 				}
 
-				if (lease) {
+				if (lease)
 					break;
-				}
 			}
 
 			block++;
@@ -528,17 +521,17 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 				       ddhcp_config *config)
 {
-	DEBUG("dhcp_hdl_release(dhcp_packet,config)\n");
-
 	ddhcp_block *lease_block = NULL;
-	uint32_t lease_index = 0;
-
+	dhcp_lease *lease;
 	struct in_addr addr;
+	uint32_t lease_index = 0;
+	uint8_t found;
+
 	memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
-	uint8_t found = find_lease_from_address(&addr, config, &lease_block,
+	found = find_lease_from_address(&addr, config, &lease_block,
 						&lease_index);
 
-	dhcp_lease *lease;
+	DEBUG("dhcp_hdl_release(dhcp_packet,config)\n");
 
 	switch (found) {
 	case 0:
@@ -645,7 +638,6 @@ ATTR_NONNULL_ALL int dhcp_ack(int socket, dhcp_packet *request,
 {
 	time_t now = time(NULL);
 	dhcp_lease *lease = lease_block->addresses + lease_index;
-
 	dhcp_packet *packet = build_initial_packet(request);
 
 	if (!packet) {
@@ -683,6 +675,7 @@ ATTR_NONNULL_ALL int dhcp_ack(int socket, dhcp_packet *request,
 
 	free(packet->options);
 	free(packet);
+
 	return 0;
 }
 
@@ -691,9 +684,8 @@ ATTR_NONNULL_ALL int dhcp_has_free(struct ddhcp_block *block)
 	dhcp_lease *lease = block->addresses;
 
 	for (unsigned int i = 0; i < block->subnet_len; i++) {
-		if (lease->state == FREE) {
+		if (lease->state == FREE)
 			return 1;
-		}
 
 		lease++;
 	}
@@ -707,9 +699,8 @@ ATTR_NONNULL_ALL uint32_t dhcp_num_free(struct ddhcp_block *block)
 	dhcp_lease *lease = block->addresses;
 
 	for (unsigned int i = 0; i < block->subnet_len; i++) {
-		if (lease->state == FREE) {
+		if (lease->state == FREE)
 			num++;
-		}
 
 		lease++;
 	}
@@ -723,9 +714,8 @@ ATTR_NONNULL_ALL uint32_t dhcp_num_offered(struct ddhcp_block *block)
 	dhcp_lease *lease = block->addresses;
 
 	for (unsigned int i = 0; i < block->subnet_len; i++) {
-		if (lease->state == OFFERED) {
+		if (lease->state == OFFERED)
 			num++;
-		}
 
 		lease++;
 	}
@@ -738,9 +728,8 @@ ATTR_NONNULL_ALL uint32_t dhcp_get_free_lease(ddhcp_block *block)
 	dhcp_lease *lease = block->addresses;
 
 	for (uint32_t i = 0; i < block->subnet_len; i++) {
-		if (lease->state == FREE) {
+		if (lease->state == FREE)
 			return i;
-		}
 
 		lease++;
 	}
@@ -772,17 +761,14 @@ ATTR_NONNULL_ALL int dhcp_check_timeouts(ddhcp_block *block)
 	DEBUG("dhcp_check_timeouts(block)\n");
 	dhcp_lease *lease = block->addresses;
 	time_t now = time(NULL);
-
 	int free_leases = 0;
 
 	for (unsigned int i = 0; i < block->subnet_len; i++) {
-		if (lease->state != FREE && lease->lease_end < now) {
+		if (lease->state != FREE && lease->lease_end < now)
 			_dhcp_release_lease(block, i);
-		}
 
-		if (lease->state == FREE) {
+		if (lease->state == FREE)
 			free_leases++;
-		}
 
 		lease++;
 	}

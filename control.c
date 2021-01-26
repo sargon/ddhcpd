@@ -41,18 +41,16 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 
 #ifdef DDHCPD_STATISTICS
 	case DDHCPCTL_STATISTICS:
-		if (msglen != 1) {
+		if (msglen != 1)
 			DEBUG("handle_command(...): message length mismatch\n");
-		}
 
 		DEBUG("handle_command(...): show statistics\n");
 		statistics_show(socket, 0, config);
 		return 0;
 
 	case DDHCPCTL_STATISTICS_RESET:
-		if (msglen != 1) {
+		if (msglen != 1)
 			DEBUG("handle_command(...): message length mismatch\n");
-		}
 
 		DEBUG("handle_command(...): show statistics reset\n");
 		statistics_show(socket, 1, config);

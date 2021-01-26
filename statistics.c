@@ -69,11 +69,9 @@ ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset,
 
 	// calculate block status
 	ddhcp_block *block = config->blocks;
-	uint32_t blocks_free = 0;
-	uint32_t blocks_tentative = 0;
-	uint32_t blocks_claimed = 0;
+	uint32_t blocks_free = 0, blocks_tentative = 0, blocks_claimed = 0, i;
 
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	for (i = 0; i < config->number_of_blocks; i++) {
 		switch (block->state) {
 		case DDHCP_BLOCKED:
 		case DDHCP_FREE:
@@ -104,10 +102,9 @@ ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset,
 	dprintf(fd, "ddhcp.blocks.tentative %u\n", blocks_tentative);
 	dprintf(fd, "ddhcp.blocks.claimed %u\n", blocks_claimed);
 
-	if (reset > 0) {
+	if (reset > 0)
 		memset(config->statistics, 0,
 		       sizeof(long int) * STAT_NUM_OF_FIELDS);
-	}
 }
 
 #endif

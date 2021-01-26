@@ -42,14 +42,17 @@ ddhcp_epoll_data *epoll_data_new(char *interface_name,
 		FATAL("Unable to allocate memory for ddhcp_epoll_data\n");
 		exit(2);
 	}
+
 	ptr->interface_name = interface_name;
 	ptr->epollin = epollin;
 	ptr->setup = setup;
+
 	if (epollhup == NULL) {
 		ptr->epollhup = hdl_epoll_hup;
 	} else {
 		ptr->epollhup = epollhup;
 	}
+
 	return ptr;
 }
 

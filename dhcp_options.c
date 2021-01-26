@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-
 #include <errno.h>
 
 #include "dhcp_options.h"
@@ -13,11 +12,9 @@ ATTR_NONNULL_ALL dhcp_option *find_option(dhcp_option *options, uint8_t len,
 {
 	dhcp_option *option = options;
 
-	for (; option < options + len; option++) {
-		if (option->code == code) {
+	for (; option < options + len; option++)
+		if (option->code == code)
 			return option;
-		}
-	}
 
 	return NULL;
 }
@@ -68,9 +65,8 @@ int find_option_parameter_request_list(dhcp_option *options, uint8_t len,
 	dhcp_option *option =
 		find_option(options, len, DHCP_CODE_PARAMETER_REQUEST_LIST);
 
-	if (requested) {
+	if (requested)
 		*requested = option ? (uint8_t *)option->payload : NULL;
-	}
 
 	int optlen = option ? option->len : 0;
 
@@ -144,9 +140,8 @@ ATTR_NONNULL_ALL dhcp_option *set_option_in_store(dhcp_option_list *store,
 
 		// Replacing current with new option
 
-		if (current->payload) {
+		if (current->payload)
 			free(current->payload);
-		}
 
 		current->len = option->len;
 		current->payload = option->payload;
@@ -163,9 +158,8 @@ ATTR_NONNULL_ALL dhcp_option *set_option_in_store(dhcp_option_list *store,
 
 ATTR_NONNULL_ALL void free_option(struct dhcp_option *option)
 {
-	if (option->payload) {
+	if (option->payload)
 		free(option->payload);
-	}
 
 	free(option);
 }
@@ -208,13 +202,11 @@ ATTR_NONNULL_ALL int16_t fill_options(dhcp_option *options, uint8_t len,
 	*fullfil = (dhcp_option *)calloc(sizeof(dhcp_option),
 					 (size_t)(max_options + additional));
 
-	if (!*fullfil) {
+	if (!*fullfil)
 		return -ENOMEM;
-	}
 
-	if (!max_options) {
+	if (!max_options)
 		return additional;
-	}
 
 	for (uint8_t i = 0; i < max_options; i++) {
 		uint8_t code = requested[i];
@@ -244,9 +236,8 @@ ATTR_NONNULL_ALL void dhcp_options_show(int fd, ddhcp_config *config)
 	list_for_each_entry (option, store, option_list) {
 		dprintf(fd, "%i\t%i\t", option->code, option->len);
 
-		for (int i = 0; i < option->len; i++) {
+		for (int i = 0; i < option->len; i++)
 			dprintf(fd, "%u\t", option->payload[i]);
-		}
 
 		dprintf(fd, "\n");
 	}
@@ -261,9 +252,8 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config *config)
 		// subnet mask
 		option = (dhcp_option *)calloc(sizeof(dhcp_option), 1);
 
-		if (!option) {
+		if (!option)
 			return -ENOMEM;
-		}
 
 		option->code = DHCP_CODE_SUBNET_MASK;
 		option->len = 4;
@@ -289,9 +279,8 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config *config)
 	if (!has_in_option_store(&config->options, DHCP_CODE_TIME_OFFSET)) {
 		option = (dhcp_option *)malloc(sizeof(dhcp_option));
 
-		if (!option) {
+		if (!option)
 			return -ENOMEM;
-		}
 
 		option->code = DHCP_CODE_TIME_OFFSET;
 		option->len = 4;
@@ -314,9 +303,8 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config *config)
 				 DHCP_CODE_BROADCAST_ADDRESS)) {
 		option = (dhcp_option *)malloc(sizeof(dhcp_option));
 
-		if (!option) {
+		if (!option)
 			return -ENOMEM;
-		}
 
 		option->code = DHCP_CODE_BROADCAST_ADDRESS;
 		option->len = 4;
@@ -347,9 +335,8 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config *config)
 				 DHCP_CODE_ADDRESS_LEASE_TIME)) {
 		option = (dhcp_option *)calloc(sizeof(dhcp_option), 1);
 
-		if (!option) {
+		if (!option)
 			return -ENOMEM;
-		}
 
 		option->code = DHCP_CODE_ADDRESS_LEASE_TIME;
 		option->len = 4;
@@ -373,9 +360,8 @@ ATTR_NONNULL_ALL int dhcp_options_init(ddhcp_config *config)
 				 DHCP_CODE_SERVER_IDENTIFIER)) {
 		option = (dhcp_option *)malloc(sizeof(dhcp_option));
 
-		if (!option) {
+		if (!option)
 			return -ENOMEM;
-		}
 
 		option->code = DHCP_CODE_SERVER_IDENTIFIER;
 		option->len = 4;

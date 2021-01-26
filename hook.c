@@ -29,11 +29,9 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
 	case HOOK_LEASE:
 		action = (char *)"lease";
 		break;
-
 	case HOOK_RELEASE:
 		action = (char *)"release";
 		break;
-
 	default:
 		break;
 	}
@@ -52,10 +50,8 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
 		return;
 	}
 
-	if (pid != 0) {
-		//Nothing to do as the parent
+	if (pid) //Nothing to do as the parent
 		return;
-	}
 
 	int err = execl(
 		// Binary to execute
@@ -83,6 +79,9 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
 
 ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config *config)
 {
+	char *action = NULL;
+	int pid;
+
 	DEBUG("hook(type:%i,addr:%s,config)\n", type);
 
 	if (!config->hook_command) {
@@ -90,15 +89,10 @@ ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config *config)
 		return;
 	}
 
-	int pid;
-
-	char *action = NULL;
-
 	switch (type) {
 	case HOOK_LEARNING_PHASE_END:
 		action = (char *)"endlearning";
 		break;
-
 	default:
 		break;
 	}
@@ -117,10 +111,8 @@ ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config *config)
 		return;
 	}
 
-	if (pid != 0) {
-		//Nothing to do as the parent
+	if (pid != 0) //Nothing to do as the parent
 		return;
-	}
 
 	int err = execl(
 		// Binary to execute

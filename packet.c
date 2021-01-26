@@ -1,10 +1,10 @@
-#include "packet.h"
-#include "logger.h"
-#include "netsock.h"
-
 #include <endian.h>
 #include <assert.h>
 #include <errno.h>
+
+#include "packet.h"
+#include "logger.h"
+#include "netsock.h"
 
 extern const struct in6_addr in6addr_localmcast;
 
@@ -45,7 +45,7 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count)
 		break;
 	}
 
-	if (len == 0)
+	if (!len)
 		ERROR("_packet_size(%i,%li): calculated zero length!", command,
 		      payload_count);
 

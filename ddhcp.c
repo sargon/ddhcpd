@@ -49,9 +49,8 @@ ATTR_NONNULL_ALL void ddhcp_block_free(ddhcp_config *config)
 {
 	ddhcp_block *block = config->blocks;
 
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	for (uint32_t i = 0; i < config->number_of_blocks; i++)
 		block_free(block++);
-	}
 
 	block_free_claims(config);
 	free(config->blocks);
@@ -92,12 +91,10 @@ ATTR_NONNULL_ALL void ddhcp_block_process(uint8_t *buffer, ssize_t len,
 					  1);
 			ddhcp_block_process_claims(&packet, config);
 			break;
-
 		case DDHCP_MSG_INQUIRE:
 			statistics_record(config, STAT_MCAST_RECV_INQUIRE, 1);
 			ddhcp_block_process_inquire(&packet, config);
 			break;
-
 		default:
 			break;
 		}
@@ -113,14 +110,15 @@ ATTR_NONNULL_ALL void
 ddhcp_block_process_claims(struct ddhcp_mcast_packet *packet,
 			   ddhcp_config *config)
 {
+	ddhcp_block *blocks = config->blocks;
+	time_t now = time(NULL);
+	unsigned int i;
+
 	DEBUG("ddhcp_block_process_claims(packet,config)\n");
 
 	assert(packet->command == 1);
-	time_t now = time(NULL);
 
-	ddhcp_block *blocks = config->blocks;
-
-	for (unsigned int i = 0; i < packet->count; i++) {
+	for (i = 0; i < packet->count; i++) {
 		struct ddhcp_payload *claim = &packet->payload[i];
 		uint32_t block_index = claim->block_index;
 
@@ -169,14 +167,15 @@ ATTR_NONNULL_ALL void
 ddhcp_block_process_inquire(struct ddhcp_mcast_packet *packet,
 			    ddhcp_config *config)
 {
+	ddhcp_block *blocks = config->blocks;
+	time_t now = time(NULL);
+	unsigned int i;
+
 	DEBUG("ddhcp_block_process_inquire(packet,config)\n");
 
 	assert(packet->command == 2);
-	time_t now = time(NULL);
 
-	ddhcp_block *blocks = config->blocks;
-
-	for (unsigned int i = 0; i < packet->count; i++) {
+	for (i = 0; i < packet->count; i++) {
 		struct ddhcp_payload *tmp = &packet->payload[i];
 
 		if (tmp->block_index >= config->number_of_blocks) {
@@ -225,45 +224,45 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_process(uint8_t *buffer, ssize_t len,
 	ssize_t ret = ntoh_mcast_packet(buffer, len, &packet);
 	packet.sender = &sender;
 
-	if (ret == 0) {
-		// Check if this packet is for our swarm
-		if (ddhcp_check_packet(&packet, config)) {
-			DEBUG("ddhcp_dhcp_process(...): drop foreign packet before processing");
-			free(packet.renew_payload);
-			return;
-		}
+	if (ret)
+		return;
 
-		switch (packet.command) {
-		case DDHCP_MSG_RENEWLEASE:
-			statistics_record(config, STAT_DIRECT_RECV_RENEWLEASE,
-					  1);
-			ddhcp_dhcp_renewlease(&packet, config);
-			break;
-
-		case DDHCP_MSG_LEASEACK:
-			statistics_record(config, STAT_DIRECT_RECV_LEASEACK, 1);
-			ddhcp_dhcp_leaseack(&packet, config);
-			break;
-
-		case DDHCP_MSG_LEASENAK:
-			statistics_record(config, STAT_DIRECT_RECV_LEASENAK, 1);
-			ddhcp_dhcp_leasenak(&packet, config);
-			break;
-
-		case DDHCP_MSG_RELEASE:
-			statistics_record(config, STAT_DIRECT_RECV_RELEASE, 1);
-			ddhcp_dhcp_release(&packet, config);
-			break;
-
-		default:
-			break;
-		}
+	// Check if this packet is for our swarm
+	if (ddhcp_check_packet(&packet, config)) {
+		DEBUG("ddhcp_dhcp_process(...): drop foreign packet before processing");
+		free(packet.renew_payload);
+		return;
 	}
+
+	switch (packet.command) {
+	case DDHCP_MSG_RENEWLEASE:
+		statistics_record(config, STAT_DIRECT_RECV_RENEWLEASE,
+				  1);
+		ddhcp_dhcp_renewlease(&packet, config);
+		break;
+	case DDHCP_MSG_LEASEACK:
+		statistics_record(config, STAT_DIRECT_RECV_LEASEACK, 1);
+		ddhcp_dhcp_leaseack(&packet, config);
+		break;
+	case DDHCP_MSG_LEASENAK:
+		statistics_record(config, STAT_DIRECT_RECV_LEASENAK, 1);
+		ddhcp_dhcp_leasenak(&packet, config);
+		break;
+	case DDHCP_MSG_RELEASE:
+		statistics_record(config, STAT_DIRECT_RECV_RELEASE, 1);
+		ddhcp_dhcp_release(&packet, config);
+		break;
+	default:
+		break;
+	}
+
 }
 
 ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet *packet,
 					    ddhcp_config *config)
 {
+	ddhcp_mcast_packet *answer = NULL;
+
 	DEBUG("ddhcp_dhcp_renewlease(request,config)\n");
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -275,9 +274,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet *packet,
 
 	int ret = dhcp_rhdl_request(&(packet->renew_payload->address), config);
 
-	ddhcp_mcast_packet *answer = NULL;
-
-	if (ret == 0) {
+	if (!ret) {
 		DEBUG("ddhcp_dhcp_renewlease(...): %i ACK\n", ret);
 		answer = new_ddhcp_packet(DDHCP_MSG_LEASEACK, config);
 		statistics_record(config, STAT_DIRECT_SEND_LEASEACK, 1);

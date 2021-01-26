@@ -17,9 +17,9 @@ static int callback(struct nl_msg *msg, void *vcfg)
 
 	if (hdr->nlmsg_type == RTM_NEWLINK) {
 		struct ifinfomsg *data = NLMSG_DATA(hdr);
-		if (DDHCP_SKT_SERVER(config)->interface_id == data->ifi_index) {
+		if (DDHCP_SKT_SERVER(config)->interface_id == data->ifi_index)
 			DEBUG("netlink_callback(...): action on server interface\n");
-		}
+
 		if (data->ifi_flags & IFF_UP) {
 			DEBUG("netlink_callback(...): iface(%i) up\n",
 			      data->ifi_index);
@@ -42,6 +42,7 @@ ATTR_NONNULL_ALL int netlink_in(epoll_data_t data, ddhcp_config *config)
 {
 	UNUSED(config);
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
+
 	return nl_recvmsgs_default((struct nl_sock *)ptr->data);
 }
 
@@ -81,5 +82,6 @@ ATTR_NONNULL_ALL int netlink_close(epoll_data_t data, ddhcp_config *config)
 	UNUSED(config);
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	nl_socket_free((struct nl_sock *)ptr->data);
+
 	return 0;
 }

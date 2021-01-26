@@ -1,8 +1,7 @@
-#include "block.h"
-
 #include <errno.h>
 #include <math.h>
 
+#include "block.h"
 #include "dhcp.h"
 #include "logger.h"
 #include "statistics.h"
@@ -21,9 +20,8 @@ int block_alloc(ddhcp_block *block)
 	}
 
 	// Do not allocate memory and initialise, when the block is already allocated
-	if (block->addresses) {
+	if (block->addresses)
 		return 0;
-	}
 
 	block->addresses = (struct dhcp_lease *)calloc(
 		sizeof(struct dhcp_lease), block->subnet_len);
@@ -58,6 +56,7 @@ ATTR_NONNULL(2) int block_own(ddhcp_block *block, ddhcp_config *config)
 	block->state = DDHCP_OURS;
 	block->first_claimed = time(NULL);
 	NODE_ID_CP(&block->node_id, &config->node_id);
+
 	return 0;
 }
 
@@ -81,6 +80,9 @@ ATTR_NONNULL_ALL void block_free(ddhcp_block *block)
 
 ATTR_NONNULL_ALL ddhcp_block *block_find_free(ddhcp_config *config)
 {
+        ddhcp_block *random_free = NULL;
+	uint32_t r = ~0u;
+
 	DEBUG("block_find_free(config)\n");
 	ddhcp_block *block = config->blocks;
 
@@ -98,9 +100,6 @@ ATTR_NONNULL_ALL ddhcp_block *block_find_free(ddhcp_config *config)
 	}
 
 	DEBUG("block_find_free(...): found %i free blocks\n", num_free_blocks);
-
-	ddhcp_block *random_free = NULL;
-	uint32_t r = ~0u;
 
 	if (num_free_blocks > 0) {
 		r = (uint32_t)rand() % num_free_blocks;
@@ -390,6 +389,8 @@ ATTR_NONNULL_ALL static void
 _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 			 time_t new_block_timeout, ddhcp_config *config)
 {
+        uint32_t index;
+
 	DEBUG("block_update_claims_send(packet:%i,%li,config)\n", packet->count,
 	      new_block_timeout);
 
@@ -403,7 +404,7 @@ _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 		// Update the timeout value of all contained blocks
 		// iff the packet has been transmitted
 		for (uint8_t i = 0; i < packet->count; i++) {
-			uint32_t index = packet->payload[i].block_index;
+			index = packet->payload[i].block_index;
 			DEBUG("block_update_claims_send(...): updated claim for block %i\n",
 			      index);
 			config->blocks[index].timeout = new_block_timeout;
@@ -416,7 +417,7 @@ _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
 {
 	DEBUG("block_update_claims(config)\n");
-	uint32_t our_blocks = 0;
+	uint32_t our_blocks = 0, i;
 	ddhcp_block *block = config->blocks;
 	time_t now = time(NULL);
 	time_t timeout_factor =
@@ -426,7 +427,7 @@ ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
 	// Determine if we need to run a full update claim run
 	// we run through the list until we see one block which needs update.
 	// Running a full update claims (see below) is much more expensive
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->state == DDHCP_OURS &&
 		    block->timeout < timeout_factor) {
 			our_blocks++;
@@ -510,8 +511,9 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 	DEBUG("block_check_timeouts(config)\n");
 	ddhcp_block *block = config->blocks;
 	time_t now = time(NULL);
+        uint32_t i;
 
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->timeout < now && block->state != DDHCP_BLOCKED &&
 		    block->state != DDHCP_FREE) {
 			INFO("block_check_timeouts(...): Block %i FREE through timeout.\n",
@@ -521,12 +523,9 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 
 		if (block->state == DDHCP_OURS) {
 			dhcp_check_timeouts(block);
-		} else if (block->addresses) {
-			int free_leases = dhcp_check_timeouts(block);
-
-			if (free_leases == block->subnet_len) {
-				block_free(block);
-			}
+		} else if (block->addresses && block->subnet_len ==
+                                dhcp_check_timeouts(block)) {
+			block_free(block);
 		}
 
 		block++;
@@ -535,7 +534,11 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 
 ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 {
+        uint32_t num_reserved_blocks = 0, free_leases, offered_leases, i, j;
 	ddhcp_block *block = config->blocks;
+        time_t now = time(NULL);
+        char node_id[17];
+
 	dprintf(fd, "block size/number\t%u/%u \n", config->block_size,
 		config->number_of_blocks);
 	dprintf(fd, "      tentative timeout\t%u\n", config->tentative_timeout);
@@ -546,12 +549,8 @@ ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 	dprintf(fd, "      network: %s/%i \n", inet_ntoa(config->prefix),
 		config->prefix_len);
 
-	char node_id[17];
-
-	for (uint32_t j = 0; j < 8; j++) {
+	for (j = 0; j < 8; j++)
 		sprintf(node_id + 2 * j, "%02X", config->node_id[j]);
-	}
-
 	node_id[16] = '\0';
 
 	dprintf(fd, "node id\t%s\n", node_id);
@@ -559,23 +558,17 @@ ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 	dprintf(fd, "ddhcp blocks\n");
 	dprintf(fd, "index\tstate\towner\t\t\tclaim\tleases\ttimeout\n");
 
-	time_t now = time(NULL);
-
-	uint32_t num_reserved_blocks = 0;
-
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-		uint32_t free_leases = 0;
-		uint32_t offered_leases = 0;
+	for (i = 0; i < config->number_of_blocks; i++) {
+		free_leases = 0;
+		offered_leases = 0;
 
 		if (block->addresses) {
 			free_leases = dhcp_num_free(block);
 			offered_leases = dhcp_num_offered(block);
 		}
 
-		for (uint32_t j = 0; j < 8; j++) {
+		for (j = 0; j < 8; j++)
 			sprintf(node_id + 2 * j, "%02X", block->node_id[j]);
-		}
-
 		node_id[16] = '\0';
 
 		char leases[16];
@@ -607,9 +600,12 @@ ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 
 void block_unmark_needless(ddhcp_config *config)
 {
+        ddhcp_block *block = config->blocks;
+        uint32_t i;
+
 	DEBUG("block_unmark_needless(config)\n");
-	ddhcp_block *block = config->blocks;
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+
+	for (i = 0; i < config->number_of_blocks; i++) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		if (block->needless_since > 0) {
 			DEBUG("block_unmark_needless(...): Unmark block %i\n",

@@ -1,11 +1,11 @@
-#include "tools.h"
-#include "logger.h"
-
 #include <string.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+
+#include "tools.h"
+#include "logger.h"
 
 ATTR_NONNULL_ALL void addr_add(struct in_addr *subnet, struct in_addr *result,
 			       int add)
@@ -20,9 +20,8 @@ ATTR_NONNULL_ALL void addr_add(struct in_addr *subnet, struct in_addr *result,
 
 dhcp_option *parse_option()
 {
-	//size_t optlen = strlen(optarg);
-
 	char *len_s = strchr(optarg, ':');
+	//size_t optlen = strlen(optarg);
 
 	if (!len_s) {
 		ERROR("parse_option(...): Malformed dhcp option '%s'\n",
@@ -73,9 +72,8 @@ dhcp_option *parse_option()
 			exit(1);
 		}
 
-		if (i + 1 < len) {
+		if (i + 1 < len)
 			next_payload_s++ [0] = '\0';
-		}
 
 		uint8_t payload = (uint8_t)strtoul(payload_s, NULL, 0);
 		option->payload[i] = payload;

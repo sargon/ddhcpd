@@ -19,9 +19,8 @@ int main(int argc, char **argv)
 	unsigned int msglen = 0;
 	dhcp_option *option = NULL;
 
-	if (argc == 1) {
+	if (argc == 1)
 		show_usage = 1;
-	}
 
 	char *path = (char *)"/tmp/ddhcpd_ctl";
 
@@ -38,35 +37,29 @@ int main(int argc, char **argv)
 		case 'h':
 			show_usage = 1;
 			break;
-
 		case 'b':
 			//show blocks
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_BLOCK_SHOW;
 			break;
-
 		case 'd':
 			// show dhcp
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTIONS_SHOW;
 			break;
-
 #ifdef DDHCPD_STATISTICS
 		case 's':
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_STATISTICS;
 			break;
-
 		case 'S':
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_STATISTICS_RESET;
 			break;
 #endif
-
 		case 'o':
 			option = parse_option();
 			break;
-
 		case 'l':
 			msglen = 7;
 			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_SET;
@@ -77,27 +70,22 @@ int main(int argc, char **argv)
 			memcpy(buffer + 3, (uint8_t *)&leasetime,
 			       sizeof(uint32_t));
 			break;
-
 		case 'r':
 			msglen = 2;
 			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_REMOVE;
 			buffer[1] = (uint8_t)atoi(optarg);
 			break;
-
 		case 'C':
 			path = optarg;
 			break;
-
 		case 'v':
 			msglen = 2;
 			buffer[0] = (uint8_t)DDHCPCTL_LOG_LEVEL_SET;
 			buffer[1] = (uint8_t)atoi(optarg);
 			break;
-
 		case 'V':
 			printf("Revision: %s\n", REVISION);
 			return 0;
-
 		default:
 			printf("ARGC: %i\n", argc);
 			show_usage = 1;
@@ -156,9 +144,8 @@ int main(int argc, char **argv)
 
 	int ret = fcntl(ctl_sock, F_GETFL, 0);
 
-	if (ret < 0) {
+	if (ret < 0)
 		perror("Cant't set stuff");
-	}
 
 	ssize_t bw = send(ctl_sock, buffer, msglen, 0);
 

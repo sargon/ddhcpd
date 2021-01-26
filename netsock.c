@@ -56,12 +56,11 @@ struct in6_addr *get_ipv6_linklokal(char *interface)
 		return NULL;
 	}
 
-	for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-		if (ifa->ifa_addr == NULL) {
+	for (ifa = ifaddr, n = 0; ifa; ifa = ifa->ifa_next, n++) {
+		if (!ifa->ifa_addr)
 			continue;
-		}
 
-		if (strcmp(ifa->ifa_name, interface) == 0) {
+		if (!strcmp(ifa->ifa_name, interface)) {
 			if (ifa->ifa_addr->sa_family == AF_INET6) {
 				if (((struct sockaddr_in6 *)ifa->ifa_addr)
 					    ->sin6_scope_id > 0) {
@@ -85,11 +84,9 @@ struct in6_addr *get_ipv6_linklokal(char *interface)
 
 ATTR_NONNULL_ALL int netsock_unix_socket_open(ddhcp_epoll_data *data)
 {
-	int ctl_sock;
 	struct sockaddr_un s_un;
 	int ret;
-
-	ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+	int ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 
 	memset(&s_un, 0, sizeof(s_un));
 	s_un.sun_family = AF_UNIX;
@@ -143,9 +140,8 @@ ATTR_NONNULL_ALL int netsock_open_socket_v6(ddhcp_epoll_data *data,
 	sin6.sin6_scope_id = if_nametoindex(data->interface_name);
 
 	int sock = socket(PF_INET6, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP);
-	if (sock < 0) {
+	if (sock < 0)
 		FATAL("netsock_open_socket_v6(...): unable to create socket\n");
-	}
 
 	if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, data->interface_name,
 		       (socklen_t)strlen(data->interface_name))) {
@@ -264,6 +260,7 @@ ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,
 		return -1;
 	}
 	UNUSED(config);
+
 	return 0;
 }
 
@@ -277,6 +274,7 @@ ATTR_NONNULL_ALL int netsock_server_init(epoll_data_t data,
 		return -1;
 	}
 	UNUSED(config);
+
 	return 0;
 }
 
@@ -288,6 +286,7 @@ ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data, ddhcp_config *config)
 		return -1;
 	}
 	UNUSED(config);
+
 	return 0;
 }
 
@@ -300,5 +299,6 @@ ATTR_NONNULL_ALL int netsock_control_init(epoll_data_t data,
 		return -1;
 	}
 	UNUSED(config);
+
 	return 0;
 }
