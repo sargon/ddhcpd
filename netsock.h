@@ -11,9 +11,12 @@
 const struct in6_addr in6addr_localmast;
 
 // ddhcpd_socket_init_t implementations
-ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,ddhcp_config* config);
-ATTR_NONNULL_ALL int netsock_server_init(epoll_data_t data,ddhcp_config* config);
-ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data,ddhcp_config* config);
-ATTR_NONNULL_ALL int netsock_control_init(epoll_data_t data,ddhcp_config* config);
+ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,
+					    ddhcp_config *config);
+ATTR_NONNULL_ALL int netsock_server_init(epoll_data_t data,
+					 ddhcp_config *config);
+ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data, ddhcp_config *config);
+ATTR_NONNULL_ALL int netsock_control_init(epoll_data_t data,
+					  ddhcp_config *config);
 
 #endif
