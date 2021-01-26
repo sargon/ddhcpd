@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Statistics glue
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include "types.h"
 #include <stdio.h>
 

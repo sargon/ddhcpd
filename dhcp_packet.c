@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - DHCP packet processing facility
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>

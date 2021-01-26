@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Helper functions
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _TOOLS_H
 #define _TOOLS_H
 

@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - epoll abstraction layer
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>

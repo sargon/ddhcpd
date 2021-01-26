@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Handling of decentral block negotiation
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _DDHCP_H
 #define _DDHCP_H
 

@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Netlink abstraction layer
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _NETLINK_H
 #define _NETLINK_H
 

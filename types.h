@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Common type definitions
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _TYPES_H
 #define _TYPES_H
 

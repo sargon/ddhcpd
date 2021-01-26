@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Handling of IP address blocks for DHCP redistribution
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _BLOCK_H
 #define _BLOCK_H
 

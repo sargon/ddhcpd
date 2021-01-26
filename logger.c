@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Logging facility
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <stdarg.h>
 
 #include "logger.h"

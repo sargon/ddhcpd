@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Command interface abstraction
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _CONTROL_H
 #define _CONTROL_H
 

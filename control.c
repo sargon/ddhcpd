@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Command interface abstraction
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include "control.h"
 #include "logger.h"
 #include "block.h"

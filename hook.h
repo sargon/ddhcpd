@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Event hooks
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _HOOK_H
 #define _HOOK_H
 

@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Event hooks
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include "hook.h"
 #include "logger.h"
 #include "tools.h"

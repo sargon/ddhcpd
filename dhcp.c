@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - DHCP server engine
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>

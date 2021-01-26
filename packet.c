@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Raw packet handling
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <endian.h>
 #include <assert.h>
 #include <errno.h>

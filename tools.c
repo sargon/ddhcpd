@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Helper functions
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #include <string.h>
 #include <getopt.h>
 #include <stdio.h>

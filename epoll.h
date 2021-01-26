@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - epoll abstraction layer
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _EPOLL_H
 #define _EPOLL_H
 
@@ -37,7 +44,7 @@ ddhcp_epoll_data *epoll_data_new(char *interface_name,
 				 ddhcpd_epoll_event_t epollin,
 				 ddhcpd_epoll_event_t epollhup);
 
-/** 
+/**
  * Add a file descriptor to an epoll instance.
  */
 void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,

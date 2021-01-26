@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - DHCP server engine
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _DHCP_H
 #define _DHCP_H
 /**

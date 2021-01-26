@@ -1,3 +1,10 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - DHCP option processing facility
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
 #ifndef _DHCP_OPTIONS_H
 #define _DHCP_OPTIONS_H
 
