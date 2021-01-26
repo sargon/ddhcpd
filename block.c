@@ -80,7 +80,7 @@ ATTR_NONNULL_ALL void block_free(ddhcp_block *block)
 
 ATTR_NONNULL_ALL ddhcp_block *block_find_free(ddhcp_config *config)
 {
-        ddhcp_block *random_free = NULL;
+	ddhcp_block *random_free = NULL;
 	uint32_t r = ~0u;
 
 	DEBUG("block_find_free(config)\n");
@@ -389,7 +389,7 @@ ATTR_NONNULL_ALL static void
 _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 			 time_t new_block_timeout, ddhcp_config *config)
 {
-        uint32_t index;
+	uint32_t index;
 
 	DEBUG("block_update_claims_send(packet:%i,%li,config)\n", packet->count,
 	      new_block_timeout);
@@ -511,7 +511,7 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 	DEBUG("block_check_timeouts(config)\n");
 	ddhcp_block *block = config->blocks;
 	time_t now = time(NULL);
-        uint32_t i;
+	uint32_t i;
 
 	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->timeout < now && block->state != DDHCP_BLOCKED &&
@@ -523,8 +523,8 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 
 		if (block->state == DDHCP_OURS) {
 			dhcp_check_timeouts(block);
-		} else if (block->addresses && block->subnet_len ==
-                                dhcp_check_timeouts(block)) {
+		} else if (block->addresses &&
+			   block->subnet_len == dhcp_check_timeouts(block)) {
 			block_free(block);
 		}
 
@@ -534,10 +534,10 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 
 ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 {
-        uint32_t num_reserved_blocks = 0, free_leases, offered_leases, i, j;
+	uint32_t num_reserved_blocks = 0, free_leases, offered_leases, i, j;
 	ddhcp_block *block = config->blocks;
-        time_t now = time(NULL);
-        char node_id[17];
+	time_t now = time(NULL);
+	char node_id[17];
 
 	dprintf(fd, "block size/number\t%u/%u \n", config->block_size,
 		config->number_of_blocks);
@@ -600,8 +600,8 @@ ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 
 void block_unmark_needless(ddhcp_config *config)
 {
-        ddhcp_block *block = config->blocks;
-        uint32_t i;
+	ddhcp_block *block = config->blocks;
+	uint32_t i;
 
 	DEBUG("block_unmark_needless(config)\n");
 

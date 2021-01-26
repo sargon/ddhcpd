@@ -4,7 +4,7 @@
 
 #include "block.h"
 #include "dhcp.h"
-#include "dhcp_options.h"
+#include "dhcp_option.h"
 #include "hook.h"
 #include "logger.h"
 #include "packet.h"
@@ -137,9 +137,9 @@ ATTR_NONNULL_ALL static int16_t _dhcp_default_options(uint8_t msg_type,
 
 	// Fill options list with requested options, allocate memory and reserve for additonal
 	// dhcp options.
-	if ((num_options =
-		     fill_options(request->options, request->options_len,
-				  &config->options, 3, &packet->options)) < 0) {
+	if ((num_options = dhcp_option_fill(
+		     request->options, request->options_len, &config->options,
+		     3, &packet->options)) < 0) {
 		return num_options;
 	}
 
@@ -147,20 +147,21 @@ ATTR_NONNULL_ALL static int16_t _dhcp_default_options(uint8_t msg_type,
 
 	// DHCP Message Type
 	_ddo[0] = msg_type;
-	set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE,
-		   1, _ddo);
+	dhcp_option_set(packet->options, packet->options_len,
+			DHCP_CODE_MESSAGE_TYPE, 1, _ddo);
 
 	// To support DHCPINFORM (as of RFC 2132) we need to be able to omit the lease time
 	if (include_lease_time) {
 		// DHCP Lease Time
-		set_option_from_store(&config->options, packet->options,
-				      packet->options_len,
-				      DHCP_CODE_ADDRESS_LEASE_TIME);
+		dhcp_option_set_from_store(&config->options, packet->options,
+					   packet->options_len,
+					   DHCP_CODE_ADDRESS_LEASE_TIME);
 	}
 
 	// DHCP Server identifier
-	set_option_from_store(&config->options, packet->options,
-			      packet->options_len, DHCP_CODE_SERVER_IDENTIFIER);
+	dhcp_option_set_from_store(&config->options, packet->options,
+				   packet->options_len,
+				   DHCP_CODE_SERVER_IDENTIFIER);
 
 	return 0;
 }
@@ -305,7 +306,7 @@ ATTR_NONNULL_ALL int dhcp_rhdl_request(uint32_t *address, ddhcp_config *config)
 		// TODO Check for validity of request (chaddr)
 		dhcp_lease *lease = lease_block->addresses + lease_index;
 		lease->lease_end = now +
-				   find_in_option_store_address_lease_time(
+				   dhcp_option_find_in_store_address_lease_time(
 					   &config->options) +
 				   DHCP_LEASE_SERVER_DELTA;
 		// Report ack
@@ -326,8 +327,8 @@ ATTR_NONNULL_ALL int dhcp_rhdl_ack(int socket, struct dhcp_packet *request,
 	uint32_t lease_index = 0;
 	struct in_addr requested_address = { 0 };
 
-	uint8_t *address = find_option_requested_address(request->options,
-							 request->options_len);
+	uint8_t *address = dhcp_option_find_requested_address(
+		request->options, request->options_len);
 
 	if (address) {
 		memcpy(&requested_address, address, sizeof(struct in_addr));
@@ -357,8 +358,8 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 	time_t now = time(NULL);
 	uint32_t lease_index = 0;
 	uint8_t found_address = 0;
-	uint8_t *address = find_option_requested_address(request->options,
-							 request->options_len);
+	uint8_t *address = dhcp_option_find_requested_address(
+		request->options, request->options_len);
 	struct in_addr requested_address;
 
 	if (address) {
@@ -394,7 +395,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 				lease->state = OFFERED;
 				lease->lease_end =
 					now +
-					find_in_option_store_address_lease_time(
+					dhcp_option_find_in_store_address_lease_time(
 						&config->options) +
 					DHCP_LEASE_SERVER_DELTA;
 				memcpy(&lease->chaddr, &request->chaddr, 16);
@@ -529,7 +530,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 
 	memcpy(&addr, &packet->ciaddr, sizeof(struct in_addr));
 	found = find_lease_from_address(&addr, config, &lease_block,
-						&lease_index);
+					&lease_index);
 
 	DEBUG("dhcp_hdl_release(dhcp_packet,config)\n");
 
@@ -616,8 +617,8 @@ ATTR_NONNULL_ALL int dhcp_nack(int socket, dhcp_packet *from_client,
 		return 1;
 	}
 
-	set_option(packet->options, packet->options_len, DHCP_CODE_MESSAGE_TYPE,
-		   1, (uint8_t[]){ DHCPNAK });
+	dhcp_option_set(packet->options, packet->options_len,
+			DHCP_CODE_MESSAGE_TYPE, 1, (uint8_t[]){ DHCPNAK });
 
 	statistics_record(config, STAT_DHCP_SEND_PKG, 1);
 	statistics_record(config, STAT_DHCP_SEND_NAK, 1);
@@ -651,7 +652,7 @@ ATTR_NONNULL_ALL int dhcp_ack(int socket, dhcp_packet *request,
 	lease->state = LEASED;
 	lease->lease_end =
 		now +
-		find_in_option_store_address_lease_time(&config->options) +
+		dhcp_option_find_in_store_address_lease_time(&config->options) +
 		DHCP_LEASE_SERVER_DELTA;
 
 	addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);

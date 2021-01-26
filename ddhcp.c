@@ -236,8 +236,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_process(uint8_t *buffer, ssize_t len,
 
 	switch (packet.command) {
 	case DDHCP_MSG_RENEWLEASE:
-		statistics_record(config, STAT_DIRECT_RECV_RENEWLEASE,
-				  1);
+		statistics_record(config, STAT_DIRECT_RECV_RENEWLEASE, 1);
 		ddhcp_dhcp_renewlease(&packet, config);
 		break;
 	case DDHCP_MSG_LEASEACK:
@@ -255,7 +254,6 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_process(uint8_t *buffer, ssize_t len,
 	default:
 		break;
 	}
-
 }
 
 ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet *packet,

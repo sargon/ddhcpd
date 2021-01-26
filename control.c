@@ -1,7 +1,7 @@
 #include "control.h"
 #include "logger.h"
 #include "block.h"
-#include "dhcp_options.h"
+#include "dhcp_option.h"
 #include "statistics.h"
 
 extern int log_level;
@@ -36,7 +36,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 		}
 
 		DEBUG("handle_command(...): show dhcp options\n");
-		dhcp_options_show(socket, config);
+		dhcp_option_show(socket, config);
 		return 0;
 
 #ifdef DDHCPD_STATISTICS
@@ -92,7 +92,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 
 		memcpy(option->payload, buffer + 3, option->len);
 
-		set_option_in_store(&config->options, option);
+		dhcp_option_set_in_store(&config->options, option);
 		return 0;
 
 	case DDHCPCTL_DHCP_OPTION_REMOVE:
@@ -104,7 +104,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 		}
 
 		uint8_t code = buffer[1];
-		remove_option_in_store(&config->options, code);
+		dhcp_option_remove_in_store(&config->options, code);
 		return 0;
 
 	case DDHCPCTL_LOG_LEVEL_SET:

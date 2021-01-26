@@ -1,5 +1,5 @@
-OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o control.o hook.o logger.o statistics.o epoll.o netlink.o
-OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_options.o tools.o block.o hook.o logger.o
+OBJ=main.o ddhcp.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_option.o tools.o block.o control.o hook.o logger.o statistics.o epoll.o netlink.o
+OBJCTL=ddhcpctl.o netsock.o packet.o dhcp.o dhcp_packet.o dhcp_option.o tools.o block.o hook.o logger.o
 HDRS=$(wildcard *.h)
 
 REVISION=$(shell git rev-list --first-parent HEAD --max-count=1)

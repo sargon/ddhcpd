@@ -16,7 +16,7 @@
 #include "control.h"
 #include "ddhcp.h"
 #include "dhcp.h"
-#include "dhcp_options.h"
+#include "dhcp_option.h"
 #include "dhcp_packet.h"
 #include "epoll.h"
 #include "hook.h"
@@ -348,7 +348,8 @@ int main(int argc, char **argv)
 		case 'o':
 			do {
 				dhcp_option *option = parse_option();
-				set_option_in_store(&config.options, option);
+				dhcp_option_set_in_store(&config.options,
+							 option);
 			} while (0);
 			break;
 		case 's':
@@ -449,7 +450,7 @@ int main(int argc, char **argv)
 	// init block stucture
 	ddhcp_block_init(&config);
 
-	if (dhcp_options_init(&config)) {
+	if (dhcp_option_init(&config)) {
 		FATAL("Failed to allocate memory for option store\n");
 		abort();
 	}
@@ -535,7 +536,6 @@ int main(int argc, char **argv)
 		if (n < 0)
 			ERROR("epoll error (%i) %s", errno, strerror(errno));
 
-
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		if (loop_timeout != config.loop_timeout) {
 			DEBUG("Increase loop timeout from %i to %i\n",
@@ -590,7 +590,7 @@ int main(int argc, char **argv)
 
 	ddhcp_block_free(&config);
 
-	free_option_store(&config.options);
+	dhcp_option_free_store(&config.options);
 	dhcp_packet_list_free(&config.dhcp_packet_cache);
 
 	// TODO Handle shutdown of sockets
