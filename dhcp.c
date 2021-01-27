@@ -94,6 +94,8 @@ ATTR_NONNULL_ALL static void _dhcp_release_lease(ddhcp_block *block,
 
 	/* TODO Should we really reset the chaddr or xid, RFC says we
 	 * ''SHOULD retain a record of the client's initialization parameters for possible reuse''
+	 * TODO: CodeFetch Yes, some clients have a broken RFC2131 implementation
+	 * for which this is needed
 	 */
 	memset(lease->chaddr, 0, 16);
 
@@ -190,7 +192,7 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 		switch (message_type) {
 		case DHCPDISCOVER:
 			statistics_record(config, STAT_DHCP_RECV_DISCOVER, 1);
-			ret = dhcp_hdl_discover(DDHCP_SKT_DHCP(config)->fd,
+			ret = dhcp_handle_discover(DDHCP_SKT_DHCP(config)->fd,
 						&dhcp_packet_buf, config);
 
 			if (ret == 1) {
@@ -201,16 +203,16 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 			break;
 		case DHCPREQUEST:
 			statistics_record(config, STAT_DHCP_RECV_REQUEST, 1);
-			dhcp_hdl_request(DDHCP_SKT_DHCP(config)->fd,
+			dhcp_handle_request(DDHCP_SKT_DHCP(config)->fd,
 					 &dhcp_packet_buf, config);
 			break;
 		case DHCPRELEASE:
 			statistics_record(config, STAT_DHCP_RECV_RELEASE, 1);
-			dhcp_hdl_release(&dhcp_packet_buf, config);
+			dhcp_handle_release(&dhcp_packet_buf, config);
 			break;
 		case DHCPINFORM:
 			statistics_record(config, STAT_DHCP_RECV_INFORM, 1);
-			dhcp_hdl_inform(DDHCP_SKT_DHCP(config)->fd,
+			dhcp_handle_inform(DDHCP_SKT_DHCP(config)->fd,
 					&dhcp_packet_buf, config);
 			break;
 		default:
@@ -230,7 +232,7 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 	return 0;
 }
 
-ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
+ATTR_NONNULL_ALL int dhcp_handle_discover(int socket, dhcp_packet *discover,
 				       ddhcp_config *config)
 {
 	ddhcp_block *lease_block = block_find_free_leases(config);
@@ -238,10 +240,10 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 	uint32_t lease_index;
 	dhcp_lease *lease;
 
-	DEBUG("dhcp_hdl_discover(socket:%i, packet, config)\n", socket);
+	DEBUG("dhcp_handle_discover(socket:%i, packet, config)\n", socket);
 
 	if (!lease_block) {
-		DEBUG("dhcp_hdl_discover(...): no block with free leases found\n");
+		DEBUG("dhcp_handle_discover(...): no block with free leases found\n");
 		return 3;
 	}
 
@@ -249,14 +251,14 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 	lease = lease_block->addresses + lease_index;
 
 	if (!lease) {
-		DEBUG("dhcp_hdl_discover(...): no free leases found, this should not happen!\n");
+		DEBUG("dhcp_handle_discover(...): no free leases found, this should not happen!\n");
 		return 2;
 	}
 
 	dhcp_packet *packet = build_initial_packet(discover);
 
 	if (!packet) {
-		WARNING("dhcp_hdl_discover(...): packet memory allocation failed\n");
+		WARNING("dhcp_handle_discover(...): packet memory allocation failed\n");
 		return 1;
 	}
 
@@ -268,11 +270,11 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 
 	addr_add(&lease_block->subnet, &packet->yiaddr, (int)lease_index);
 
-	DEBUG("dhcp_hdl_discover(...): offering address %i %s\n", lease_index,
+	DEBUG("dhcp_handle_discover(...): offering address %i %s\n", lease_index,
 	      inet_ntoa(lease_block->subnet));
 
 	if (_dhcp_default_options(DHCPOFFER, packet, discover, config, true)) {
-		WARNING("dhcp_hdl_discover(...): option memory allocation failed\n");
+		WARNING("dhcp_handle_discover(...): option memory allocation failed\n");
 		free(packet);
 		return 1;
 	}
@@ -286,7 +288,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 		/* We needed the block, hence remove a possible needless marking */
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		if (lease_block->needless_since > 0)
-			DEBUG("dhcp_hdl_discover(...): Reset needless marker for block %i\n",
+			DEBUG("dhcp_handle_discover(...): Reset needless marker for block %i\n",
 			      lease_block->index);
 #endif
 		lease_block->needless_since = 0;
@@ -359,10 +361,10 @@ ATTR_NONNULL_ALL int dhcp_rhdl_ack(int socket, struct dhcp_packet *request,
 	return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
-ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
+ATTR_NONNULL_ALL int dhcp_handle_request(int socket, struct dhcp_packet *request,
 				      ddhcp_config *config)
 {
-	DEBUG("dhcp_hdl_request(socket:%i, dhcp_packet, config)\n", socket);
+	DEBUG("dhcp_handle_request(socket:%i, dhcp_packet, config)\n", socket);
 
 	/* search the lease we may have offered */
 
@@ -379,6 +381,10 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 		memcpy(&requested_address, address, sizeof(struct in_addr));
 		found_address = 1;
 	} else if (request->ciaddr.s_addr != INADDR_ANY) {
+		/* FIXME Why should we do this? If the client does not include
+		 * the requested address, we should NACK, because the request
+		 * is broken!
+		 */
 		memcpy(&requested_address, &request->ciaddr.s_addr,
 		       sizeof(struct in_addr));
 		found_address = 1;
@@ -391,17 +397,17 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 
 		if (found != 2) {
 			lease = lease_block->addresses + lease_index;
-			DEBUG("dhcp_hdl_request(...): Lease found.\n");
+			DEBUG("dhcp_handle_request(...): Lease found.\n");
 
 			if (lease_block->state == DDHCP_CLAIMED) {
 				if (block_alloc(lease_block)) {
-					ERROR("dhcp_hdl_request(...): can't allocate requested block\n");
+					ERROR("dhcp_handle_request(...): can't allocate requested block\n");
 					dhcp_nack(socket, request, config);
 				}
 
 				lease = lease_block->addresses + lease_index;
 				/* This lease block is not ours so we have to forward the request */
-				DEBUG("dhcp_hdl_request(...): Requested lease is owned by another node. Sent request.\n");
+				DEBUG("dhcp_handle_request(...): Requested lease is owned by another node. Sent request.\n");
 				/* Register client information in lease
 				 * TODO This isn't a good idea, because of multi request on the same address from various
 				 * clients, register it elsewhere and append xid.
@@ -425,7 +431,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 				char *hwaddr = hwaddr2c(payload.chaddr);
-				DEBUG("dhcp_hdl_request(...): Save request for xid: %u chaddr: %s\n",
+				DEBUG("dhcp_handle_request(...): Save request for xid: %u chaddr: %s\n",
 				      payload.xid, hwaddr);
 				free(hwaddr);
 #endif
@@ -435,7 +441,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 					DDHCP_MSG_RENEWLEASE, config);
 
 				if (!packet) {
-					WARNING("dhcp_hdl_request(...): Failed to allocate memory for ddhcpd mcast packet\n");
+					WARNING("dhcp_handle_request(...): Failed to allocate memory for ddhcpd mcast packet\n");
 					return -ENOMEM;
 				}
 
@@ -467,7 +473,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 						   lease->chaddr, 16) != 0) {
 						/* Check if lease is free */
 						if (lease->state != FREE) {
-							DEBUG("dhcp_hdl_request(...): Requested lease offered to other client\n");
+							DEBUG("dhcp_handle_request(...): Requested lease offered to other client\n");
 							/* Send DHCP_NACK */
 							dhcp_nack(socket,
 								  request,
@@ -484,7 +490,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 					 */
 					dhcp_nack(socket, request, config);
 				} else {
-					INFO("dhcp_hdl_request(...): Request could not be nacked safely.\n");
+					INFO("dhcp_handle_request(...): Request could not be nacked safely.\n");
 				}
 
 				return 2;
@@ -505,7 +511,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 						if (memcmp(request->chaddr,
 							   lease_iter->chaddr,
 							   16) == 0) {
-							DEBUG("dhcp_hdl_request(...): Found requested lease\n");
+							DEBUG("dhcp_handle_request(...): Found requested lease\n");
 
 							lease = lease_iter;
 							lease_block = block;
@@ -527,7 +533,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 	}
 
 	if (!lease) {
-		DEBUG("dhcp_hdl_request(...): Requested lease not found\n");
+		DEBUG("dhcp_handle_request(...): Requested lease not found\n");
 		/* Send DHCP_NACK */
 		dhcp_nack(socket, request, config);
 		return 2;
@@ -536,7 +542,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 	return dhcp_ack(socket, request, lease_block, lease_index, config);
 }
 
-ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
+ATTR_NONNULL_ALL void dhcp_handle_release(dhcp_packet *packet,
 				       ddhcp_config *config)
 {
 	ddhcp_block *lease_block = NULL;
@@ -549,7 +555,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 	found = find_lease_from_address(&addr, config, &lease_block,
 					&lease_index);
 
-	DEBUG("dhcp_hdl_release(dhcp_packet,config)\n");
+	DEBUG("dhcp_handle_release(dhcp_packet,config)\n");
 
 	switch (found) {
 	case 0:
@@ -561,7 +567,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 			hook_address(HOOK_RELEASE, &packet->yiaddr,
 				     (uint8_t *)&packet->chaddr, config);
 		} else {
-			ERROR("dhcp_hdl_release(...): Hardware address transmitted by client did not match with our record, doing nothing.\n");
+			ERROR("dhcp_handle_release(...): Hardware address transmitted by client did not match with our record, doing nothing.\n");
 		}
 
 	case 1:
@@ -576,10 +582,10 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 	}
 }
 
-ATTR_NONNULL_ALL void dhcp_hdl_inform(int socket, dhcp_packet *request,
+ATTR_NONNULL_ALL void dhcp_handle_inform(int socket, dhcp_packet *request,
 				      ddhcp_config *config)
 {
-	DEBUG("dhcp_hdl_inform(socket:%i, dhcp_packet,config)\n", socket);
+	DEBUG("dhcp_handle_inform(socket:%i, dhcp_packet,config)\n", socket);
 
 	ddhcp_block *lease_block = NULL;
 	uint32_t lease_index = 0;
@@ -591,17 +597,17 @@ ATTR_NONNULL_ALL void dhcp_hdl_inform(int socket, dhcp_packet *request,
 	dhcp_packet *packet = build_initial_packet(request);
 
 	if (!packet) {
-		WARNING("dhcp_hdl_inform(...): packed memory allocation failed\n");
+		WARNING("dhcp_handle_inform(...): packed memory allocation failed\n");
 		return;
 	}
 
 	if (_dhcp_default_options(DHCPACK, packet, request, config, false)) {
-		WARNING("dhcp_hdl_inform(...): option memory allocation failed\n");
+		WARNING("dhcp_handle_inform(...): option memory allocation failed\n");
 		free(packet);
 		return;
 	}
 
-	DEBUG("dhcp_hdl_inform(...): informing address %i %s\n", lease_index,
+	DEBUG("dhcp_handle_inform(...): informing address %i %s\n", lease_index,
 	      inet_ntoa(packet->ciaddr));
 	statistics_record(config, STAT_DHCP_SEND_PKG, 1);
 	statistics_record(config, STAT_DHCP_SEND_ACK, 1);

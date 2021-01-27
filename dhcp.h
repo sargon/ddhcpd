@@ -28,14 +28,14 @@ ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
  *
  * In a second step a dhcp_packet is created an send back.
  */
-ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
+ATTR_NONNULL_ALL int dhcp_handle_discover(int socket, dhcp_packet *discover,
 				       ddhcp_config *config);
 
 /**
  * DHCP Request
  * Performs on base of de
  */
-ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
+ATTR_NONNULL_ALL int dhcp_handle_request(int socket, struct dhcp_packet *request,
 				      ddhcp_config *config);
 
 /**
@@ -51,13 +51,13 @@ ATTR_NONNULL_ALL int dhcp_rhdl_ack(int socket, struct dhcp_packet *request,
 /**
  * DHCP Release
  */
-ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
+ATTR_NONNULL_ALL void dhcp_handle_release(dhcp_packet *packet,
 				       ddhcp_config *config);
 
 /**
  * DHCP Inform
  */
-ATTR_NONNULL_ALL void dhcp_hdl_inform(int socket, dhcp_packet *packet,
+ATTR_NONNULL_ALL void dhcp_handle_inform(int socket, dhcp_packet *packet,
 				      ddhcp_config *config);
 
 ATTR_NONNULL_ALL int dhcp_nack(int socket, dhcp_packet *from_client,
