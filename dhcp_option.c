@@ -12,7 +12,7 @@
 #include "dhcp_option.h"
 #include "list.h"
 #include "logger.h"
-#include "tools.h"
+#include "util.h"
 
 ATTR_NONNULL_ALL dhcp_option *dhcp_option_find(dhcp_option *options,
 					       uint8_t len, uint8_t code)
@@ -235,7 +235,7 @@ ATTR_NONNULL_ALL int16_t dhcp_option_fill(dhcp_option *options, uint8_t len,
 	return (int16_t)(num_found_options + additional);
 }
 
-ATTR_NONNULL_ALL void dhcp_option_show(int fd, ddhcp_config *config)
+ATTR_NONNULL_ALL void dhcp_option_show(int fd, ddhcp_config_t *config)
 {
 	struct dhcp_option *option;
 	dhcp_option_list *store = &config->options;
@@ -255,7 +255,7 @@ ATTR_NONNULL_ALL void dhcp_option_show(int fd, ddhcp_config *config)
 	}
 }
 
-ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config *config)
+ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config_t *config)
 {
 	dhcp_option *option;
 	int8_t pl = (int8_t)config->prefix_len;

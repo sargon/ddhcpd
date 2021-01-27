@@ -60,7 +60,7 @@ ssize_t _packet_size(uint8_t command, ssize_t payload_count)
 }
 
 ATTR_NONNULL_ALL struct ddhcp_mcast_packet *
-new_ddhcp_packet(uint8_t command, ddhcp_config *config)
+new_ddhcp_packet(uint8_t command, ddhcp_config_t *config)
 {
 	struct ddhcp_mcast_packet *packet = (struct ddhcp_mcast_packet *)calloc(
 		sizeof(struct ddhcp_mcast_packet), 1);
@@ -79,25 +79,25 @@ new_ddhcp_packet(uint8_t command, ddhcp_config *config)
 	return packet;
 }
 
-ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
+ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buf, ssize_t len,
 					   struct ddhcp_mcast_packet *packet)
 {
 	/* Header */
-	copy_buf_to_var_inc(buffer, ddhcp_node_id, packet->node_id);
+	copy_buf_to_var_inc(buf, ddhcp_node_id, packet->node_id);
 
 	/* The Python implementation prefixes with a node number?
 	 * prefix address
 	 */
-	copy_buf_to_var_inc(buffer, struct in_addr, packet->prefix);
+	copy_buf_to_var_inc(buf, struct in_addr, packet->prefix);
 
 	/* prefix length */
-	copy_buf_to_var_inc(buffer, uint8_t, packet->prefix_len);
+	copy_buf_to_var_inc(buf, uint8_t, packet->prefix_len);
 	/* size of a block */
-	copy_buf_to_var_inc(buffer, uint8_t, packet->blocksize);
+	copy_buf_to_var_inc(buf, uint8_t, packet->blocksize);
 	/* the command */
-	copy_buf_to_var_inc(buffer, uint8_t, packet->command);
+	copy_buf_to_var_inc(buf, uint8_t, packet->command);
 	/* count of payload entries */
-	copy_buf_to_var_inc(buffer, uint8_t, packet->count);
+	copy_buf_to_var_inc(buf, uint8_t, packet->count);
 
 	ssize_t should_len = _packet_size(packet->command, packet->count);
 
@@ -132,13 +132,13 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 		}
 
 		for (int i = 0; i < packet->count; i++) {
-			copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+			copy_buf_to_var_inc(buf, uint32_t, tmp32);
 			payload->block_index = ntohl(tmp32);
 
-			copy_buf_to_var_inc(buffer, uint16_t, tmp16);
+			copy_buf_to_var_inc(buf, uint16_t, tmp16);
 			payload->timeout = ntohs(tmp16);
 
-			copy_buf_to_var_inc(buffer, uint8_t, tmp8);
+			copy_buf_to_var_inc(buf, uint8_t, tmp8);
 			payload->reserved = tmp8;
 
 			payload++;
@@ -156,7 +156,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 		}
 
 		for (int i = 0; i < packet->count; i++) {
-			copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+			copy_buf_to_var_inc(buf, uint32_t, tmp32);
 			payload->block_index = ntohl(tmp32);
 
 			payload++;
@@ -175,13 +175,13 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 			return -ENOMEM;
 		}
 
-		copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+		copy_buf_to_var_inc(buf, uint32_t, tmp32);
 		packet->renew_payload->address = ntohl(tmp32);
-		copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+		copy_buf_to_var_inc(buf, uint32_t, tmp32);
 		packet->renew_payload->xid = ntohl(tmp32);
-		copy_buf_to_var_inc(buffer, uint32_t, tmp32);
+		copy_buf_to_var_inc(buf, uint32_t, tmp32);
 		packet->renew_payload->lease_seconds = ntohl(tmp32);
-		memcpy(&packet->renew_payload->chaddr, buffer, 16);
+		memcpy(&packet->renew_payload->chaddr, buf, 16);
 		break;
 	default:
 		DEBUG("noth_mcast_packet(...): Unknown packet type\n");
@@ -191,8 +191,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 	return 0;
 }
 
-ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
-				 char *buffer)
+ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet, char *buf)
 {
 	struct ddhcp_payload *payload;
 	uint32_t tmp32;
@@ -200,21 +199,21 @@ ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
 	uint8_t tmp8;
 
 	/* Header */
-	copy_var_to_buf_inc(buffer, ddhcp_node_id, packet->node_id);
+	copy_var_to_buf_inc(buf, ddhcp_node_id, packet->node_id);
 
 	/* The Python implementation prefixes with a node number?
 	 * prefix address
 	 */
-	copy_var_to_buf_inc(buffer, struct in_addr, packet->prefix);
+	copy_var_to_buf_inc(buf, struct in_addr, packet->prefix);
 
 	/* prefix length */
-	copy_var_to_buf_inc(buffer, uint8_t, packet->prefix_len);
+	copy_var_to_buf_inc(buf, uint8_t, packet->prefix_len);
 	/* size of a block */
-	copy_var_to_buf_inc(buffer, uint8_t, packet->blocksize);
+	copy_var_to_buf_inc(buf, uint8_t, packet->blocksize);
 	/* the command */
-	copy_var_to_buf_inc(buffer, uint8_t, packet->command);
+	copy_var_to_buf_inc(buf, uint8_t, packet->command);
 	/* count of payload entries */
-	copy_var_to_buf_inc(buffer, uint8_t, packet->count);
+	copy_var_to_buf_inc(buf, uint8_t, packet->count);
 
 	switch (packet->command) {
 	case DDHCP_MSG_UPDATECLAIM:
@@ -222,13 +221,13 @@ ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
 
 		for (unsigned int index = 0; index < packet->count; index++) {
 			tmp32 = htonl(payload->block_index);
-			copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+			copy_var_to_buf_inc(buf, uint32_t, tmp32);
 
 			tmp16 = htons(payload->timeout);
-			copy_var_to_buf_inc(buffer, uint16_t, tmp16);
+			copy_var_to_buf_inc(buf, uint16_t, tmp16);
 
 			tmp8 = (uint8_t)payload->reserved;
-			copy_var_to_buf_inc(buffer, uint8_t, tmp8);
+			copy_var_to_buf_inc(buf, uint8_t, tmp8);
 
 			payload++;
 		}
@@ -239,7 +238,7 @@ ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
 
 		for (unsigned int index = 0; index < packet->count; index++) {
 			tmp32 = htonl(payload->block_index);
-			copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+			copy_var_to_buf_inc(buf, uint32_t, tmp32);
 
 			payload++;
 		}
@@ -250,12 +249,12 @@ ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
 	case DDHCP_MSG_RELEASE:
 	case DDHCP_MSG_RENEWLEASE:
 		tmp32 = htonl(packet->renew_payload->address);
-		copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+		copy_var_to_buf_inc(buf, uint32_t, tmp32);
 		tmp32 = htonl(packet->renew_payload->xid);
-		copy_var_to_buf_inc(buffer, uint32_t, tmp32);
+		copy_var_to_buf_inc(buf, uint32_t, tmp32);
 		tmp32 = htonl(packet->renew_payload->lease_seconds);
-		copy_var_to_buf_inc(buffer, uint32_t, tmp32);
-		memcpy(buffer, &packet->renew_payload->chaddr, 16);
+		copy_var_to_buf_inc(buf, uint32_t, tmp32);
+		memcpy(buf, &packet->renew_payload->chaddr, 16);
 		break;
 
 	default:
@@ -271,14 +270,14 @@ ATTR_NONNULL_ALL ssize_t send_packet_mcast(struct ddhcp_mcast_packet *packet,
 					   ddhcp_epoll_data *data)
 {
 	size_t len = (size_t)_packet_size(packet->command, packet->count);
-	char *buffer = (char *)calloc(1, len);
+	char *buf = (char *)calloc(1, len);
 
-	if (buffer == NULL)
+	if (buf == NULL)
 		return -1;
 
 	errno = 0;
 
-	hton_packet(packet, buffer);
+	hton_packet(packet, buf);
 
 	struct sockaddr_in6 dest_addr = { .sin6_family = AF_INET6,
 					  .sin6_port =
@@ -289,10 +288,10 @@ ATTR_NONNULL_ALL ssize_t send_packet_mcast(struct ddhcp_mcast_packet *packet,
 	       sizeof(in6addr_localmcast));
 
 	ssize_t bytes_send =
-		sendto(data->fd, buffer, len, 0, (struct sockaddr *)&dest_addr,
+		sendto(data->fd, buf, len, 0, (struct sockaddr *)&dest_addr,
 		       sizeof(dest_addr));
 
-	free(buffer);
+	free(buf);
 
 	if (bytes_send < 0)
 		ERROR("send_packet_mcast(...): Failed (%i): %s\n", errno,
@@ -309,10 +308,10 @@ ATTR_NONNULL_ALL ssize_t send_packet_direct(struct ddhcp_mcast_packet *packet,
 	      data->fd, data->interface_id);
 	size_t len = (size_t)_packet_size(packet->command, packet->count);
 
-	char *buffer = (char *)calloc(1, len);
+	char *buf = (char *)calloc(1, len);
 
-	if (buffer == NULL) {
-		ERROR("send_packet_direct(...): Failed to allocate send buffer\n");
+	if (buf == NULL) {
+		ERROR("send_packet_direct(...): Failed to allocate send buf\n");
 		return -1;
 	}
 
@@ -331,13 +330,13 @@ ATTR_NONNULL_ALL ssize_t send_packet_direct(struct ddhcp_mcast_packet *packet,
 
 #endif
 
-	hton_packet(packet, buffer);
+	hton_packet(packet, buf);
 
 	ssize_t bytes_send =
-		sendto(data->fd, buffer, len, 0, (struct sockaddr *)&dest_addr,
+		sendto(data->fd, buf, len, 0, (struct sockaddr *)&dest_addr,
 		       sizeof(struct sockaddr_in6));
 
-	free(buffer);
+	free(buf);
 
 	if (bytes_send < 0) {
 		ERROR("send_packet_direct(...): Failed (%i): %s\n", errno,

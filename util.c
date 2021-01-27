@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-#include "tools.h"
+#include "util.h"
 #include "logger.h"
 
 ATTR_NONNULL_ALL void addr_add(struct in_addr *subnet, struct in_addr *result,

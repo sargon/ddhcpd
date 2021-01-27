@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "tools.h"
+#include "util.h"
 #include "control.h"
 #include "version.h"
 
@@ -25,10 +25,10 @@ int main(int argc, char **argv)
 	char *path = (char *)"/tmp/ddhcpd_ctl";
 
 #define BUFSIZE_MAX 1500
-	uint8_t *buffer = (uint8_t *)calloc(sizeof(uint8_t), BUFSIZE_MAX);
+	uint8_t *buf = (uint8_t *)calloc(sizeof(uint8_t), BUFSIZE_MAX);
 
-	if (!buffer) {
-		fprintf(stderr, "Failed to allocate message buffer\n");
+	if (!buf) {
+		fprintf(stderr, "Failed to allocate message buf\n");
 		exit(1);
 	}
 
@@ -40,21 +40,21 @@ int main(int argc, char **argv)
 		case 'b':
 			/* show blocks */
 			msglen = 1;
-			buffer[0] = (uint8_t)DDHCPCTL_BLOCK_SHOW;
+			buf[0] = (uint8_t)DDHCPCTL_BLOCK_SHOW;
 			break;
 		case 'd':
 			/* show dhcp */
 			msglen = 1;
-			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTIONS_SHOW;
+			buf[0] = (uint8_t)DDHCPCTL_DHCP_OPTIONS_SHOW;
 			break;
 #ifdef DDHCPD_STATISTICS
 		case 's':
 			msglen = 1;
-			buffer[0] = (uint8_t)DDHCPCTL_STATISTICS;
+			buf[0] = (uint8_t)DDHCPCTL_STATISTICS;
 			break;
 		case 'S':
 			msglen = 1;
-			buffer[0] = (uint8_t)DDHCPCTL_STATISTICS_RESET;
+			buf[0] = (uint8_t)DDHCPCTL_STATISTICS_RESET;
 			break;
 #endif
 		case 'o':
@@ -62,26 +62,26 @@ int main(int argc, char **argv)
 			break;
 		case 'l':
 			msglen = 7;
-			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_SET;
-			buffer[1] = (uint8_t)51;
-			buffer[2] = (uint8_t)4;
+			buf[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_SET;
+			buf[1] = (uint8_t)51;
+			buf[2] = (uint8_t)4;
 			uint32_t leasetime =
 				htonl((uint32_t)strtoul(optarg, NULL, 0));
-			memcpy(buffer + 3, (uint8_t *)&leasetime,
+			memcpy(buf + 3, (uint8_t *)&leasetime,
 			       sizeof(uint32_t));
 			break;
 		case 'r':
 			msglen = 2;
-			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_REMOVE;
-			buffer[1] = (uint8_t)atoi(optarg);
+			buf[0] = (uint8_t)DDHCPCTL_DHCP_OPTION_REMOVE;
+			buf[1] = (uint8_t)atoi(optarg);
 			break;
 		case 'C':
 			path = optarg;
 			break;
 		case 'v':
 			msglen = 2;
-			buffer[0] = (uint8_t)DDHCPCTL_LOG_LEVEL_SET;
-			buffer[1] = (uint8_t)atoi(optarg);
+			buf[0] = (uint8_t)DDHCPCTL_LOG_LEVEL_SET;
+			buf[1] = (uint8_t)atoi(optarg);
 			break;
 		case 'V':
 			printf("Revision: %s\n", REVISION);
@@ -93,15 +93,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* Check if a dhcp option code should be set and if all parameters
+	/* Check if a DHCP option code should be set and if all parameters
 	 * for that are given.
 	 */
 	if (option) {
 		msglen = 3u + option->len;
-		buffer[0] = (uint8_t)3;
-		buffer[1] = (uint8_t)option->code;
-		buffer[2] = (uint8_t)option->len;
-		memcpy(buffer + 3, option->payload, option->len);
+		buf[0] = (uint8_t)3;
+		buf[1] = (uint8_t)option->code;
+		buf[2] = (uint8_t)option->len;
+		memcpy(buf + 3, option->payload, option->len);
 		free(option);
 	}
 
@@ -125,8 +125,8 @@ int main(int argc, char **argv)
 	}
 
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
-		perror("can't create socket");
-		free(buffer);
+		perror("Can't create socket");
+		free(buf);
 		return (-1);
 	}
 
@@ -137,8 +137,8 @@ int main(int argc, char **argv)
 	strncpy(s_un.sun_path, path, sizeof(s_un.sun_path));
 
 	if (connect(ctl_sock, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
-		perror("can't connect to control socket");
-		free(buffer);
+		perror("Can't connect to control socket");
+		free(buf);
 		close(ctl_sock);
 		return -1;
 	}
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 	if (ret < 0)
 		perror("Cant't set stuff");
 
-	ssize_t bw = send(ctl_sock, buffer, msglen, 0);
+	ssize_t bw = send(ctl_sock, buf, msglen, 0);
 
 	if (bw < (ssize_t)msglen) {
 		printf("Wrote %i / %u bytes to control socket", (int)bw,
@@ -159,11 +159,11 @@ int main(int argc, char **argv)
 
 	ssize_t br;
 
-	while ((br = recv(ctl_sock, (char *)buffer, BUFSIZE_MAX - 1, 0))) {
-		buffer[br] = '\0';
-		printf("%s", (char *)buffer);
+	while ((br = recv(ctl_sock, (char *)buf, BUFSIZE_MAX - 1, 0))) {
+		buf[br] = '\0';
+		printf("%s", (char *)buf);
 	}
 
 	close(ctl_sock);
-	free(buffer);
+	free(buf);
 }

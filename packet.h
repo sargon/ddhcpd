@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _PACKET_H
-#define _PACKET_H
+#ifndef _DDHCP_PACKET_H
+#define _DDHCP_PACKET_H
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -70,8 +70,8 @@ struct ddhcp_renew_payload {
 typedef struct ddhcp_renew_payload ddhcp_renew_payload;
 
 ATTR_NONNULL_ALL struct ddhcp_mcast_packet *
-new_ddhcp_packet(uint8_t command, ddhcp_config *config);
-ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
+new_ddhcp_packet(uint8_t command, ddhcp_config_t *config);
+ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buf, ssize_t len,
 					   struct ddhcp_mcast_packet *packet);
 
 ATTR_NONNULL_ALL ssize_t send_packet_mcast(struct ddhcp_mcast_packet *packet,

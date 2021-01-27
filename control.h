@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _CONTROL_H
-#define _CONTROL_H
+#ifndef _DDHCP_CONTROL_H
+#define _DDHCP_CONTROL_H
 
 #include "types.h"
 
@@ -19,7 +19,7 @@ enum { DDHCPCTL_BLOCK_SHOW = 1,
        DDHCPCTL_STATISTICS_RESET,
 };
 
-ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
+ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buf, ssize_t msglen,
 				    ddhcp_config *config);
 
 #endif

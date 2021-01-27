@@ -122,7 +122,7 @@ err:
 	return -1;
 }
 
-ATTR_NONNULL_ALL void netsocket_unix_socket_close(ddhcp_config *config)
+ATTR_NONNULL_ALL void netsocket_unix_socket_close(ddhcp_config_t *config)
 {
 	close(config->control_socket);
 	remove(config->control_path);
@@ -245,7 +245,7 @@ ATTR_NONNULL_ALL int netsock_open_dhcp(ddhcp_epoll_data *data, uint16_t port)
 // DDHCPD_SOCKET_INIT_T for all the different socket types we handle
 
 ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,
-					    ddhcp_config *config)
+					    ddhcp_config_t *config)
 {
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	if ((netsock_open_socket_v6(ptr, &in6addr_localmcast,
@@ -265,7 +265,7 @@ ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,
 }
 
 ATTR_NONNULL_ALL int netsock_server_init(epoll_data_t data,
-					 ddhcp_config *config)
+					 ddhcp_config_t *config)
 {
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	if ((netsock_open_socket_v6(ptr, (struct in6_addr *)&in6addr_any,
@@ -278,7 +278,8 @@ ATTR_NONNULL_ALL int netsock_server_init(epoll_data_t data,
 	return 0;
 }
 
-ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data,
+				       ddhcp_config_t *config)
 {
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	if ((netsock_open_dhcp(ptr, config->dhcp_port)) < 0) {
@@ -291,7 +292,7 @@ ATTR_NONNULL_ALL int netsock_dhcp_init(epoll_data_t data, ddhcp_config *config)
 }
 
 ATTR_NONNULL_ALL int netsock_control_init(epoll_data_t data,
-					  ddhcp_config *config)
+					  ddhcp_config_t *config)
 {
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	if ((netsock_unix_socket_open(ptr)) < 0) {

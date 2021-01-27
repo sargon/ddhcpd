@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _STATISTICS_H
-#define _STATISTICS_H
+#ifndef _DDHCP_STATISTICS_H
+#define _DDHCP_STATISTICS_H
 
 #include "types.h"
 

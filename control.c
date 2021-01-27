@@ -13,8 +13,8 @@
 
 extern int log_level;
 
-ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
-				    ddhcp_config *config)
+ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buf, ssize_t msglen,
+				    ddhcp_config_t *config)
 {
 	if (msglen == 0) {
 		DEBUG("handle_command(...): zero length command received\n");
@@ -23,9 +23,9 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 
 	/* TODO Rethink command handling and command design */
 	DEBUG("handle_command(socket, cmd:%u, len:%i, blocks, config)\n",
-	      buffer[0], msglen);
+	      buf[0], msglen);
 
-	switch (buffer[0]) {
+	switch (buf[0]) {
 	case DDHCPCTL_BLOCK_SHOW:
 		if (msglen != 1) {
 			DEBUG("handle_command(...): message length mismatch\n");
@@ -72,7 +72,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 			return -2;
 		}
 
-		if (buffer[2] + 3ul > (size_t)msglen) {
+		if (buf[2] + 3ul > (size_t)msglen) {
 			DEBUG("handle_command(...): message not long enough\n");
 			return -2;
 		}
@@ -85,9 +85,9 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 			return -1;
 		}
 
-		option->code = buffer[1];
-		option->len = buffer[2];
-		printf("%i:%i\n", buffer[1], buffer[2]);
+		option->code = buf[1];
+		option->len = buf[2];
+		printf("%i:%i\n", buf[1], buf[2]);
 		option->payload =
 			(uint8_t *)calloc(sizeof(uint8_t), option->len);
 
@@ -97,7 +97,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 			return -1;
 		}
 
-		memcpy(option->payload, buffer + 3, option->len);
+		memcpy(option->payload, buf + 3, option->len);
 
 		dhcp_option_set_in_store(&config->options, option);
 		return 0;
@@ -110,7 +110,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 			return -2;
 		}
 
-		uint8_t code = buffer[1];
+		uint8_t code = buf[1];
 		dhcp_option_remove_in_store(&config->options, code);
 		return 0;
 
@@ -122,7 +122,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 			return -2;
 		}
 
-		log_level = buffer[1];
+		log_level = buf[1];
 		return 0;
 
 	default:

@@ -25,7 +25,7 @@
 #include "netsock.h"
 #include "packet.h"
 #include "statistics.h"
-#include "tools.h"
+#include "util.h"
 #include "version.h"
 
 volatile int daemon_running = 0;
@@ -35,7 +35,7 @@ extern int log_level;
 const int NET = 0;
 const int NET_LEN = 10;
 
-uint8_t *buffer = NULL;
+uint8_t *buf = NULL;
 
 ATTR_NONNULL_ALL in_addr_storage get_in_addr(struct sockaddr *sa)
 {
@@ -63,7 +63,7 @@ ATTR_NONNULL_ALL in_addr_storage get_in_addr(struct sockaddr *sa)
  * + Claim new blocks if we are low on spare leases.
  * + Update our claims.
  */
-ATTR_NONNULL_ALL void house_keeping(ddhcp_config *config)
+ATTR_NONNULL_ALL void house_keeping(ddhcp_config_t *config)
 {
 	DEBUG("house_keeping(blocks,config)\n");
 	block_check_timeouts(config);
@@ -95,7 +95,7 @@ ATTR_NONNULL_ALL void house_keeping(ddhcp_config *config)
 	DEBUG("house_keeping(...) finish\n\n");
 }
 
-ATTR_NONNULL_ALL uint32_t get_loop_timeout(ddhcp_config *config)
+ATTR_NONNULL_ALL uint32_t get_loop_timeout(ddhcp_config_t *config)
 {
 	/* Multiply by 500 to convert the timeout value given in seconds
 	 * into milliseconds AND dividing the value by two at the same time.
@@ -125,14 +125,14 @@ void handle_signal_terminate(int sig_nr)
 		daemon_running = 0;
 }
 
-ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config_t *config)
 {
 	int fd = epoll_get_fd(data);
 	socklen_t sender_len = sizeof sender;
 	struct sockaddr_in6 sender;
 	ssize_t len;
 
-	while ((len = recvfrom(fd, buffer, 1500, 0, (struct sockaddr *)&sender,
+	while ((len = recvfrom(fd, buf, 1500, 0, (struct sockaddr *)&sender,
 			       &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		in_addr_storage in_addr;
@@ -144,20 +144,20 @@ ATTR_NONNULL_ALL int hdl_ddhcp_dhcp(epoll_data_t data, ddhcp_config *config)
 #endif
 		statistics_record(config, STAT_DIRECT_RECV_BYTE, (long int)len);
 		statistics_record(config, STAT_DIRECT_RECV_PKG, 1);
-		ddhcp_dhcp_process(buffer, len, sender, config);
+		ddhcp_dhcp_process(buf, len, sender, config);
 	}
 
 	return 0;
 }
 
-ATTR_NONNULL_ALL int hdl_ddhcp_block(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int hdl_ddhcp_block(epoll_data_t data, ddhcp_config_t *config)
 {
 	int fd = epoll_get_fd(data);
 	ssize_t len;
 	struct sockaddr_in6 sender;
 	socklen_t sender_len = sizeof sender;
 
-	while ((len = recvfrom(fd, buffer, 1500, 0, (struct sockaddr *)&sender,
+	while ((len = recvfrom(fd, buf, 1500, 0, (struct sockaddr *)&sender,
 			       &sender_len)) > 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		in_addr_storage in_addr;
@@ -169,46 +169,46 @@ ATTR_NONNULL_ALL int hdl_ddhcp_block(epoll_data_t data, ddhcp_config *config)
 #endif
 		statistics_record(config, STAT_MCAST_RECV_BYTE, (long int)len);
 		statistics_record(config, STAT_MCAST_RECV_PKG, 1);
-		ddhcp_block_process(buffer, len, sender, config);
+		ddhcp_block_process(buf, len, sender, config);
 	}
 
 	return 1;
 }
 
-ATTR_NONNULL_ALL int hdl_dhcp(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int hdl_dhcp(epoll_data_t data, ddhcp_config_t *config)
 {
 	int fd = epoll_get_fd(data);
 	ssize_t len;
 	int need_house_keeping = 0;
 
-	while ((len = read(fd, buffer, 1500)) > 0) {
+	while ((len = read(fd, buf, 1500)) > 0) {
 		statistics_record(config, STAT_DHCP_RECV_BYTE, (long int)len);
 		statistics_record(config, STAT_DHCP_RECV_PKG, 1);
-		need_house_keeping |= dhcp_process(buffer, len, config);
+		need_house_keeping |= dhcp_process(buf, len, config);
 	}
 
 	return need_house_keeping;
 }
 
-ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config_t *config)
 {
 	int fd = epoll_get_fd(data);
 	ssize_t len;
 	/* Handle commands comming over a control_socket */
-	len = read(fd, buffer, 1500);
+	len = read(fd, buf, 1500);
 
-	if (handle_command(fd, buffer, len, config) < 0) {
+	if (handle_command(fd, buf, len, config) < 0) {
 		ERROR("Malformed command on control socket.\n");
 	}
 
-	del_fd(config->epoll_fd, fd);
+	epoll_del_fd(config->epoll_fd, fd);
 	close(fd);
 
 	return 0;
 }
 
 /* Handle new control socket connections */
-ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config_t *config)
 {
 	UNUSED(config);
 	int fd = epoll_get_fd(data);
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 {
 	srand((unsigned int)time(NULL));
 
-	ddhcp_config config;
+	ddhcp_config_t config;
 	config.block_size = 32;
 	config.claiming_blocks_amount = 0;
 
@@ -462,10 +462,10 @@ int main(int argc, char **argv)
 	 * Initializing Network Buffer, EPOLL and Sockets
 	 * Here all later event loop handling is initialized
 	 */
-	buffer = (uint8_t *)malloc(sizeof(uint8_t) * 1500);
+	buf = (uint8_t *)malloc(sizeof(uint8_t) * 1500);
 
-	if (!buffer) {
-		FATAL("Failed to allocate network buffer\n");
+	if (!buf) {
+		FATAL("Failed to allocate network buf\n");
 		abort();
 	}
 
@@ -588,7 +588,7 @@ int main(int argc, char **argv)
 	 */
 	/* TODO free dhcp_leases */
 	free(events);
-	free(buffer);
+	free(buf);
 
 	ddhcp_block_free(&config);
 

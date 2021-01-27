@@ -7,14 +7,14 @@
 
 #include "hook.h"
 #include "logger.h"
-#include "tools.h"
+#include "util.h"
 
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
-				   uint8_t *chaddr, ddhcp_config *config)
+				   uint8_t *chaddr, ddhcp_config_t *config)
 {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 	char *hwaddr = hwaddr2c(chaddr);
@@ -84,7 +84,7 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
 	exit(1);
 }
 
-ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config *config)
+ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config_t *config)
 {
 	char *action = NULL;
 	int pid;

@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _TYPES_H
-#define _TYPES_H
+#ifndef _DDHCP_TYPES_H
+#define _DDHCP_TYPES_H
 
 #include <arpa/inet.h>
 #include <time.h>
@@ -18,15 +18,14 @@
 #include "dhcp_packet.h"
 
 #define NODE_ID_CMP(id1, id2)                                                  \
-	memcmp((char *)(id1), (char *)(id2), sizeof(ddhcp_node_id))
+	memcmp((char *)(id1), (char *)(id2), sizeof(ddhcp_node_id_t))
 
-/* node ident */
+/* Node identity */
+typedef uint8_t ddhcp_node_id_t[8];
+#define NODE_ID_CLEAR(id) memset(id, '\0', sizeof(ddhcp_node_id_t))
+#define NODE_ID_CP(dest, src) memcpy(dest, src, sizeof(ddhcp_node_id_t))
 
-typedef uint8_t ddhcp_node_id[8];
-#define NODE_ID_CLEAR(id) memset(id, '\0', sizeof(ddhcp_node_id))
-#define NODE_ID_CP(dest, src) memcpy(dest, src, sizeof(ddhcp_node_id))
-
-/* statistic fields */
+/* Statistics fields */
 #ifdef DDHCPD_STATISTICS
 enum { STAT_MCAST_RECV_PKG,
        STAT_MCAST_SEND_PKG,
@@ -76,24 +75,23 @@ enum ddhcp_block_state {
 /* List of ddhcp_block */
 typedef struct list_head ddhcp_block_list;
 
-struct ddhcp_block {
+typedef struct {
 	uint32_t index;
 	enum ddhcp_block_state state;
 	struct in_addr subnet;
 	uint8_t subnet_len;
 	uint8_t claiming_counts;
-	ddhcp_node_id node_id;
+	ddhcp_node_id_t node_id;
 	struct in6_addr owner_address;
 	time_t first_claimed;
 	time_t needless_since;
 	time_t timeout;
-	/* Only iff state is equal to CLAIMED lease_block is not equal to NULL. */
+	/* Only if state is equal to CLAIMED lease_block is not equal to NULL. */
 	struct dhcp_lease *addresses;
 
 	ddhcp_block_list tmp_list;
 	ddhcp_block_list claim_list;
-};
-typedef struct ddhcp_block ddhcp_block;
+} ddhcp_block_t;
 
 /* DHCP structures */
 
@@ -103,25 +101,23 @@ enum dhcp_lease_state {
 	LEASED,
 };
 
-struct dhcp_lease {
+typedef struct dhcp_lease {
 	uint8_t chaddr[16];
 	enum dhcp_lease_state state;
 	uint32_t xid;
 	time_t lease_end;
-};
-typedef struct dhcp_lease dhcp_lease;
+} dhcp_lease_t;
 
 /* List of dhcp_option */
-typedef struct list_head dhcp_option_list;
+typedef struct list_head dhcp_option_list_t;
 
-struct dhcp_option {
+typedef struct {
 	uint8_t code;
 	uint8_t len;
 	uint8_t *payload;
 
 	dhcp_option_list option_list;
-};
-typedef struct dhcp_option dhcp_option;
+} dhcp_option_t;
 
 enum dhcp_option_code {
 	/* RFC 2132 */
@@ -151,9 +147,21 @@ enum dhcp_option_code {
 #define DDHCP_SKT_CONTROL(config)                                              \
 	((ddhcp_epoll_data *)config->sockets[SKT_CONTROL])
 
-/* configuration and global state */
-struct ddhcp_config {
-	ddhcp_node_id node_id;
+/* DDHCP configuration */
+typedef struct {
+	ddhcp_node_id_t node_id;
+	time_t next_wakeup;
+	ddhcp_config_t config;
+
+	/* Global options */
+	uint32_t loop_timeout;
+	uint8_t claiming_blocks_amount;
+	uint8_t needless_marks;
+	ddhcp_block_t *blocks;
+	ddhcp_block_list claiming_blocks;
+
+	/* DHCP */
+	uint16_t dhcp_port;
 	uint32_t number_of_blocks;
 	uint16_t block_timeout;
 	uint16_t block_refresh_factor;
@@ -165,18 +173,10 @@ struct ddhcp_config {
 	uint8_t prefix_len;
 	uint8_t disable_dhcp;
 
-	/* Global Stuff */
-	time_t next_wakeup;
-	uint32_t loop_timeout;
-	uint8_t claiming_blocks_amount;
-	uint8_t needless_marks;
-	ddhcp_block *blocks;
-	ddhcp_block_list claiming_blocks;
-
-	/* DHCP packets for later use. */
+	/* DHCP packet */
 	dhcp_packet_list dhcp_packet_cache;
 
-	/* DHCP Options */
+	/* DHCP options */
 	dhcp_option_list options;
 
 	/* Network */
@@ -191,15 +191,11 @@ struct ddhcp_config {
 	/* Hook */
 	char *hook_command;
 
-	/* DHCP */
-	uint16_t dhcp_port;
-
 	/* Statistics */
 #ifdef DDHCPD_STATISTICS
 	long int statistics[STAT_NUM_OF_FIELDS];
 #endif
-};
-typedef struct ddhcp_config ddhcp_config;
+} ddhcp_config_t;
 
 union in_addr_storage {
 	struct in_addr in_addr;

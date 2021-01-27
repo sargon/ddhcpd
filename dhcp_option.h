@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _DHCP_OPTIONS_H
-#define _DHCP_OPTIONS_H
+#ifndef _DDHCP_DHCP_OPTIONS_H
+#define _DDHCP_DHCP_OPTIONS_H
 
 #include "types.h"
 
@@ -100,12 +100,12 @@ ATTR_NONNULL_ALL void dhcp_option_free_store(dhcp_option_list *store);
 /**
  * Print the inventory of a option store into given file descriptor.
  */
-ATTR_NONNULL_ALL void dhcp_option_show(int fd, ddhcp_config *config);
+ATTR_NONNULL_ALL void dhcp_option_show(int fd, ddhcp_config_t *config);
 
 /**
  * Initialize dhcp_options store in the configuration.
  */
-ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config *config);
+ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config_t *config);
 
 /**
  * Search for option in store and if found store it in the options list.

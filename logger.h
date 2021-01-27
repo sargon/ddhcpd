@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _LOGGER_H
-#define _LOGGER_H
+#ifndef _DDHCP_LOGGER_H
+#define _DDHCP_LOGGER_H
 
 /**
  * A set of logging function which allow compile time and runtime logging decissions.

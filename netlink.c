@@ -12,12 +12,12 @@
 
 #include "epoll.h"
 #include "logger.h"
-#include "tools.h"
+#include "util.h"
 #include "types.h"
 
 static int callback(struct nl_msg *msg, void *vcfg)
 {
-	ddhcp_config *config = (ddhcp_config *)vcfg;
+	ddhcp_config_t *config = (ddhcp_config_t *)vcfg;
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
 
 	DEBUG("netlink_callback(...): callback triggered\n");
@@ -45,7 +45,7 @@ static int callback(struct nl_msg *msg, void *vcfg)
 	return 0;
 }
 
-ATTR_NONNULL_ALL int netlink_in(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int netlink_in(epoll_data_t data, ddhcp_config_t *config)
 {
 	UNUSED(config);
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
@@ -53,7 +53,7 @@ ATTR_NONNULL_ALL int netlink_in(epoll_data_t data, ddhcp_config *config)
 	return nl_recvmsgs_default((struct nl_sock *)ptr->data);
 }
 
-ATTR_NONNULL_ALL int netlink_init(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int netlink_init(epoll_data_t data, ddhcp_config_t *config)
 {
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;
 	DEBUG("netlink_init(config)\n");
@@ -84,7 +84,7 @@ ATTR_NONNULL_ALL int netlink_init(epoll_data_t data, ddhcp_config *config)
 	return 0;
 }
 
-ATTR_NONNULL_ALL int netlink_close(epoll_data_t data, ddhcp_config *config)
+ATTR_NONNULL_ALL int netlink_close(epoll_data_t data, ddhcp_config_t *config)
 {
 	UNUSED(config);
 	ddhcp_epoll_data *ptr = (ddhcp_epoll_data *)data.ptr;

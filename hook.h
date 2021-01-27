@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _HOOK_H
-#define _HOOK_H
+#ifndef _DDHCP_HOOK_H
+#define _DDHCP_HOOK_H
 
 #include "types.h"
 
@@ -16,8 +16,8 @@
 #define HOOK_LEARNING_PHASE_END 4
 
 ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr *address,
-				   uint8_t *chaddr, ddhcp_config *config);
-ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config *config);
+				   uint8_t *chaddr, ddhcp_config_t *config);
+ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config_t *config);
 void hook_init();
 
 #endif

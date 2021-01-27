@@ -12,12 +12,12 @@
 #include "dhcp.h"
 #include "logger.h"
 #include "statistics.h"
-#include "tools.h"
+#include "util.h"
 
 /* TODO define sane value */
 #define UPDATE_CLAIM_MAX_BLOCKS 32
 
-int block_alloc(ddhcp_block *block)
+int block_alloc(ddhcp_block_t *block)
 {
 	DEBUG("block_alloc(block)\n");
 
@@ -47,7 +47,7 @@ int block_alloc(ddhcp_block *block)
 	return 0;
 }
 
-ATTR_NONNULL(2) int block_own(ddhcp_block *block, ddhcp_config *config)
+ATTR_NONNULL(2) int block_own(ddhcp_block_t *block, ddhcp_config_t *config)
 {
 	if (!block) {
 		WARNING("block_own(...): No block given to own\n");
@@ -67,7 +67,7 @@ ATTR_NONNULL(2) int block_own(ddhcp_block *block, ddhcp_config *config)
 	return 0;
 }
 
-ATTR_NONNULL_ALL void block_free(ddhcp_block *block)
+ATTR_NONNULL_ALL void block_free(ddhcp_block_t *block)
 {
 	DEBUG("block_free(%i)\n", block->index);
 
@@ -85,13 +85,13 @@ ATTR_NONNULL_ALL void block_free(ddhcp_block *block)
 	}
 }
 
-ATTR_NONNULL_ALL ddhcp_block *block_find_free(ddhcp_config *config)
+ATTR_NONNULL_ALL ddhcp_block_t *block_find_free(ddhcp_config_t *config)
 {
-	ddhcp_block *random_free = NULL;
+	ddhcp_block_t *random_free = NULL;
 	uint32_t r = ~0u;
 
 	DEBUG("block_find_free(config)\n");
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 
 	ddhcp_block_list free_blocks;
 	INIT_LIST_HEAD(&free_blocks);
@@ -141,7 +141,7 @@ ATTR_NONNULL_ALL ddhcp_block *block_find_free(ddhcp_config *config)
 	return random_free;
 }
 
-ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
+ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config_t *config)
 {
 	DEBUG("block_claim(count:%i, config)\n", num_blocks);
 
@@ -150,7 +150,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 	time_t now = time(NULL);
 
 	list_for_each_safe (pos, q, &config->claiming_blocks) {
-		ddhcp_block *block = list_entry(pos, ddhcp_block, claim_list);
+		ddhcp_block_t *block = list_entry(pos, ddhcp_block, claim_list);
 
 		if (block->claiming_counts == 3) {
 			if (block_own(block, config) > 0) {
@@ -181,7 +181,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 			(uint32_t)num_blocks - config->claiming_blocks_amount;
 
 		for (uint32_t i = 0; i < needed_blocks; i++) {
-			ddhcp_block *block = block_find_free(config);
+			ddhcp_block_t *block = block_find_free(config);
 
 			if (block) {
 				block->state = DDHCP_CLAIMING;
@@ -233,7 +233,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 	}
 
 	int index = 0;
-	ddhcp_block *block;
+	ddhcp_block_t *block;
 
 	list_for_each_entry (block, &config->claiming_blocks, claim_list) {
 		packet->payload[index].block_index = block->index;
@@ -261,17 +261,17 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 	return 0;
 }
 
-ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config *config)
+ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config_t *config)
 {
 	DEBUG("block_num_free_leases(config)\n");
 
-	ddhcp_block *block = config->blocks;
-	uint32_t free_leases = 0;
+	ddhcp_block_t *block = config->blocks;
+	uint32_t free_leases = 0, i;
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 	uint32_t num_blocks = 0;
 #endif
 
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->state == DDHCP_OURS) {
 			free_leases += dhcp_num_free(block);
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -287,40 +287,32 @@ ATTR_NONNULL_ALL uint32_t block_num_free_leases(ddhcp_config *config)
 	return free_leases;
 }
 
-ATTR_NONNULL_ALL uint32_t block_num_owned(ddhcp_config *config)
+ATTR_NONNULL_ALL uint32_t block_num_owned(ddhcp_config_t *config)
 {
-	uint32_t owned_blocks = 0;
-	ddhcp_block *block = config->blocks;
-	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
+	uint32_t owned_blocks = 0, i;
+	ddhcp_block_t *block = config->blocks;
+	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->state == DDHCP_OURS) {
 			owned_blocks++;
 		}
 	}
 	DEBUG("block_num_owned(...): We own %lu blocks\n", owned_blocks);
+
 	return owned_blocks;
 }
 
-ATTR_NONNULL_ALL ddhcp_block *block_find_free_leases(ddhcp_config *config)
+ATTR_NONNULL_ALL ddhcp_block_t *block_find_free_leases(ddhcp_config_t *config)
 {
 	DEBUG("block_find_free_leases(config)\n");
 
-	ddhcp_block *block = config->blocks;
-	ddhcp_block *selected = NULL;
+	ddhcp_block_t *block = config->blocks;
+	ddhcp_block_t *selected = NULL;
 
 	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
-		if (block->state == DDHCP_OURS) {
-			if (dhcp_has_free(block)) {
-				if (selected) {
-					/* If observed block is claimed earlier, select that block */
-					if (selected->first_claimed >
-					    block->first_claimed) {
-						selected = block;
-					}
-				} else {
-					selected = block;
-				}
-			}
-		}
+		if (block->state == DDHCP_OURS && dhcp_has_free(block) &&
+		    (!selected ||
+		     selected->first_claimed > block->first_claimed))
+			selected = block;
 
 		block++;
 	}
@@ -339,11 +331,11 @@ ATTR_NONNULL_ALL ddhcp_block *block_find_free_leases(ddhcp_config *config)
 	return selected;
 }
 
-ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config *config)
+ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config_t *config)
 {
 	DEBUG("block_drop_unsued(config)\n");
-	ddhcp_block *block = config->blocks;
-	ddhcp_block *freeable_block = NULL;
+	ddhcp_block_t *block = config->blocks;
+	ddhcp_block_t *freeable_block = NULL;
 
 	for (uint32_t i = 0; i < config->number_of_blocks; i++) {
 		if (block->state == DDHCP_OURS) {
@@ -396,7 +388,7 @@ ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config *config)
 
 ATTR_NONNULL_ALL static void
 _block_update_claim_send(struct ddhcp_mcast_packet *packet,
-			 time_t new_block_timeout, ddhcp_config *config)
+			 time_t new_block_timeout, ddhcp_config_t *config)
 {
 	uint32_t index;
 
@@ -424,11 +416,11 @@ _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 	}
 }
 
-ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
+ATTR_NONNULL_ALL void block_update_claims(ddhcp_config_t *config)
 {
 	DEBUG("block_update_claims(config)\n");
 	uint32_t our_blocks = 0, i;
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 	time_t now = time(NULL);
 	time_t timeout_factor =
 		now + config->block_timeout -
@@ -518,10 +510,10 @@ ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
 	free(packet);
 }
 
-ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
+ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config_t *config)
 {
 	DEBUG("block_check_timeouts(config)\n");
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 	time_t now = time(NULL);
 	uint32_t i;
 
@@ -544,10 +536,10 @@ ATTR_NONNULL_ALL void block_check_timeouts(ddhcp_config *config)
 	}
 }
 
-ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
+ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config_t *config)
 {
 	uint32_t num_reserved_blocks = 0, free_leases, offered_leases, i, j;
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 	time_t now = time(NULL);
 	char node_id[17];
 
@@ -610,9 +602,9 @@ ATTR_NONNULL_ALL void block_show_status(int fd, ddhcp_config *config)
 	dprintf(fd, "\nblocks in use: %i\n", num_reserved_blocks);
 }
 
-void block_unmark_needless(ddhcp_config *config)
+void block_unmark_needless(ddhcp_config_t *config)
 {
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 	uint32_t i;
 
 	DEBUG("block_unmark_needless(config)\n");

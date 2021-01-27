@@ -11,7 +11,7 @@
 #ifdef DDHCPD_STATISTICS
 
 ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset,
-				      ddhcp_config *config)
+				      ddhcp_config_t *config)
 {
 	dprintf(fd, "mcast.recv_pkg %li\n",
 		config->statistics[STAT_MCAST_RECV_PKG]);
@@ -75,7 +75,7 @@ ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset,
 		config->statistics[STAT_DHCP_RECV_RELEASE]);
 
 	/* calculate block status */
-	ddhcp_block *block = config->blocks;
+	ddhcp_block_t *block = config->blocks;
 	uint32_t blocks_free = 0, blocks_tentative = 0, blocks_claimed = 0, i;
 
 	for (i = 0; i < config->number_of_blocks; i++) {

@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _EPOLL_H
-#define _EPOLL_H
+#ifndef _DDHCP_EPOLL_H
+#define _DDHCP_EPOLL_H
 
 #include <sys/epoll.h>
 #include "types.h"
@@ -53,6 +53,6 @@ void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,
 /**
  * Remove a file descriptor from an epoll instance.
  */
-void del_fd(int efd, int fd);
+void epoll_del_fd(int efd, int fd);
 
 #endif

@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _NETLINK_H
-#define _NETLINK_H
+#ifndef _DDHCP_NETLINK_H
+#define _DDHCP_NETLINK_H
 
 #include "types.h"
 #include "epoll.h"

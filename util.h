@@ -5,8 +5,8 @@
  *  See AUTHORS file for copyright holders
  */
 
-#ifndef _TOOLS_H
-#define _TOOLS_H
+#ifndef _DDHCP_UTIL_H
+#define _DDHCP_UTIL_H
 
 #include <arpa/inet.h>
 

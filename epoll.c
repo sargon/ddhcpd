@@ -13,7 +13,7 @@
 #include "logger.h"
 #include "types.h"
 
-void epoll_init(ddhcp_config *config)
+void epoll_init(ddhcp_config_t *config)
 {
 	int efd;
 
@@ -28,11 +28,11 @@ void epoll_init(ddhcp_config *config)
 	config->epoll_fd = efd;
 }
 
-int hdl_epoll_hup(epoll_data_t data, ddhcp_config *config)
+int epoll_handle_hup(epoll_data_t data, ddhcp_config_t *config)
 {
 	int fd = epoll_get_fd(data);
-	DEBUG("hdl_epoll_hup(fd,config): Removing epoll fd:%i\n", fd);
-	del_fd(config->epoll_fd, fd);
+	DEBUG("epoll_handle_hup(fd,config): Removing epoll fd:%i\n", fd);
+	epoll_del_fd(config->epoll_fd, fd);
 	epoll_data_free(data);
 	close(fd);
 	return 0;
@@ -55,7 +55,7 @@ ddhcp_epoll_data *epoll_data_new(char *interface_name,
 	ptr->setup = setup;
 
 	if (epollhup == NULL) {
-		ptr->epollhup = hdl_epoll_hup;
+		ptr->epollhup = epoll_handle_hup;
 	} else {
 		ptr->epollhup = epollhup;
 	}
@@ -64,7 +64,7 @@ ddhcp_epoll_data *epoll_data_new(char *interface_name,
 }
 
 void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,
-		  ddhcp_config *config)
+		  ddhcp_config_t *config)
 {
 	DEBUG("epoll_add_fd(%i,%i)\n", efd, events);
 	/* Initializing socket if needed */
@@ -86,7 +86,7 @@ void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,
 	}
 }
 
-void del_fd(int efd, int fd)
+void epoll_del_fd(int efd, int fd)
 {
 	int s = epoll_ctl(efd, EPOLL_CTL_DEL, fd, NULL);
 
