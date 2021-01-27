@@ -38,12 +38,12 @@ int main(int argc, char **argv)
 			show_usage = 1;
 			break;
 		case 'b':
-			//show blocks
+			/* show blocks */
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_BLOCK_SHOW;
 			break;
 		case 'd':
-			// show dhcp
+			/* show dhcp */
 			msglen = 1;
 			buffer[0] = (uint8_t)DDHCPCTL_DHCP_OPTIONS_SHOW;
 			break;
@@ -93,8 +93,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	// Check if a dhcp option code should be set and if all parameters
-	// for that are given.
+	/* Check if a dhcp option code should be set and if all parameters
+	 * for that are given.
+	 */
 	if (option) {
 		msglen = 3u + option->len;
 		buffer[0] = (uint8_t)3;

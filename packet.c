@@ -82,20 +82,21 @@ new_ddhcp_packet(uint8_t command, ddhcp_config *config)
 ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 					   struct ddhcp_mcast_packet *packet)
 {
-	// Header
+	/* Header */
 	copy_buf_to_var_inc(buffer, ddhcp_node_id, packet->node_id);
 
-	// The Python implementation prefixes with a node number?
-	// prefix address
+	/* The Python implementation prefixes with a node number?
+	 * prefix address
+	 */
 	copy_buf_to_var_inc(buffer, struct in_addr, packet->prefix);
 
-	// prefix length
+	/* prefix length */
 	copy_buf_to_var_inc(buffer, uint8_t, packet->prefix_len);
-	// size of a block
+	/* size of a block */
 	copy_buf_to_var_inc(buffer, uint8_t, packet->blocksize);
-	// the command
+	/* the command */
 	copy_buf_to_var_inc(buffer, uint8_t, packet->command);
-	// count of payload entries
+	/* count of payload entries */
 	copy_buf_to_var_inc(buffer, uint8_t, packet->count);
 
 	ssize_t should_len = _packet_size(packet->command, packet->count);
@@ -112,14 +113,14 @@ ATTR_NONNULL_ALL ssize_t ntoh_mcast_packet(uint8_t *buffer, ssize_t len,
 	      (long unsigned int)packet->node_id, str, packet->prefix_len,
 	      packet->blocksize, packet->command, packet->count);
 
-	// Payload
+	/* Payload */
 	uint8_t tmp8;
 	uint16_t tmp16;
 	uint32_t tmp32;
 	struct ddhcp_payload *payload;
 
 	switch (packet->command) {
-	// UpdateClaim
+	/* UpdateClaim */
 	case DDHCP_MSG_UPDATECLAIM:
 		packet->payload = (struct ddhcp_payload *)calloc(
 			sizeof(struct ddhcp_payload), packet->count);
@@ -198,20 +199,21 @@ ATTR_NONNULL_ALL int hton_packet(struct ddhcp_mcast_packet *packet,
 	uint16_t tmp16;
 	uint8_t tmp8;
 
-	// Header
+	/* Header */
 	copy_var_to_buf_inc(buffer, ddhcp_node_id, packet->node_id);
 
-	// The Python implementation prefixes with a node number?
-	// prefix address
+	/* The Python implementation prefixes with a node number?
+	 * prefix address
+	 */
 	copy_var_to_buf_inc(buffer, struct in_addr, packet->prefix);
 
-	// prefix length
+	/* prefix length */
 	copy_var_to_buf_inc(buffer, uint8_t, packet->prefix_len);
-	// size of a block
+	/* size of a block */
 	copy_var_to_buf_inc(buffer, uint8_t, packet->blocksize);
-	// the command
+	/* the command */
 	copy_var_to_buf_inc(buffer, uint8_t, packet->command);
-	// count of payload entries
+	/* count of payload entries */
 	copy_var_to_buf_inc(buffer, uint8_t, packet->count);
 
 	switch (packet->command) {

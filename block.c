@@ -14,7 +14,7 @@
 #include "statistics.h"
 #include "tools.h"
 
-// TODO define sane value
+/* TODO define sane value */
 #define UPDATE_CLAIM_MAX_BLOCKS 32
 
 int block_alloc(ddhcp_block *block)
@@ -26,7 +26,7 @@ int block_alloc(ddhcp_block *block)
 		return 1;
 	}
 
-	// Do not allocate memory and initialise, when the block is already allocated
+	/* Do not allocate memory and initialise, when the block is already allocated */
 	if (block->addresses)
 		return 0;
 
@@ -80,7 +80,7 @@ ATTR_NONNULL_ALL void block_free(ddhcp_block *block)
 		DEBUG("block_free(%i): Freeing DHCP leases\n", block->index);
 		free(block->addresses);
 		block->addresses = NULL;
-		// Reset needless timeout
+		/* Reset needless timeout */
 		block->needless_since = 0;
 	}
 }
@@ -145,7 +145,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 {
 	DEBUG("block_claim(count:%i, config)\n", num_blocks);
 
-	// Handle blocks already in claiming prozess
+	/* Handle blocks already in claiming process */
 	struct list_head *pos, *q;
 	time_t now = time(NULL);
 
@@ -158,7 +158,7 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 				      block->index);
 				block->claiming_counts = 0;
 			} else {
-				//Reduce number of blocks we need to claim
+				/* Reduce number of blocks we need to claim */
 				num_blocks--;
 				INFO("block_claim(...): block %i claimed after 3 claims.\n",
 				     block->index);
@@ -174,9 +174,9 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 		}
 	}
 
-	// Do we still need more, then lets find some.
+	/* Do we still need more, then lets find some. */
 	if (num_blocks > config->claiming_blocks_amount) {
-		// find num_blocks - config->claiming_blocks_amount free blocks
+		/* find num_blocks - config->claiming_blocks_amount free blocks */
 		uint32_t needed_blocks =
 			(uint32_t)num_blocks - config->claiming_blocks_amount;
 
@@ -192,25 +192,27 @@ ATTR_NONNULL_ALL int block_claim(int32_t num_blocks, ddhcp_config *config)
 					      &config->claiming_blocks);
 				config->claiming_blocks_amount++;
 			} else {
-				// We are short on free blocks in the network.
+				/* We are short on free blocks in the network */
 				WARNING("block_claim(...): Network has no free blocks left!\n");
-				// TODO In a future version we could start to forward DHCP requests
-				//      to other servers.
+				/* TODO In a future version we could start to forward DHCP requests
+				 *      to other servers.
+                                 */
 			}
 		}
 	}
 
-	// TODO Sort blocks in claiming process by number of claims already processed.
+	/* TODO Sort blocks in claiming process by number of claims already processed. */
 
-	// TODO If we have more blocks in claiming process than we need, drop the tail
-	//      of blocks for which we had less claim announcements.
+	/* TODO If we have more blocks in claiming process than we need, drop the tail
+	 *      of blocks for which we had less claim announcements.
+         */
 
 	if (config->claiming_blocks_amount < 1) {
 		DEBUG("block_claim(...): No blocks need claiming.\n");
 		return 0;
 	}
 
-	// Send claim message for all blocks in claiming process.
+	/* Send claim message for all blocks in claiming process. */
 	struct ddhcp_mcast_packet *packet =
 		new_ddhcp_packet(DDHCP_MSG_INQUIRE, config);
 
@@ -309,7 +311,7 @@ ATTR_NONNULL_ALL ddhcp_block *block_find_free_leases(ddhcp_config *config)
 		if (block->state == DDHCP_OURS) {
 			if (dhcp_has_free(block)) {
 				if (selected) {
-					// If observed block is claimed earlier, select that block.
+					/* If observed block is claimed earlier, select that block */
 					if (selected->first_claimed >
 					    block->first_claimed) {
 						selected = block;
@@ -350,7 +352,7 @@ ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config *config)
 				      block->index);
 
 				if (freeable_block) {
-					// If observed block is younger than current selected, select block.
+					/* If observed block is younger than current selected, select block. */
 					if (freeable_block->first_claimed <
 					    block->first_claimed) {
 						freeable_block = block;
@@ -370,7 +372,7 @@ ATTR_NONNULL_ALL void block_drop_unused(ddhcp_config *config)
 			DEBUG("block_drop_unused(...): mark block %i to be needless\n",
 			      freeable_block->index);
 			freeable_block->needless_since = now;
-			// Set needless marks flag
+			/* Set needless marks flag */
 			config->needless_marks = 1;
 		} else {
 			if (freeable_block->needless_since <=
@@ -405,11 +407,12 @@ _block_update_claim_send(struct ddhcp_mcast_packet *packet,
 	statistics_record(config, STAT_MCAST_SEND_UPDATECLAIM, 1);
 	ssize_t bytes_send = send_packet_mcast(packet, DDHCP_SKT_MCAST(config));
 	statistics_record(config, STAT_MCAST_SEND_BYTE, (long int)bytes_send);
-	// TODO? Stat the number of blocks reclaimed.
+	/* TODO? Stat the number of blocks reclaimed. */
 
 	if (bytes_send > 0) {
-		// Update the timeout value of all contained blocks
-		// iff the packet has been transmitted
+		/* Update the timeout value of all contained blocks
+		 * iff the packet has been transmitted
+                 */
 		for (uint8_t i = 0; i < packet->count; i++) {
 			index = packet->payload[i].block_index;
 			DEBUG("block_update_claims_send(...): updated claim for block %i\n",
@@ -431,9 +434,10 @@ ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
 		now + config->block_timeout -
 		(time_t)(config->block_timeout / config->block_refresh_factor);
 
-	// Determine if we need to run a full update claim run
-	// we run through the list until we see one block which needs update.
-	// Running a full update claims (see below) is much more expensive
+	/* Determine if we need to run a full update claim run
+	 * we run through the list until we see one block which needs update.
+	 * Running a full update claims (see below) is much more expensive
+         */
 	for (i = 0; i < config->number_of_blocks; i++) {
 		if (block->state == DDHCP_OURS &&
 		    block->timeout < timeout_factor) {
@@ -457,8 +461,9 @@ ATTR_NONNULL_ALL void block_update_claims(ddhcp_config *config)
 		return;
 	}
 
-	// Aggressively group blocks into packets, send packet iff
-	// at least one block in a packet is below the baseline.
+	/* Aggressively group blocks into packets, send packet iff
+	 * at least one block in a packet is below the baseline.
+         */
 
 	packet->payload = (struct ddhcp_payload *)calloc(
 		sizeof(struct ddhcp_payload), UPDATE_CLAIM_MAX_BLOCKS);
@@ -622,6 +627,6 @@ void block_unmark_needless(ddhcp_config *config)
 		block->needless_since = 0;
 		block++;
 	}
-	// Remove needless marks flag
+	/* Remove needless marks flag */
 	config->needless_marks = 0;
 }

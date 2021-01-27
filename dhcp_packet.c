@@ -104,7 +104,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 
 	DEBUG("ntoh_dhcp_packet(...): package len:%zi\n", len);
 
-	// TODO Use macros to read from the buffer
+	/* TODO Use macros to read from the buffer */
 
 	packet->op = buffer[0];
 	packet->htype = buffer[1];
@@ -124,7 +124,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 	memcpy(&packet->sname, buffer + 44, 64);
 	memcpy(&packet->file, buffer + 108, 128);
 
-	// Check for the magic cookie
+	/* Check for the magic cookie */
 	if (!((uint8_t)buffer[236] == 99 && (uint8_t)buffer[237] == 130 &&
 	      (uint8_t)buffer[238] == 83 && (uint8_t)buffer[239] == 99)) {
 		WARNING("ntoh_dhcp_packet(...) -> Magic cookie not found, possibly malformed request!\n");
@@ -133,7 +133,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 
 	uint8_t *option = buffer + 236 + 4;
 
-	// Count options
+	/* Count options */
 	size_t options = 0;
 	int exit = 0;
 	int dhcp_message_type = 0;
@@ -142,7 +142,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 	while (option < buffer + len && exit == 0) {
 		switch ((uint8_t)option[0]) {
 		case DHCP_CODE_PAD:
-			// JUMP the padding
+			/* JUMP the padding */
 			option += 1;
 			continue;
 			break;
@@ -167,7 +167,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 		}
 
 		if (option + option[1] + 2 > buffer + len) {
-			// Error: Malformed dhcp options
+			/* Error: Malformed dhcp options */
 			WARNING("ntoh_dhcp_packet(...): DHCP options smaller than len of last option suggests, possible broken client.\n");
 			return -5;
 		} else {
@@ -202,7 +202,7 @@ ATTR_NONNULL_ALL ssize_t ntoh_dhcp_packet(dhcp_packet *packet, uint8_t *buffer,
 		case DHCP_CODE_END:
 			exit = 1;
 		case DHCP_CODE_PAD:
-			// JUMP padding and end
+			/* JUMP padding and end */
 			packet->options[i].code = option[0];
 			packet->options[i].len = 0;
 			packet->options[i].payload = NULL;
@@ -241,7 +241,7 @@ ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet *packet)
 	if (!buffer)
 		return -ENOMEM;
 
-	// Header
+	/* Header */
 	buffer[0] = packet->op;
 	buffer[1] = packet->htype;
 	buffer[2] = packet->hlen;
@@ -260,13 +260,13 @@ ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet *packet)
 	memcpy(buffer + 44, &packet->sname, 64);
 	memcpy(buffer + 108, &packet->file, 128);
 
-	// Magic Cookie
+	/* Magic Cookie */
 	buffer[236] = 99;
 	buffer[237] = 130;
 	buffer[238] = 83;
 	buffer[239] = 99;
 
-	// Options
+	/* Options */
 	uint8_t *obuf = buffer + 240;
 	dhcp_option *option = packet->options;
 
@@ -291,13 +291,13 @@ ATTR_NONNULL_ALL ssize_t dhcp_packet_send(int socket, dhcp_packet *packet)
 
 	buffer[_dhcp_packet_len(packet) - 1] = 255;
 	assert(obuf + 1 == buffer + _dhcp_packet_len(packet));
-	// Network send
+	/* Network send */
 	printf("Message LEN: %zu\n", _dhcp_packet_len(packet));
 
 	struct sockaddr_in *address = &broadcast;
-	// Check the broadcast flag
+	/* Check the broadcast flag */
 	if (!(packet->flags & DHCP_BROADCAST_MASK)) {
-		// Check if client address is set to none zero
+		/* Check if client address is set to none zero */
 		uint8_t zeros[4] = { 0, 0, 0, 0 };
 		if (memcmp(zeros, &packet->ciaddr, 4) != 0) {
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -372,7 +372,7 @@ ATTR_NONNULL_ALL int dhcp_packet_list_add(dhcp_packet_list *list,
 					  dhcp_packet *packet)
 {
 	time_t now = time(NULL);
-	// Save dhcp packet, for further actions, later.
+	/* Save dhcp packet, for further actions, later. */
 	dhcp_packet *copy = calloc(1, sizeof(dhcp_packet));
 
 	if (!copy) {

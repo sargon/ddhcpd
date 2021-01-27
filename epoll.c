@@ -67,7 +67,7 @@ void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,
 		  ddhcp_config *config)
 {
 	DEBUG("epoll_add_fd(%i,%i)\n", efd, events);
-	// Initializing socket if needed
+	/* Initializing socket if needed */
 	if (data->fd == 0) {
 		if (epoll_data_call(data, setup, config) != 0) {
 			FATAL("epoll_add_fd(...): Failure while initializing socket");
@@ -75,7 +75,7 @@ void epoll_add_fd(int efd, ddhcp_epoll_data *data, uint32_t events,
 		}
 	}
 
-	// Setup epoll event
+	/* Setup epoll event */
 	struct epoll_event event = { 0 };
 	event.events = events;
 	event.data.ptr = (void *)data;
@@ -94,6 +94,6 @@ void del_fd(int efd, int fd)
 		int errsv = errno;
 		FATAL("%i", errsv);
 		perror("epoll_ctl");
-		exit(1); //("epoll_ctl");
+		exit(1); /*("epoll_ctl");*/
 	}
 }

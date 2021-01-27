@@ -97,9 +97,10 @@ ATTR_NONNULL_ALL void house_keeping(ddhcp_config *config)
 
 ATTR_NONNULL_ALL uint32_t get_loop_timeout(ddhcp_config *config)
 {
-	//Multiply by 500 to convert the timeout value given in seconds
-	//into milliseconds AND dividing the value by two at the same time.
-	//The integer overflow occuring for timeouts greater than 99.4 days is ignored here.
+	/* Multiply by 500 to convert the timeout value given in seconds
+	 * into milliseconds AND dividing the value by two at the same time.
+	 * The integer overflow occuring for timeouts greater than 99.4 days is ignored here.
+	 */
 	return config->tentative_timeout * 500u;
 }
 
@@ -112,9 +113,8 @@ static sighandler_t handle_signal(int sig_nr, sighandler_t signalhandler)
 	sigemptyset(&new_sig.sa_mask);
 	new_sig.sa_flags = SA_RESTART;
 
-	if (sigaction(sig_nr, &new_sig, &old_sig) < 0) {
+	if (sigaction(sig_nr, &new_sig, &old_sig) < 0)
 		return SIG_ERR;
-	}
 
 	return old_sig.sa_handler;
 }
@@ -194,7 +194,7 @@ ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config *config)
 {
 	int fd = epoll_get_fd(data);
 	ssize_t len;
-	// Handle commands comming over a control_socket
+	/* Handle commands comming over a control_socket */
 	len = read(fd, buffer, 1500);
 
 	if (handle_command(fd, buffer, len, config) < 0) {
@@ -207,7 +207,7 @@ ATTR_NONNULL_ALL int hdl_ctrl_cmd(epoll_data_t data, ddhcp_config *config)
 	return 0;
 }
 
-// Handle new control socket connections
+/* Handle new control socket connections */
 ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config *config)
 {
 	UNUSED(config);
@@ -219,7 +219,7 @@ ATTR_NONNULL_ALL int hdl_ctrl_new(epoll_data_t data, ddhcp_config *config)
 
 	control_link->fd = accept(fd, (struct sockaddr *)&client_fd, &len);
 
-	//set_nonblocking(config.client_control_socket);
+	/* set_nonblocking(config.client_control_socket); */
 	epoll_add_fd(config->epoll_fd, control_link, EPOLLIN | EPOLLET, config);
 	DEBUG("ControlSocket: new connections\n");
 
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 	memset(config.statistics, 0, sizeof(long int) * STAT_NUM_OF_FIELDS);
 #endif
 
-	// DHCP
+	/* DHCP */
 	config.dhcp_port = 67;
 	INIT_LIST_HEAD(&config.options);
 	INIT_LIST_HEAD(&config.claiming_blocks);
@@ -301,7 +301,7 @@ int main(int argc, char **argv)
 			daemon_running = 1;
 			break;
 		case 'D':
-			//We pretend we are normally running, just in another mode
+			/* We pretend we are normally running, just in another mode */
 			daemon_running = 2;
 			break;
 		case 'h':
@@ -315,7 +315,7 @@ int main(int argc, char **argv)
 			return 0;
 		case 'N':
 			do {
-				// TODO Split prefix and cidr
+				/* TODO Split prefix and cidr */
 				size_t optlen = strlen(optarg);
 				char *cidr = strchr(optarg, '/');
 
@@ -430,24 +430,25 @@ int main(int argc, char **argv)
 	INFO("CONFIG: client_interface=%s\n", interface_client);
 	INFO("CONFIG: group_interface=%s\n", interface);
 
-	//Register signal handlers
+	/* Register signal handlers */
 	handle_signal(SIGHUP, SIG_IGN);
 	handle_signal(SIGPIPE, SIG_IGN);
 	handle_signal(SIGINT, handle_signal_terminate);
 	handle_signal(SIGTERM, handle_signal_terminate);
 
-	//Daemonize if requested
+	/* Daemonize if requested */
 	if (1 == daemon_running) {
 		if (daemon(0, 0)) {
 			perror("ddhcp");
 			exit(1);
 		}
 
-		//Conflicts with existing logging
-		//openlog("ddhcp", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_DAEMON);
+		/* Conflicts with existing logging
+		 * openlog("ddhcp", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_DAEMON);
+		 */
 	}
 
-	// init block stucture
+	/* init block stucture */
 	ddhcp_block_init(&config);
 
 	if (dhcp_option_init(&config)) {
@@ -457,10 +458,10 @@ int main(int argc, char **argv)
 
 	hook_init();
 
-	// --------------------------------------------------------------------------
-	// Initializing Network Buffer, EPOLL and Sockets
-	// Here all later event loop handling is initialized
-	// --------------------------------------------------------------------------
+	/* -------------------------------------------------------------------
+	 * Initializing Network Buffer, EPOLL and Sockets
+	 * Here all later event loop handling is initialized
+	 */
 	buffer = (uint8_t *)malloc(sizeof(uint8_t) * 1500);
 
 	if (!buffer) {
@@ -482,7 +483,7 @@ int main(int argc, char **argv)
 	ddhcp_epoll_data *netlink =
 		epoll_data_new(NULL, netlink_init, netlink_in, netlink_close);
 
-	// Trigger socket initializing and register to EPOLL
+	/* Trigger socket initializing and register to EPOLL */
 	epoll_add_fd(config.epoll_fd, config.sockets[SKT_MCAST],
 		     EPOLLIN | EPOLLET, &config);
 	epoll_add_fd(config.epoll_fd, config.sockets[SKT_SERVER],
@@ -498,7 +499,7 @@ int main(int argc, char **argv)
 			     EPOLLIN | EPOLLET, &config);
 	}
 
-	// Event buffer
+	/* Event buffer */
 	events = calloc(maxevents, sizeof(struct epoll_event));
 
 	if (!events) {
@@ -506,18 +507,19 @@ int main(int argc, char **argv)
 		abort();
 	}
 
-	// --------------------------------------------------------------------------
-	// Main event loop && House keeping handler
-	// --------------------------------------------------------------------------
+	/* --------------------------------------------------------------------------
+	 * Main event loop && House keeping handler
+	 */
 	int need_house_keeping = 0;
 	uint32_t loop_timeout = config.loop_timeout = get_loop_timeout(&config);
 	time_t now = time(NULL);
-	// The first time we want to make housekeeping is after the learning phase,
-	// which is block_timeout long.
+	/* The first time we want to make housekeeping is after the learning phase,
+	 * which is block_timeout long.
+	 */
 	time_t timeout_time = now + config.block_timeout;
 
 	if (!learning_phase) {
-		// We want no learning phase, so reset all the timers
+		/* We want no learning phase, so reset all the timers */
 		loop_timeout = 0;
 		timeout_time = now;
 		hook(HOOK_LEARNING_PHASE_END, &config);
@@ -547,9 +549,9 @@ int main(int argc, char **argv)
 
 		now = time(NULL);
 		if (timeout_time <= now) {
-			// Our time for house keeping has come
+			/* Our time for house keeping has come */
 			need_house_keeping = 1;
-			// The next time for house keeping is in half the tentative timeout.
+			/* The next time for house keeping is in half the tentative timeout. */
 			timeout_time = now + (config.tentative_timeout >> 1);
 			if (learning_phase) {
 				learning_phase = 0;
@@ -581,10 +583,10 @@ int main(int argc, char **argv)
 
 	} while (daemon_running);
 
-	// --------------------------------------------------------------------------
-	// Shutdown process, cleaning up stuff
-	// --------------------------------------------------------------------------
-	// TODO free dhcp_leases
+	/* --------------------------------------------------------------------------
+	 * Shutdown process, cleaning up stuff
+	 */
+	/* TODO free dhcp_leases */
 	free(events);
 	free(buffer);
 
@@ -593,10 +595,11 @@ int main(int argc, char **argv)
 	dhcp_option_free_store(&config.options);
 	dhcp_packet_list_free(&config.dhcp_packet_cache);
 
-	// TODO Handle shutdown of sockets
-	//close(config.mcast_socket);
-	//close(config.client_socket);
-	//close(config.control_socket);
+	/* TODO Handle shutdown of sockets
+	 * close(config.mcast_socket);
+	 * close(config.client_socket);
+	 * close(config.control_socket);
+	 */
 	epoll_data_call(netlink, epollhup, (&config));
 
 	remove(config.control_path);

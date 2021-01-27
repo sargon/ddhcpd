@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 #include "types.h"
 
-// List of dhcp_packet
+/* List of dhcp_packet */
 typedef struct list_head dhcp_packet_list;
 
 struct dhcp_packet {

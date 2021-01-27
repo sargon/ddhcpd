@@ -20,13 +20,13 @@
 #define NODE_ID_CMP(id1, id2)                                                  \
 	memcmp((char *)(id1), (char *)(id2), sizeof(ddhcp_node_id))
 
-// node ident
+/* node ident */
 
 typedef uint8_t ddhcp_node_id[8];
 #define NODE_ID_CLEAR(id) memset(id, '\0', sizeof(ddhcp_node_id))
 #define NODE_ID_CP(dest, src) memcpy(dest, src, sizeof(ddhcp_node_id))
 
-// statistic fields
+/* statistic fields */
 #ifdef DDHCPD_STATISTICS
 enum { STAT_MCAST_RECV_PKG,
        STAT_MCAST_SEND_PKG,
@@ -62,7 +62,7 @@ enum { STAT_MCAST_RECV_PKG,
        STAT_NUM_OF_FIELDS };
 #endif
 
-// block structures
+/* block structures */
 
 enum ddhcp_block_state {
 	DDHCP_FREE,
@@ -73,7 +73,7 @@ enum ddhcp_block_state {
 	DDHCP_BLOCKED
 };
 
-// List of ddhcp_block
+/* List of ddhcp_block */
 typedef struct list_head ddhcp_block_list;
 
 struct ddhcp_block {
@@ -87,7 +87,7 @@ struct ddhcp_block {
 	time_t first_claimed;
 	time_t needless_since;
 	time_t timeout;
-	// Only iff state is equal to CLAIMED lease_block is not equal to NULL.
+	/* Only iff state is equal to CLAIMED lease_block is not equal to NULL. */
 	struct dhcp_lease *addresses;
 
 	ddhcp_block_list tmp_list;
@@ -95,7 +95,7 @@ struct ddhcp_block {
 };
 typedef struct ddhcp_block ddhcp_block;
 
-// DHCP structures
+/* DHCP structures */
 
 enum dhcp_lease_state {
 	FREE,
@@ -111,7 +111,7 @@ struct dhcp_lease {
 };
 typedef struct dhcp_lease dhcp_lease;
 
-// List of dhcp_option
+/* List of dhcp_option */
 typedef struct list_head dhcp_option_list;
 
 struct dhcp_option {
@@ -124,7 +124,7 @@ struct dhcp_option {
 typedef struct dhcp_option dhcp_option;
 
 enum dhcp_option_code {
-	// RFC 2132
+	/* RFC 2132 */
 	DHCP_CODE_PAD = 0,
 	DHCP_CODE_SUBNET_MASK = 1,
 	DHCP_CODE_TIME_OFFSET = 2,
@@ -138,7 +138,7 @@ enum dhcp_option_code {
 	DHCP_CODE_END = 255,
 };
 
-// network socket
+/* network socket */
 #define SKT_MCAST 0
 #define SKT_SERVER 1
 #define SKT_DHCP 2
@@ -151,7 +151,7 @@ enum dhcp_option_code {
 #define DDHCP_SKT_CONTROL(config)                                              \
 	((ddhcp_epoll_data *)config->sockets[SKT_CONTROL])
 
-// configuration and global state
+/* configuration and global state */
 struct ddhcp_config {
 	ddhcp_node_id node_id;
 	uint32_t number_of_blocks;
@@ -165,7 +165,7 @@ struct ddhcp_config {
 	uint8_t prefix_len;
 	uint8_t disable_dhcp;
 
-	// Global Stuff
+	/* Global Stuff */
 	time_t next_wakeup;
 	uint32_t loop_timeout;
 	uint8_t claiming_blocks_amount;
@@ -173,28 +173,28 @@ struct ddhcp_config {
 	ddhcp_block *blocks;
 	ddhcp_block_list claiming_blocks;
 
-	// DHCP packets for later use.
+	/* DHCP packets for later use. */
 	dhcp_packet_list dhcp_packet_cache;
 
-	// DHCP Options
+	/* DHCP Options */
 	dhcp_option_list options;
 
-	// Network
+	/* Network */
 	int epoll_fd;
 	void *sockets[4];
 
-	// Control
+	/* Control */
 	int control_socket;
 	char *control_path;
 	int client_control_socket;
 
-	// Hook
+	/* Hook */
 	char *hook_command;
 
-	// DHCP
+	/* DHCP */
 	uint16_t dhcp_port;
 
-	// Statistics
+	/* Statistics */
 #ifdef DDHCPD_STATISTICS
 	long int statistics[STAT_NUM_OF_FIELDS];
 #endif

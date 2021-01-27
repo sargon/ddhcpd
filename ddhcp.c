@@ -32,8 +32,9 @@ ATTR_NONNULL_ALL int ddhcp_block_init(ddhcp_config *config)
 
 	time_t now = time(NULL);
 
-	// TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
-	//      and assign one here instead of NULL. Performance boost, Memory defrag?
+	/* TODO Maybe we should allocate number_of_blocks dhcp_lease_blocks previous
+	 *      and assign one here instead of NULL. Performance boost, Memory defrag?
+	 */
 	struct ddhcp_block *block = config->blocks;
 
 	for (uint32_t index = 0; index < config->number_of_blocks; index++) {
@@ -85,7 +86,7 @@ ATTR_NONNULL_ALL void ddhcp_block_process(uint8_t *buffer, ssize_t len,
 	packet.sender = &sender;
 
 	if (ret == 0) {
-		// Check if this packet is for our swarm
+		/* Check if this packet is for our swarm */
 		if (ddhcp_check_packet(&packet, config)) {
 			DEBUG("ddhcp_block_process(...): drop foreign packet before processing");
 			free(packet.payload);
@@ -138,17 +139,19 @@ ddhcp_block_process_claims(struct ddhcp_mcast_packet *packet,
 		    NODE_ID_CMP(packet->node_id, config->node_id) < 0) {
 			INFO("ddhcp_block_process_claims(...): node 0x%02x%02x%02x%02x%02x%02x%02x%02x claims our block %i\n",
 			     HEX_NODE_ID(packet->node_id), block_index);
-			// TODO Decide when and if we reclaim this block
-			//      Which node has more leases in this block, ..., who has the better node_id.
-			// Unrelated from the above, the original concept is claiming the block now.
+			/* TODO Decide when and if we reclaim this block
+			 *      Which node has more leases in this block, ..., who has the better node_id.
+			 * Unrelated from the above, the original concept is claiming the block now.
+			 */
 			blocks[block_index].timeout = 0;
 			block_update_claims(config);
 		} else {
-			// Notice the ownership
+			/* Notice the ownership */
 			blocks[block_index].state = DDHCP_CLAIMED;
 			blocks[block_index].timeout = now + claim->timeout;
-			// Save the connection details for the claiming node
-			// We need to contact him, for dhcp forwarding actions.
+			/* Save the connection details for the claiming node
+			 * We need to contact him, for dhcp forwarding actions.
+			 */
 			memcpy(&blocks[block_index].owner_address,
 			       &packet->sender->sin6_addr,
 			       sizeof(struct in6_addr));
@@ -194,7 +197,7 @@ ddhcp_block_process_inquire(struct ddhcp_mcast_packet *packet,
 		     HEX_NODE_ID(packet->node_id), tmp->block_index);
 
 		if (blocks[tmp->block_index].state == DDHCP_OURS) {
-			// Update Claims
+			/* Update Claims */
 			INFO("ddhcp_block_process_inquire(...): block %i is ours, notify network\n",
 			     tmp->block_index);
 			blocks[tmp->block_index].timeout = 0;
@@ -203,7 +206,7 @@ ddhcp_block_process_inquire(struct ddhcp_mcast_packet *packet,
 			INFO("ddhcp_block_process_inquire(...): we are furthermore interested in block %i\n",
 			     tmp->block_index);
 
-			// QUESTION Why do we need multiple states for the same process?
+			/* QUESTION Why do we need multiple states for the same process? */
 			if (NODE_ID_CMP(packet->node_id, config->node_id) > 0) {
 				INFO("ddhcp_block_process_inquire(...): ... but other node wins.\n");
 				blocks[tmp->block_index].state =
@@ -212,7 +215,7 @@ ddhcp_block_process_inquire(struct ddhcp_mcast_packet *packet,
 					now + config->tentative_timeout;
 			}
 
-			// otherwise keep inquiring, the other node should see our inquires and step back.
+			/* otherwise keep inquiring, the other node should see our inquires and step back. */
 		} else {
 			INFO("ddhcp_block_process_inquire(...): set block %i to tentative\n",
 			     tmp->block_index);
@@ -234,7 +237,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_process(uint8_t *buffer, ssize_t len,
 	if (ret)
 		return;
 
-	// Check if this packet is for our swarm
+	/* Check if this packet is for our swarm */
 	if (ddhcp_check_packet(&packet, config)) {
 		DEBUG("ddhcp_dhcp_process(...): drop foreign packet before processing");
 		free(packet.renew_payload);
@@ -287,9 +290,9 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet *packet,
 		DEBUG("ddhcp_dhcp_renewlease(...): %i NAK\n", ret);
 		answer = new_ddhcp_packet(DDHCP_MSG_LEASENAK, config);
 		statistics_record(config, STAT_DIRECT_SEND_LEASENAK, 1);
-		// TODO Can we hand over the block?
+		/* TODO Can we hand over the block? */
 	} else {
-		// Unexpected behaviour
+		/* Unexpected behaviour */
 		WARNING("ddhcp_dhcp_renewlease(...): Unexpected return value from dhcp_rhdl_request.");
 		return;
 	}
@@ -314,7 +317,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_renewlease(struct ddhcp_mcast_packet *packet,
 ATTR_NONNULL_ALL void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet *request,
 					  ddhcp_config *config)
 {
-	// Stub functions
+	/* Stub functions */
 	DEBUG("ddhcp_dhcp_leaseack(request,config)\n");
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -330,10 +333,10 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet *request,
 				      request->renew_payload->chaddr);
 
 	if (!packet) {
-		// Ignore packet
+		/* Ignore packet */
 		DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
 	} else {
-		// Process packet
+		/* Process packet */
 		dhcp_rhdl_ack(DDHCP_SKT_DHCP(config)->fd, packet, config);
 		dhcp_packet_free(packet, 1);
 		free(packet);
@@ -345,7 +348,7 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_leaseack(struct ddhcp_mcast_packet *request,
 ATTR_NONNULL_ALL void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet *request,
 					  ddhcp_config *config)
 {
-	// Stub functions
+	/* Stub functions */
 	DEBUG("ddhcp_dhcp_leasenak(request,config)\n");
 
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
@@ -361,10 +364,10 @@ ATTR_NONNULL_ALL void ddhcp_dhcp_leasenak(struct ddhcp_mcast_packet *request,
 				      request->renew_payload->chaddr);
 
 	if (!packet) {
-		// Ignore packet
+		/* Ignore packet */
 		DEBUG("ddhcp_dhcp_leaseack(...): No matching packet found, message ignored\n");
 	} else {
-		// Process packet
+		/* Process packet */
 		dhcp_nack(DDHCP_SKT_DHCP(config)->fd, packet, config);
 		dhcp_packet_free(packet, 1);
 		free(packet);

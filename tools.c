@@ -28,7 +28,7 @@ ATTR_NONNULL_ALL void addr_add(struct in_addr *subnet, struct in_addr *result,
 dhcp_option *parse_option()
 {
 	char *len_s = strchr(optarg, ':');
-	//size_t optlen = strlen(optarg);
+	/* size_t optlen = strlen(optarg); */
 
 	if (!len_s) {
 		ERROR("parse_option(...): Malformed dhcp option '%s'\n",

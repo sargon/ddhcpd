@@ -74,7 +74,7 @@ ATTR_NONNULL_ALL void statistics_show(int fd, uint8_t reset,
 	dprintf(fd, "dhcp.recv_release %li\n",
 		config->statistics[STAT_DHCP_RECV_RELEASE]);
 
-	// calculate block status
+	/* calculate block status */
 	ddhcp_block *block = config->blocks;
 	uint32_t blocks_free = 0, blocks_tentative = 0, blocks_claimed = 0, i;
 

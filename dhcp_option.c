@@ -148,7 +148,7 @@ ATTR_NONNULL_ALL dhcp_option *dhcp_option_set_in_store(dhcp_option_list *store,
 	if (current) {
 		DEBUG("set_in_option_store(...): replace option\n");
 
-		// Replacing current with new option
+		/* Replacing current with new option */
 
 		if (current->payload)
 			free(current->payload);
@@ -221,7 +221,7 @@ ATTR_NONNULL_ALL int16_t dhcp_option_fill(dhcp_option *options, uint8_t len,
 
 	for (uint8_t i = 0; i < max_options; i++) {
 		uint8_t code = requested[i];
-		// LOOP thought option_store
+		/* LOOP thought option_store */
 		dhcp_option *option =
 			dhcp_option_find_in_store(option_store, code);
 
@@ -261,7 +261,7 @@ ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config *config)
 	int8_t pl = (int8_t)config->prefix_len;
 
 	if (!has_in_option_store(&config->options, DHCP_CODE_SUBNET_MASK)) {
-		// subnet mask
+		/* subnet mask */
 		option = (dhcp_option *)calloc(sizeof(dhcp_option), 1);
 
 		if (!option)
@@ -359,7 +359,7 @@ ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config *config)
 			return -ENOMEM;
 		}
 
-		// 300 ms ~ 5min
+		/* 300 ms ~ 5min */
 		option->payload[0] = 0x00;
 		option->payload[1] = 0x00;
 		option->payload[2] = 0x01;
@@ -384,11 +384,12 @@ ATTR_NONNULL_ALL int dhcp_option_init(ddhcp_config *config)
 			return -ENOMEM;
 		}
 
-		// TODO Check interface for address
+		/* TODO Check interface for address */
 		memcpy(option->payload, &config->prefix.s_addr, 4);
-		//option->payload[0] = 10;
-		//option->payload[1] = 0;
-		//option->payload[2] = 0;
+		/* option->payload[0] = 10;
+		 * option->payload[1] = 0;
+		 * option->payload[2] = 0;
+		 */
 		option->payload[3] = 1;
 
 		dhcp_option_set_in_store(&config->options, option);

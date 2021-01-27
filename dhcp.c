@@ -18,7 +18,7 @@
 #include "statistics.h"
 #include "tools.h"
 
-// Free an offered lease after 12 seconds.
+/* Free an offered lease after 12 seconds. */
 uint16_t DHCP_OFFER_TIMEOUT = 12;
 uint16_t DHCP_LEASE_SERVER_DELTA = 10;
 
@@ -74,7 +74,7 @@ uint8_t find_lease_from_address(struct in_addr *addr, ddhcp_config *config,
 		if (blocks[block_number].state == DDHCP_OURS) {
 			return 0;
 		} else {
-			// TODO Try to aquire address for client
+			/* TODO Try to aquire address for client */
 			return 1;
 		}
 	}
@@ -92,8 +92,9 @@ ATTR_NONNULL_ALL static void _dhcp_release_lease(ddhcp_block *block,
 	     lease_index, block->index);
 	dhcp_lease *lease = block->addresses + lease_index;
 
-	// TODO Should we really reset the chaddr or xid, RFC says we
-	// ''SHOULD retain a record of the client's initialization parameters for possible reuse''
+	/* TODO Should we really reset the chaddr or xid, RFC says we
+	 * ''SHOULD retain a record of the client's initialization parameters for possible reuse''
+	 */
 	memset(lease->chaddr, 0, 16);
 
 	lease->xid = 0;
@@ -119,13 +120,15 @@ ATTR_NONNULL_ALL dhcp_packet *build_initial_packet(dhcp_packet *from_client)
 	packet->secs = 0;
 	packet->flags = from_client->flags;
 	memcpy(&packet->ciaddr, &from_client->ciaddr, 4);
-	// yiaddr
-	// siaddr
+	/* yiaddr
+	 * siaddr
+	 */
 	memcpy(&packet->giaddr, &from_client->giaddr, 4);
 	memcpy(&packet->chaddr, &from_client->chaddr, 16);
-	// sname
-	// file
-	// options
+	/* sname
+	 * file
+	 * options
+	 */
 
 	return packet;
 }
@@ -139,11 +142,12 @@ ATTR_NONNULL_ALL static int16_t _dhcp_default_options(uint8_t msg_type,
 						      bool include_lease_time)
 {
 	int16_t num_options;
-	// TODO We need a more extendable way to build up options
-	// TODO Proper error handling
-
-	// Fill options list with requested options, allocate memory and reserve for additonal
-	// dhcp options.
+	/* TODO We need a more extendable way to build up options
+	 * TODO Proper error handling
+	 *
+	 * Fill options list with requested options, allocate memory and reserve for additonal
+	 * dhcp options.
+	 */
 	if ((num_options = dhcp_option_fill(
 		     request->options, request->options_len, &config->options,
 		     3, &packet->options)) < 0) {
@@ -152,20 +156,20 @@ ATTR_NONNULL_ALL static int16_t _dhcp_default_options(uint8_t msg_type,
 
 	packet->options_len = (uint8_t)num_options;
 
-	// DHCP Message Type
+	/* DHCP Message Type */
 	_ddo[0] = msg_type;
 	dhcp_option_set(packet->options, packet->options_len,
 			DHCP_CODE_MESSAGE_TYPE, 1, _ddo);
 
-	// To support DHCPINFORM (as of RFC 2132) we need to be able to omit the lease time
+	/* To support DHCPINFORM (as of RFC 2132) we need to be able to omit the lease time */
 	if (include_lease_time) {
-		// DHCP Lease Time
+		/* DHCP Lease Time */
 		dhcp_option_set_from_store(&config->options, packet->options,
 					   packet->options_len,
 					   DHCP_CODE_ADDRESS_LEASE_TIME);
 	}
 
-	// DHCP Server identifier
+	/* DHCP Server identifier */
 	dhcp_option_set_from_store(&config->options, packet->options,
 				   packet->options_len,
 				   DHCP_CODE_SERVER_IDENTIFIER);
@@ -176,7 +180,7 @@ ATTR_NONNULL_ALL static int16_t _dhcp_default_options(uint8_t msg_type,
 ATTR_NONNULL_ALL int dhcp_process(uint8_t *buffer, ssize_t len,
 				  ddhcp_config *config)
 {
-	// TODO Error Handling
+	/* TODO Error Handling */
 	struct dhcp_packet dhcp_packet_buf;
 	ssize_t ret = ntoh_dhcp_packet(&dhcp_packet_buf, buffer, len);
 
@@ -256,7 +260,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 		return 1;
 	}
 
-	// Mark lease as offered and register client
+	/* Mark lease as offered and register client */
 	memcpy(&lease->chaddr, &discover->chaddr, 16);
 	lease->xid = discover->xid;
 	lease->state = OFFERED;
@@ -279,7 +283,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_discover(int socket, dhcp_packet *discover,
 	statistics_record(config, STAT_DHCP_SEND_BYTE, (long int)bytes_send);
 
 	if (bytes_send > 0) {
-		// We needed the block, hence remove a possible needless marking.
+		/* We needed the block, hence remove a possible needless marking */
 #if LOG_LEVEL_LIMIT >= LOG_DEBUG
 		if (lease_block->needless_since > 0)
 			DEBUG("dhcp_hdl_discover(...): Reset needless marker for block %i\n",
@@ -309,18 +313,20 @@ ATTR_NONNULL_ALL int dhcp_rhdl_request(uint32_t *address, ddhcp_config *config)
 						&lease_block, &lease_index);
 
 	if (found == 0) {
-		// Update lease information
-		// TODO Check for validity of request (chaddr)
+		/* Update lease information
+		 * TODO Check for validity of request (chaddr)
+		 */
 		dhcp_lease *lease = lease_block->addresses + lease_index;
 		lease->lease_end = now +
 				   dhcp_option_find_in_store_address_lease_time(
 					   &config->options) +
 				   DHCP_LEASE_SERVER_DELTA;
-		// Report ack
+		/* Report ack */
 		return 0;
 	} else if (found == 1) {
-		// We got a request for a block we don't own (anymore?)
-		// Reply with a nack
+		/* We got a request for a block we don't own (anymore?)
+		 * Reply with a NACK
+		 */
 		return 1;
 	} else {
 		return 2;
@@ -358,7 +364,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 {
 	DEBUG("dhcp_hdl_request(socket:%i, dhcp_packet, config)\n", socket);
 
-	// search the lease we may have offered
+	/* search the lease we may have offered */
 
 	ddhcp_block *lease_block = NULL;
 	dhcp_lease *lease = NULL;
@@ -379,7 +385,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 	}
 
 	if (found_address) {
-		// Calculate block and dhcp_lease from address
+		/* Calculate block and dhcp_lease from address */
 		uint8_t found = find_lease_from_address(
 			&requested_address, config, &lease_block, &lease_index);
 
@@ -394,10 +400,12 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 				}
 
 				lease = lease_block->addresses + lease_index;
-				// This lease block is not ours so we have to forward the request
+				/* This lease block is not ours so we have to forward the request */
 				DEBUG("dhcp_hdl_request(...): Requested lease is owned by another node. Sent request.\n");
-				// Register client information in lease
-				// TODO This isn't a good idea, because of multi request on the same address from various clients, register it elsewhere and append xid.
+				/* Register client information in lease
+				 * TODO This isn't a good idea, because of multi request on the same address from various
+				 * clients, register it elsewhere and append xid.
+				 */
 				lease->xid = request->xid;
 				lease->state = OFFERED;
 				lease->lease_end =
@@ -407,7 +415,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 					DHCP_LEASE_SERVER_DELTA;
 				memcpy(&lease->chaddr, &request->chaddr, 16);
 
-				// Build packet and send it
+				/* Build packet and send it */
 				ddhcp_renew_payload payload;
 				memcpy(&payload.chaddr, &request->chaddr, 16);
 				memcpy(&payload.address, &requested_address,
@@ -422,7 +430,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 				free(hwaddr);
 #endif
 
-				// Send packet
+				/* Send packet */
 				ddhcp_mcast_packet *packet = new_ddhcp_packet(
 					DDHCP_MSG_RENEWLEASE, config);
 
@@ -433,8 +441,9 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 
 				packet->renew_payload = &payload;
 
-				// Store packet for later usage.
-				// TODO Error handling
+				/* Store packet for later usage.
+				 * TODO Error handling
+				 */
 				dhcp_packet_list_add(&config->dhcp_packet_cache,
 						     request);
 
@@ -456,10 +465,10 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 				    lease->xid != request->xid) {
 					if (memcmp(request->chaddr,
 						   lease->chaddr, 16) != 0) {
-						// Check if lease is free
+						/* Check if lease is free */
 						if (lease->state != FREE) {
 							DEBUG("dhcp_hdl_request(...): Requested lease offered to other client\n");
-							// Send DHCP_NACK
+							/* Send DHCP_NACK */
 							dhcp_nack(socket,
 								  request,
 								  config);
@@ -468,10 +477,11 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 					}
 				}
 			} else {
-				// Block is neither blocked nor ours, so probably say nak here
+				/* Block is neither blocked nor ours, so probably say NAK here */
 				if (block_num_owned(config) > 0) {
-					// When we own a block the learning phase is over, so we can safely nack requests
-					// in this step.
+					/* When we own a block the learning phase is over, so we can safely nack requests
+					 * in this step.
+					 */
 					dhcp_nack(socket, request, config);
 				} else {
 					INFO("dhcp_hdl_request(...): Request could not be nacked safely.\n");
@@ -483,7 +493,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 	} else {
 		ddhcp_block *block = config->blocks;
 
-		// Find lease from xid
+		/* Find lease from xid TODO CodeFetch says this is potentially flawed */
 		for (uint32_t i = 0; i < config->number_of_blocks; i++) {
 			if (block->state == DDHCP_OURS) {
 				dhcp_lease *lease_iter = block->addresses;
@@ -518,7 +528,7 @@ ATTR_NONNULL_ALL int dhcp_hdl_request(int socket, struct dhcp_packet *request,
 
 	if (!lease) {
 		DEBUG("dhcp_hdl_request(...): Requested lease not found\n");
-		// Send DHCP_NACK
+		/* Send DHCP_NACK */
 		dhcp_nack(socket, request, config);
 		return 2;
 	}
@@ -545,7 +555,7 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 	case 0:
 		lease = lease_block->addresses + lease_index;
 
-		// Check Hardware Address of client
+		/* Check Hardware Address of client */
 		if (memcmp(packet->chaddr, lease->chaddr, 16) == 0) {
 			_dhcp_release_lease(lease_block, lease_index);
 			hook_address(HOOK_RELEASE, &packet->yiaddr,
@@ -555,12 +565,13 @@ ATTR_NONNULL_ALL void dhcp_hdl_release(dhcp_packet *packet,
 		}
 
 	case 1:
-		// TODO Handle remote block
-		// Send Message to neighbor
+		/* TODO Handle remote block
+		 * Send Message to neighbor
+		 */
 		break;
 
 	default:
-		// Since there is no reply to this message, we could `silently` drop this case.
+		/* Since there is no reply to this message, we could `silently` drop this case. */
 		break;
 	}
 }
@@ -653,7 +664,7 @@ ATTR_NONNULL_ALL int dhcp_ack(int socket, dhcp_packet *request,
 		return 1;
 	}
 
-	// Mark lease as leased and register client
+	/* Mark lease as leased and register client */
 	memcpy(&lease->chaddr, &request->chaddr, 16);
 	lease->xid = request->xid;
 	lease->state = LEASED;

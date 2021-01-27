@@ -21,7 +21,7 @@ ATTR_NONNULL_ALL int handle_command(int socket, uint8_t *buffer, ssize_t msglen,
 		return -2;
 	}
 
-	// TODO Rethink command handling and command design
+	/* TODO Rethink command handling and command design */
 	DEBUG("handle_command(socket, cmd:%u, len:%i, blocks, config)\n",
 	      buffer[0], msglen);
 
