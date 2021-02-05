@@ -1,7 +1,6 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <getopt.h>
-#include <math.h>
 #include <netinet/in.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -408,7 +407,8 @@ int main(int argc, char** argv) {
     LOG("WARNING: Requested verbosity is higher than maximum supported by this build\n");
   }
 
-  config.number_of_blocks = (uint32_t)pow(2u, (32u - config.prefix_len - ceil(log2(config.block_size))));
+  unsigned long number_of_addresses = 1ul << (32 - config.prefix_len);
+  config.number_of_blocks = (uint32_t)number_of_addresses / config.block_size;
 
   if (config.disable_dhcp) {
     config.spare_leases_needed = 0;
@@ -423,6 +423,7 @@ int main(int argc, char** argv) {
   INFO("CONFIG: tentative_timeout=%i\n", config.tentative_timeout);
   INFO("CONFIG: client_interface=%s\n", interface_client);
   INFO("CONFIG: group_interface=%s\n", interface);
+  INFO("CONFIG: number_of_blocks=%lu\n", config.number_of_blocks);
 
   //Register signal handlers
   handle_signal(SIGHUP, SIG_IGN);

@@ -1,7 +1,6 @@
 #include "block.h"
 
 #include <errno.h>
-#include <math.h>
 
 #include "dhcp.h"
 #include "logger.h"

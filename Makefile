@@ -37,7 +37,6 @@ CXXFLAGS+= \
 
 LFLAGS+= \
     -flto \
-    -lm \
     `pkg-config --libs libnl-3.0`
 
 ifeq ($(DEBUG),1)
