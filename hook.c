@@ -77,7 +77,7 @@ ATTR_NONNULL_ALL void hook_address(uint8_t type, struct in_addr* address, uint8_
 }
 
 ATTR_NONNULL_ALL void hook(uint8_t type, ddhcp_config* config) {
-  DEBUG("hook(type:%i,addr:%s,config)\n", type);
+  DEBUG("hook(type:%i,config)\n", type);
 
   if (!config->hook_command) {
     DEBUG("hook_address(...): No hook command set\n");
