@@ -1,5 +1,12 @@
-#ifndef _LOGGER_H
-#define _LOGGER_H
+/* SPDX-License-Identifier: GPL-3.0-only */
+/*
+ *  DDHCP - Logging facility
+ *
+ *  See AUTHORS file for copyright holders
+ */
+
+#ifndef _DDHCP_LOGGER_H
+#define _DDHCP_LOGGER_H
 
 /**
  * A set of logging function which allow compile time and runtime logging decissions.
@@ -25,11 +32,14 @@
 #define LOG_LEVEL_DEFAULT LOG_WARNING
 #endif
 
-#define HEX_NODE_ID(x) ((uint8_t*) x)[0],((uint8_t*) x)[1],((uint8_t*) x)[2],((uint8_t*) x)[3],((uint8_t*) x)[4],((uint8_t*) x)[5],((uint8_t*) x)[6],((uint8_t*) x)[7]
+#define HEX_NODE_ID(x)                                                         \
+	((uint8_t *)x)[0], ((uint8_t *)x)[1], ((uint8_t *)x)[2],               \
+		((uint8_t *)x)[3], ((uint8_t *)x)[4], ((uint8_t *)x)[5],       \
+		((uint8_t *)x)[6], ((uint8_t *)x)[7]
 
-ATTR_NONNULL_ALL void logger(int level, const char* prefix, ...);
+ATTR_NONNULL_ALL void logger(int level, const char *prefix, ...);
 
-#define LOG(...) logger(-1, "",__VA_ARGS__)
+#define LOG(...) logger(-1, "", __VA_ARGS__)
 
 #if LOG_LEVEL_LIMIT >= LOG_FATAL
 #define FATAL(...) logger(LOG_FATAL, "FATAL: ", __VA_ARGS__)
