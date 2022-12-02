@@ -8,7 +8,7 @@
 #define DDHCP_MULTICAST_PORT 1234
 #define DDHCP_UNICAST_PORT 1235
 
-const struct in6_addr in6addr_localmast;
+extern const struct in6_addr in6addr_localmast;
 
 // ddhcpd_socket_init_t implementations
 ATTR_NONNULL_ALL int netsock_multicast_init(epoll_data_t data,ddhcp_config* config);
