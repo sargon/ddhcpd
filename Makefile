@@ -5,6 +5,26 @@ HDRS=$(wildcard *.h)
 REVISION=$(shell git rev-list --first-parent HEAD --max-count=1)
 
 CC=gcc
+
+ifeq ($(origin PKG_CONFIG), undefined)
+  PKG_CONFIG = pkg-config
+  ifeq ($(shell which $(PKG_CONFIG) 2>/dev/null),)
+    $(error $(PKG_CONFIG) not found)
+  endif
+endif
+
+ifeq ($(origin LIBNL_CFLAGS) $(origin LIBNL_LDLIBS), undefined undefined)
+  LIBNL_NAME ?= libnl-3.0
+  ifeq ($(shell $(PKG_CONFIG) --modversion $(LIBNL_NAME) 2>/dev/null),)
+    $(error No $(LIBNL_NAME) development libraries found!)
+  endif
+  LIBNL_CFLAGS += $(shell $(PKG_CONFIG) --cflags $(LIBNL_NAME))
+  LIBNL_LDLIBS +=  $(shell $(PKG_CONFIG) --libs $(LIBNL_NAME))
+endif
+CFLAGS += $(LIBNL_CFLAGS)
+LFLAGS += $(LIBNL_LDLIBS)
+
+
 CFLAGS+= \
     -Wall \
     -Wextra \
@@ -26,8 +46,7 @@ CFLAGS+= \
     -Wswitch-default \
     -Wswitch-enum \
     -Wunreachable-code \
-    -Winit-self \
-    `pkg-config --cflags libnl-3.0`
+    -Winit-self
 
 CXXFLAGS+= \
     ${CFLAGS} \
@@ -37,8 +56,7 @@ CXXFLAGS+= \
 
 LFLAGS+= \
     -flto \
-    -lm \
-    `pkg-config --libs libnl-3.0`
+    -lm
 
 ifeq ($(DEBUG),1)
 CFLAGS+= \
