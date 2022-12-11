@@ -2,6 +2,7 @@
 #include <netlink/msg.h>
 #include <netlink/netlink.h>
 #include <netlink/socket.h>
+#include <linux/rtnetlink.h>
 
 #include "epoll.h"
 #include "logger.h"
